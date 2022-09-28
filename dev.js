@@ -29,7 +29,7 @@ exports.restart = async function (interaction) {
 exports.update = function (interaction) {
     interaction.reply("Updating...")
     shellCommand("./update.sh").then(res => {
-        if (res.include("updated succesfully!")) this.restart(interaction)
+        if (res.includes("updated succesfully!")) this.restart(interaction)
         else console.log("Error! :\n", res)
     })
 }
