@@ -1,6 +1,7 @@
 let { client } = require("./client.js")
 let { distube } = require("./music.js")
-const fs = require("fs")
+const { exec } = require("child_process");
+const { sendMessage } = require("./data.js");
 
 exports.devQueue = function (interaction) {
     var queue = distube.getQueue(interaction)
@@ -14,11 +15,32 @@ exports.devInteraction = function (interaction) {
 }
 
 exports.restart = async function (interaction) {
-    client.user.setPresence({ activities: [{ name: 'Redémarrage...' }], status: 'dnd' });
-    interaction.reply("Restarting...")
-    interaction.deleteReply()
+    const msg = "Redémarrage..."
+    client.user.setPresence({ activities: [{ name: msg }], status: 'dnd' });
+    try {
+        interaction.reply(msg)
+        //interaction.deleteReply()
+    } catch {
+        sendMessage(interaction.channel, msg)
+    }
     setTimeout(process.exit, 500)
-    
+}
+
+exports.update = function (interaction) {
+    interaction.reply("Updating...")
+    shellCommand("./update.sh").then(res => {
+        if (res.include("updated succesfully!")) this.restart(interaction)
+        else console.log("Error! :\n", res)
+    })
+}
+
+function shellCommand (cmd) {
+    return new Promise((resolve, reject) => {
+        exec(cmd, (err, output) => {
+            if (err) reject(err)
+            else resolve(output)
+        })
+    })
 }
 
 //      async function walkObject (object) {

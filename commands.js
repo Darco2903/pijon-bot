@@ -99,6 +99,7 @@ devCommands: [
         new SlashCommandBuilder().setName("queue").setDescription("[Dev] Show queue in console"),
         new SlashCommandBuilder().setName("interaction").setDescription("[Dev] Show interaction in console"),
         new SlashCommandBuilder().setName("restart").setDescription("[Dev] Restart Bot"),
+        new SlashCommandBuilder().setName("update").setDescription("[Dev] Update Bot"),
         
     ].map(command => command.toJSON())
 }            
@@ -128,6 +129,7 @@ exports.commandHandler = function (interaction) {
     else if (interaction.commandName == "queue") dev.devQueue(interaction)
     else if (interaction.commandName == "interaction") dev.devInteraction(interaction)
     else if (interaction.commandName == "restart") dev.restart(interaction)
+    else if (interaction.commandName == "update") dev.update(interaction)
 }   
 
 exports.registerCommands = function () {
