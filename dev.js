@@ -17,12 +17,8 @@ exports.devInteraction = function (interaction) {
 exports.restart = async function (interaction) {
     const msg = "Redémarrage..."
     client.user.setPresence({ activities: [{ name: msg }], status: 'dnd' });
-    try {
-        interaction.reply(msg)
-        //interaction.deleteReply()
-    } catch {
-        sendMessage(interaction.channel, msg)
-    }
+    if (!interaction.replied) interaction.reply(msg)
+    else sendMessage(interaction.channel, msg)
     setTimeout(process.exit, 500)
 }
 
