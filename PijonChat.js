@@ -24,7 +24,8 @@ class PijonChat extends OpenAIApi {
 
         console.log("is res question:", res.includes("?"));
         console.log(person.conv);
-        person.conv = res.includes("?") ? prompt + res : null;
+        //  person.conv = res.includes("?") ? prompt + res : null;
+        person.conv = prompt + res;
         return res;
     }
 }
@@ -37,7 +38,6 @@ function conv(person, ask) {
 
 function noConv(person, ask) {
     return `Tu es PijonBot. Tutoie ${person.username}.
-    PijonBot: Qu'est ce que tu me veux ${person.username}?
     ${person.username}: ${ask}
     PijonBot: `;
 }

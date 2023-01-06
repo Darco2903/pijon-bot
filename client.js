@@ -1,7 +1,7 @@
-import fs, { cp } from "fs";
+import fs from "fs";
 import { Client, GatewayIntentBits } from "discord.js";
 import { token /*, sendMessage, channelIds*/ } from "./data.js";
-import OpenAI from "./openAI.js";
+import PijonChat from "./PijonChat.js";
 
 export const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildVoiceStates] });
 
@@ -28,8 +28,7 @@ client.on("ready", () => {
 
         if (msg.content.includes(botPing)) msg.content = msg.content.replace(botPing, "");
 
-        const reply = await OpenAI.askQuestion(msg);
-        console.log(reply);
+        const reply = await PijonChat.askQuestion(msg);
         msg.reply(reply);
     });
 
