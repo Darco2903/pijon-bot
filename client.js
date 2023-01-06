@@ -1,34 +1,48 @@
-const fs = require("fs");
-const { Client, GatewayIntentBits } = require('discord.js');
-const { token/*, sendMessage, channelIds*/ } = require("./data.js")
+import fs, { cp } from "fs";
+import { Client, GatewayIntentBits } from "discord.js";
+import { token /*, sendMessage, channelIds*/ } from "./data.js";
+import OpenAI from "./openAI.js";
 
-let client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates] })
-//let musicChannel, testChannel
+export const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildVoiceStates] });
 
-client.on('ready', () => {
-    exports.client = client 
-    const presence = require("./presence.js")
-    const music = require("./music.js")
-    const misc = require("./misc.js")
-    const dev = require("./dev.js")
-    const { commandHandler, registerCommands } = require("./commands.js")
-    
+//  import presence from "./presence.js";
+//  import music from "./music.js";
+//  import misc from "./misc.js";
+//  import dev from "./dev.js";
+//  import { commandHandler, registerCommands } from "./commands.js";
+
+client.on("ready", () => {
+    //  exports.client = client
+
     //musicChannel = client.channels.cache.get(channelIds.musicChannelId)  //Pijons
     //testChannel = client.channels.cache.get(channelIds.testChannelId)    //TEST_Server
-    
-    console.log(`Logged in as ${client.user.tag}`)
-    
-    registerCommands(client)
-    client.on('interactionCreate', commandHandler)
+
+    console.log(`Logged in as ${client.user.tag}`);
+
+    client.on("messageCreate", async (msg) => {
+        if (msg.author.bot) return;
+        console.log("content:", msg.content);
+        const botPing = "<@938380480565350411>";
+
+        if (msg.channel.name != "pijon-bot" && msg.content.indexOf(botPing) != 0) return;
+
+        if (msg.content.includes(botPing)) msg.content = msg.content.replace(botPing, "");
+
+        const reply = await OpenAI.askQuestion(msg);
+        console.log(reply);
+        msg.reply(reply);
+    });
+
+    //  registerCommands(client);
+    //  client.on("interactionCreate", commandHandler);
 
     //sendMessage(testChannel, '**Ready** :white_check_mark:', true, false)
-    presence.set("Initialisation terminée!", "Playing")
+    //  presence.set("Initialisation terminée!", "Playing");
 
-    setTimeout(() => {
-        presence.set("j'suis un sniper", "Listening", "https://www.youtube.com/watch?v=RyiDL-dVsIs")
-        //presence.dynamic("lock")
-    }, 2000);
+    //  setTimeout(() => {
+    //      presence.set("j'suis un sniper", "Listening", "https://www.youtube.com/watch?v=RyiDL-dVsIs");
+    //      //presence.dynamic("lock")
+    //  }, 2000);
+});
 
-})
-
-client.login(token)
+client.login(token);
