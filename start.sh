@@ -1,1 +1,3 @@
-node client.js
+#!/bin/bash
+
+npm run start
