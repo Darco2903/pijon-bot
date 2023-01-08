@@ -1,2 +1,5 @@
 node_modules
 test*
+config.json
+old/
+

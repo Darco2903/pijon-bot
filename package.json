@@ -1,30 +1,34 @@
 {
-  "name": "pijon-bot",
-  "version": "1.0.0",
-  "description": "",
-  "main": "client.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Darco2903/Pijon-Bot.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/Darco2903/Pijon-Bot/issues"
-  },
-  "homepage": "https://github.com/Darco2903/Pijon-Bot#readme",
-  "dependencies": {
-    "@discordjs/opus": "^0.8.0",
-    "@discordjs/voice": "^0.13.0",
-    "@distube/ytdl-core": "^4.11.5",
-    "discord.js": "^14.6.0",
-    "distube": "^4.0.4",
-    "openai": "^3.1.0",
-    "tweetnacl": "^1.0.3"
-  },
-  "type": "module"
+    "name": "pijon-bot",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "node . node music/main.js",
+        "deploy": "node deploy-commands.js",
+        "deploy-dev": "node deploy-commands-dev.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Darco2903/Pijon-Bot.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/Darco2903/Pijon-Bot/issues"
+    },
+    "homepage": "https://github.com/Darco2903/Pijon-Bot#readme",
+    "dependencies": {
+        "@discordjs/opus": "^0.8.0",
+        "@discordjs/voice": "^0.13.0",
+        "@distube/ytdl-core": "^4.11.5",
+        "console-log-colors": "^0.3.3",
+        "discord.js": "^14.6.0",
+        "distube": "^4.0.4",
+        "ffmpeg-static": "^4.4.1",
+        "openai": "^3.1.0",
+        "tweetnacl": "^1.0.3"
+    }
 }
