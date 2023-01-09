@@ -13,11 +13,15 @@ const distube = new DisTube(client, {
 
 client.distube = distube;
 
-distube.on("playSong", (queue, song) =>
-    client.user.setPresence({
-        activities: [{ name: song.name, type: ActivityType.Listening, url: song.url }],
-        status: "online",
-    })
-);
+distube.on("playSong", (queue, song) => setSongPresence(song.name));
+client.on("music:setSongPresence", setSongPresence);
+
 distube.on("deleteQueue", (queue) => client.emit("presence:setDefault"));
 distube.on("empty", (queue) => console.log("empty"));
+
+function setSongPresence(name) {
+    client.user.setPresence({
+        activities: [{ name, type: ActivityType.Listening }],
+        status: "online",
+    });
+}

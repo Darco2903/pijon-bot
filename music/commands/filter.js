@@ -31,7 +31,10 @@ module.exports = {
         const distube = interaction.client.distube;
         const queue = distube.getQueue(interaction);
 
-        if (!queue) return;
+        if (!queue) {
+            interaction.reply("Faut mettre une musique avant de faire ça");
+            return;
+        }
 
         const filter = interaction.options.get("filter").value;
         if (filter == "clear") queue.filters.clear();

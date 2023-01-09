@@ -7,21 +7,19 @@ module.exports = {
         const distube = interaction.client.distube;
         const queue = distube.getQueue(interaction);
 
-        switch (true) {
-            case !queue:
-                interaction.reply("Faut mettre une musique avant de faire ça");
-            //  Fall Through
-            case !queue.previousSongs[0]:
-                interaction.reply("Pas de musique précédente");
-                return;
+        if (!queue) {
+            interaction.reply("Faut mettre une musique avant de faire ça");
+            return;
+        }
 
-            default:
-                break;
+        if (!queue.previousSongs[0]) {
+            interaction.reply("Pas de musique précédente");
+            return;
         }
 
         queue.previous();
 
-        //  if (queue.paused) distube.resume(interaction);
+        if (queue.paused) distube.resume(interaction);
 
         let n = queue.previousSongs.length - 1;
         let prevSong = queue.previousSongs[n];

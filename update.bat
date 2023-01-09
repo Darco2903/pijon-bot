@@ -1,3 +1,6 @@
 @echo off
 
-npm update && echo updated succesfully!
+git pull
+npm update
+
+echo updated succesfully!

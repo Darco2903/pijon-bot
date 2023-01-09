@@ -1,6 +1,6 @@
 #!/bin/bash
 
-npm update
 git pull
+npm update
 
 echo updated succesfully!

@@ -7,7 +7,10 @@ module.exports = {
         const distube = interaction.client.distube;
         const queue = distube.getQueue(interaction);
 
-        if (!queue) return interaction.reply("Faut mettre une musique avant de faire ça");
+        if (!queue) {
+            interaction.reply("Faut mettre une musique avant de faire ça");
+            return;
+        }
 
         distube.stop(interaction);
 

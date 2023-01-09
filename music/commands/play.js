@@ -17,13 +17,14 @@ module.exports = {
 
     async execute(interaction) {
         if (!interaction.member.voice.channel) {
-            interaction.reply("Va dans un salon vocal ou j'te bute.");
+            await interaction.reply("Va dans un salon vocal ou j'te bute.");
             return;
         }
 
         await interaction.deferReply();
 
         const distube = interaction.client.distube;
+        const channel = interaction.member.voice.channel;
         const track = interaction.options.get("track").value;
         const id = youtube_parser(track);
         let url;
@@ -31,15 +32,16 @@ module.exports = {
         if (!id) {
             const searchArray = await distube.search(track, { searchCooldown: 1 });
             if (searchArray.length < 1) {
-                interaction.editReply("Aucun résultat obtenu...");
+                await interaction.editReply("Aucun résultat obtenu...");
                 return;
             }
             url = searchArray[0].url;
         } else url = `https://youtu.be/${id}`;
 
-        const queue = distube.getQueue(interaction);
-        distube.play(interaction.member.voice.channel, url);
-        if (!queue) interaction.editReply(`Zé parti la zik bande de noobs\n${url}`);
-        else interaction.editReply(`Ajout de à la liste de lecture\n${url}`);
+        const queue = await distube.getQueue(interaction);
+        await distube.play(channel, url);
+
+        if (!queue) await interaction.editReply(`Zé parti la zik bande de noobs\n${url}`);
+        else await interaction.editReply(`Ajout de à la liste de lecture\n${url}`);
     },
 };
