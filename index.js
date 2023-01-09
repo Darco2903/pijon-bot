@@ -48,7 +48,6 @@ function setDefaultPresence() {
 
 client.once(Events.ClientReady, (c) => {
     require("./music/main");
-    require("./chat/main");
     setDefaultPresence();
     console.log(color.green(`Logged in as ${c.user.tag}`));
 });
