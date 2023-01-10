@@ -7,8 +7,7 @@
         "start": "node .",
         "deploy": "node deploy-commands.js",
         "deploy-dev": "node deploy-commands-dev.js",
-        "distube-patch": "npm uninstall ffmpeg-static npm ci --no-optional npm update",
-        "update": "git pull && npm update"
+        "distube-patch": "npm uninstall ffmpeg-static npm ci --no-optional npm update"
     },
     "repository": {
         "type": "git",
