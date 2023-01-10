@@ -6,9 +6,11 @@ const client = global.client;
 const distube = new DisTube(client, {
     leaveOnStop: true,
     leaveOnEmpty: true,
+    leaveOnFinish: false,
     emitNewSongOnly: false,
     emitAddSongWhenCreatingQueue: false,
     emitAddListWhenCreatingQueue: false,
+    nsfw: true,
 });
 
 client.distube = distube;
