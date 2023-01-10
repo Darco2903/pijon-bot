@@ -8,7 +8,7 @@ module.exports = {
 
     async execute(interaction) {
         const content = interaction.options.get("message");
-        interaction.deferReply();
+        await interaction.deferReply();
         interaction.deleteReply();
         interaction.channel.send({ content: content.value });
     },

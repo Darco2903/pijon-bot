@@ -41,7 +41,7 @@ module.exports = {
         const queue = await distube.getQueue(interaction);
         await distube.play(channel, url);
 
-        if (!queue) await interaction.editReply(`Zé parti la zik bande de noobs\n${url}`);
+        if (!queue || queue.songs.length <= 1) await interaction.editReply(`Zé parti la zik bande de noobs\n${url}`);
         else await interaction.editReply(`Ajout de à la liste de lecture\n${url}`);
     },
 };

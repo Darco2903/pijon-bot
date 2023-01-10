@@ -8,18 +8,18 @@ module.exports = {
         const queue = await distube.getQueue(interaction);
 
         if (!queue) {
-            interaction.reply("Faut mettre une musique avant de faire ça");
+            await interaction.reply("Faut mettre une musique avant de faire ça");
             return;
         }
 
         if (queue.paused) {
-            interaction.reply("Déjà en pause");
+            await interaction.reply("Déjà en pause");
             return;
         }
 
-        distube.pause(interaction);
+        await distube.pause(interaction);
 
-        interaction.reply(":pause_button:");
+        await interaction.reply(":pause_button:");
 
         const song = queue.songs[0];
 

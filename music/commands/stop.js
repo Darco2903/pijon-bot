@@ -5,15 +5,15 @@ module.exports = {
 
     async execute(interaction) {
         const distube = interaction.client.distube;
-        const queue = distube.getQueue(interaction);
+        const queue = await distube.getQueue(interaction);
 
         if (!queue) {
-            interaction.reply("Faut mettre une musique avant de faire ça");
+            await interaction.reply("Faut mettre une musique avant de faire ça");
             return;
         }
 
-        distube.stop(interaction);
+        await distube.stop(interaction);
 
-        interaction.reply(":stop_button:");
+        await interaction.reply(":stop_button:");
     },
 };

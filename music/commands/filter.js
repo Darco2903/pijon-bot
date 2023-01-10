@@ -29,10 +29,10 @@ module.exports = {
 
     async execute(interaction) {
         const distube = interaction.client.distube;
-        const queue = distube.getQueue(interaction);
+        const queue = await distube.getQueue(interaction);
 
         if (!queue) {
-            interaction.reply("Faut mettre une musique avant de faire ça");
+            await interaction.reply("Faut mettre une musique avant de faire ça");
             return;
         }
 
@@ -40,6 +40,6 @@ module.exports = {
         if (filter == "clear") queue.filters.clear();
         else queue.filters.add(filter);
 
-        interaction.reply(`Filtre: ${filter}`);
+        await interaction.reply(`Filtre: ${filter}`);
     },
 };
