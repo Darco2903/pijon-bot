@@ -5,29 +5,23 @@ module.exports = {
 
     async execute(interaction) {
         const distube = interaction.client.distube;
-        const queue = distube.getQueue(interaction);
+        const queue = await distube.getQueue(interaction);
 
-        switch (true) {
-            case !queue:
-                interaction.reply("Faut mettre une musique avant de faire ça");
-            //  Fall Through
-            case !queue.paused:
-                interaction.reply("Déjà en lecture");
-                return;
-
-            default:
-                break;
+        if (!queue) {
+            await interaction.reply("Faut mettre une musique avant de faire ça");
+            return;
         }
 
-        distube.resume(interaction);
+        if (!queue.paused) {
+            await interaction.reply("Déjà en lecture");
+            return;
+        }
 
-        interaction.reply(":arrow_forward:");
+        await distube.resume(interaction);
+
+        await interaction.reply(":arrow_forward:");
 
         const song = queue.songs[0];
-
-        interaction.client.user.setPresence({
-            activities: [{ name: song.name, type: ActivityType.Listening, url: song.url }],
-            status: "online",
-        });
+        interaction.client.emit("music:setSongPresence", song.name);
     },
 };

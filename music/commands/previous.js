@@ -5,27 +5,25 @@ module.exports = {
 
     async execute(interaction) {
         const distube = interaction.client.distube;
-        const queue = distube.getQueue(interaction);
+        const queue = await distube.getQueue(interaction);
 
-        switch (true) {
-            case !queue:
-                interaction.reply("Faut mettre une musique avant de faire ça");
-            //  Fall Through
-            case !queue.previousSongs[0]:
-                interaction.reply("Pas de musique précédente");
-                return;
-
-            default:
-                break;
+        if (!queue) {
+            await interaction.reply("Faut mettre une musique avant de faire ça");
+            return;
         }
 
-        queue.previous();
+        if (!queue.previousSongs[0]) {
+            await interaction.reply("Pas de musique précédente");
+            return;
+        }
 
-        //  if (queue.paused) distube.resume(interaction);
+        await queue.previous();
 
         let n = queue.previousSongs.length - 1;
         let prevSong = queue.previousSongs[n];
 
-        interaction.reply(`:arrow_forward: Lecture de **${prevSong.name}**`);
+        await interaction.reply(`:arrow_forward: Lecture de **${prevSong.name}**`);
+
+        if (queue.paused) await distube.resume(interaction);
     },
 };

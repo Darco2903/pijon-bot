@@ -24,18 +24,30 @@ commandFiles.forEach((file) => {
 client.on(Events.InteractionCreate, async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
 
+    console.log(
+        color.blue(interaction.user.username),
+        color.cyan("/" + interaction.commandName),
+        ...interaction.options.data.map((option) => `${color.blue(color.magenta(option.name))} ${color.yellow(option.value)}`)
+    );
+
     const command = interaction.client.commands.get(interaction.commandName);
-    
     if (!command) {
-        console.error(color.red(`No command matching ${interaction.commandName} was found.`));
+        console.error(color.red(`No command matching ${color.yellow(interaction.commandName)} was found.`));
         return;
     }
 
     try {
         await command.execute(interaction);
     } catch (error) {
-        console.error(color.red(`${interaction.commandName} failed:\n ${error}`));
-        await interaction.reply({ content: "Une erreur est survenue lors de l'execution de cette commande.", ephemeral: true });
+        console.error(color.red(`${interaction.commandName} failed:\n`), color.yellow(error));
+        const reply = { content: "Une erreur est survenue lors de l'execution de cette commande.", ephemeral: true };
+        try {
+            await interaction.reply(reply);
+        } catch (error) {
+            try {
+                await interaction.editReply(reply);
+            } catch (error) {}
+        }
     }
 });
 
@@ -48,7 +60,6 @@ function setDefaultPresence() {
 
 client.once(Events.ClientReady, (c) => {
     require("./music/main");
-    require("./chat/main");
     setDefaultPresence();
     console.log(color.green(`Logged in as ${c.user.tag}`));
 });

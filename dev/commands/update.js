@@ -14,7 +14,7 @@ module.exports = {
         interaction.reply("Mise à jour en cours...");
         exec(path.join(".", `update.${ext}`), async (error, stdout, stderr) => {
             if (!error && stdout.includes("updated succesfully!")) {
-                interaction.editReply("Mise à jour terminée ! :white_check_mark:\n Redémarrer maintenant ?");
+                await interaction.editReply("Mise à jour terminée ! :white_check_mark:\n Redémarrer maintenant ?");
 
                 //  const message = await interaction.fetchReply();
                 //  await message.react("✅");
@@ -40,7 +40,7 @@ module.exports = {
                     });
                     */
             } else {
-                interaction.editReply("Error on update :x:");
+                await interaction.editReply("Error on update :x:");
                 console.log(color.red("error on update", error));
             }
         });
