@@ -4,10 +4,11 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
         "start": "node .",
         "deploy": "node deploy-commands.js",
-        "deploy-dev": "node deploy-commands-dev.js"
+        "deploy-dev": "node deploy-commands-dev.js",
+        "distube-patch": "npm uninstall ffmpeg-static npm ci --no-optional npm update",
+        "update": "git pull && npm update"
     },
     "repository": {
         "type": "git",
