@@ -60,6 +60,7 @@ function setDefaultPresence() {
 
 client.once(Events.ClientReady, (c) => {
     require("./music/main");
+    require("./openai/main");
     setDefaultPresence();
     console.log(color.green(`Logged in as ${c.user.tag}`));
 });

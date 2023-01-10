@@ -1,10 +1,9 @@
 const { Configuration, OpenAIApi } = require("openai");
+const { openaiApiKey } = require("../config.json");
 
-const openai = new OpenAIApi(
-    new Configuration({
-        apiKey: "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",
-    })
-);
+const client = global.client;
+if (!client.openai) client.openai = new OpenAIApi(new Configuration({ apiKey: openaiApiKey }));
+const openai = client.openai;
 
 class PijonChat {
     constructor() {
@@ -40,6 +39,10 @@ class PijonChat {
     }
 
     promptConv(person, ask) {
+        if (person.username == "Darco2903")
+            return `${person.conv}
+        moi: ${ask}
+        toi: `;
         return `${person.conv}
         ${person.username}: ${ask}
         Pijon Bot: `;
@@ -48,6 +51,9 @@ class PijonChat {
     promptInitConv(person, ask) {
         const date = new Date();
         date.setUTCHours(date.getHours());
+        if (person.username == "Darco2903")
+            return `moi: ${ask}
+        toi: `;
         return `${date.toUTCString()} ${this.conv}
         ${person.username}: ${ask}
         Pijon Bot: `;
