@@ -13,7 +13,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName("play")
         .setDescription("[Music] Lecture de musique")
-        .addStringOption((option) => option.setName("track").setDescription("Lien ou ID YouTube").setRequired(true)),
+        .addStringOption((option) => option.setName("track").setDescription("Titre ou Lien ou ID YouTube").setRequired(true)),
 
     async execute(interaction) {
         if (!interaction.member.voice.channel) {

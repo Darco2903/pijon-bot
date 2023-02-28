@@ -8,7 +8,7 @@ const isWin = process.platform === "win32";
 const ext = isWin ? "bat" : "sh";
 
 module.exports = {
-    data: new SlashCommandBuilder().setName("update").setDescription("[Dev] Mise à jour"),
+    //  data: new SlashCommandBuilder().setName("update").setDescription("[Dev] Mise à jour"),
 
     async execute(interaction) {
         interaction.reply("Mise à jour en cours...");
