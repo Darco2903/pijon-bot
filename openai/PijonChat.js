@@ -1,34 +1,30 @@
-const { Configuration, OpenAIApi } = require("openai");
-const { openaiApiKey } = require("../config.json");
-
 const client = global.client;
-client.openai = new OpenAIApi(new Configuration({ apiKey: openaiApiKey }));
-const openai = client.openai;
 
-class PijonChat {
-    constructor() {
-        this.conv = "Tu es Pijon Bot. Tutoie tout le monde.";
+class Message {
+    constructor(author, content) {
+        return { role: author, content };
+    }
+}
+
+class Conversation extends Array {
+    constructor(initContent) {
+        super();
+        if (initContent) this.userMessage("system", initContent);
     }
 
-    async chat(msg) {
-        let person = msg.author;
-        const prompt = person.conv ? this.promptConv(person, msg.content) : this.promptInitConv(person, msg.content);
-        //  console.log(`${person.username}: ${msg.content}`);
-        let res;
-        try {
-            res = await openai.createCompletion({
-                model: "text-davinci-003",
-                prompt: prompt,
-                max_tokens: 300,
-                temperature: 0.9,
-                top_p: 0,
-                n: 1,
-                stream: false,
-                echo: false,
-            });
-            res = res.data.choices ? res.data.choices[0].text : "err";
-        } catch (error) {
-            res = "err";
+    userMessage(author, content) {
+        this.push(new Message(author, content));
+    }
+
+    botReply(message) {
+        this.push(message);
+    }
+
+    toFormat() {
+        return Array.from(this);
+    }
+}
+
 Buffer.prototype.toObject = function () {
     const str = this.toString();
     return JSON.parse(str.substring(str.indexOf(":") + 1));
@@ -65,16 +61,36 @@ class streamHandler {
     }
 }
 
-        person.conv = prompt + res;
-        //  console.log(person.conv);
-
-        return res;
+class PijonChat {
+    constructor(conversation) {
+        this.conversation = conversation;
+        this.process = false;
     }
 
-    promptConv(person, ask) {
-        return `${person.conv}
-        ${person.username}: ${ask}
-        Pijon Bot: `;
+    getReply(conversation) {
+        return new Promise(async (resolve, reject) => {
+            client.openai
+                .createChatCompletion({
+                    model: "gpt-3.5-turbo",
+                    messages: conversation.toFormat(),
+                    max_tokens: 300,
+                    temperature: 0.9,
+                    top_p: 1,
+                    n: 1,
+                    stream: false,
+                    stop: null,
+                })
+                .then((response) => {
+                    if (response.data.choices) resolve(response.data.choices[0].message);
+                    else reject("empty");
+                })
+                .catch((error) => {
+                    console.log(error);
+                    resolve("err");
+                });
+        });
+    }
+
     async getReplyStreamed(conversation, reply) {
         let streamedContent = [];
         let process = false;
@@ -94,12 +110,6 @@ class streamHandler {
         new streamHandler(res.data);
     }
 
-    promptInitConv(person, ask) {
-        const date = new Date();
-        date.setUTCHours(date.getHours());
-        return `${date.toUTCString()} ${this.conv}
-        ${person.username}: ${ask}
-        Pijon Bot: `;
     //     const onData = (buffer) => {
     //         const str = buffer.toString().replace("data: ", "");
     //         if (str.includes("[DONE]")) {
@@ -140,31 +150,34 @@ class streamHandler {
     //     if (streamedContent.length != 0) this.processEdit(reply, streamedContent);
     // }
 }
+
+class PijonPersonnalChat extends PijonChat {
+    constructor(user) {
+        super(new Conversation(`Tu es Pijon Bot. Tu parles avec ${user.username}`));
+        // this.username = user.username;
+        user.chat = this;
     }
 
-    /*
-    async chatAll(msg) {
-        let person = msg.author;
-        const prompt = `${person.username}: ${msg.content}`;
-        console.log(prompt);
-        this.conv += `${person.username}: ${msg.content}\n`;
+    send(content) {
+        return new Promise((resolve, reject) => {
+            this.conversation.userMessage("user", content);
 
-        let res = await openai.createCompletion({
-            model: "text-davinci-003",
-            prompt: prompt,
-            max_tokens: 300,
-            temperature: 0,
+            this.getReply(this.conversation)
+                .then((reply) => {
+                    // console.log("reply:", reply);
+                    this.conversation.botReply(reply);
+                    console.log(this.conversation.toFormat());
+                    resolve(reply);
+                })
+                .catch((error) => {
+                    // reject(error);
+                });
         });
+    }
 
-        res = res.data.choices ? res.data.choices[0].text : "err";
     async sendStreamed(message) {
         const reply = await message.reply(":white_small_square:");
 
-        this.conv += `Pijon Bot: ${res}\n`;
-        console.log(`Pijon Bot: ${res}\n`);
-        //  console.log(person.conv);
-        //  console.log(this.conv);
-        return res;
         this.conversation.userMessage("user", message.content);
 
         this.getReplyStreamed(this.conversation, reply);
@@ -178,12 +191,14 @@ class streamHandler {
         //     // reject(error);
         // });
     }
-    */
 }
 
-module.exports = new PijonChat();
 class PijonGlobalChat extends PijonChat {
     constructor() {
         client.chat = new PijonChat(new Conversation("Tu es Pijon Bot."));
     }
 }
+
+// module.exports = new PijonChat();
+
+module.exports = { PijonPersonnalChat };
