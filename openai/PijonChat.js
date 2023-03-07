@@ -26,8 +26,15 @@ class Conversation extends Array {
 }
 
 Buffer.prototype.toObject = function () {
-    const str = this.toString();
-    return JSON.parse(str.substring(str.indexOf(":") + 1));
+    try {
+        let str = this.toString();
+        str = str.substring(str.indexOf("{"));
+        console.log(str);
+        return JSON.parse(str);
+    } catch (error) {
+        console.log(error);
+        return this.toObject();
+    }
 };
 
 class streamHandler {
@@ -36,15 +43,26 @@ class streamHandler {
         this.message = message;
         this.process = false;
         this.contentQueue = [];
+        this.content = "";
         this.data.on("data", this.onData);
     }
 
     onData(buffer) {
+        const obj = buffer.toObject();
+        const delta = obj.choices[0].delta;
+        if (!delta.content) return;
+        console.log(delta.content);
+        this.push(delta.content);
+    }
+
+    onData2(buffer) {
         let str = buffer.toString();
         str = str.substring(str.indexOf("{"));
-        console.log(str);
+        // console.log(str);
         if (str.includes("[DONE]")) {
-            this.data.off("data", this.onData);
+            console.log(this.data);
+            // this.data.off("data", this.onData);
+            this.process = false;
             return;
         }
         try {
@@ -55,13 +73,22 @@ class streamHandler {
             this.contentQueue.push(delta.content);
             if (!this.process) {
                 this.process = true;
-                this.processEdit(reply);
+                // this.processEdit(reply);
             }
-        } catch (error) {}
+        } catch (error) {
+            console.log(str);
+            console.log(error);
+        }
     }
 
     async processEdit() {
-        
+        while (this.process) {
+            if (this.contentQueue.length < 1) continue;
+            const content = this.contentQueue.shift();
+            console.log(content);
+            console.log(this.content + content);
+            this.message = await this.message.edit(this.message.content + content);
+        }
     }
 }
 
