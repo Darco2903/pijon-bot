@@ -31,20 +31,20 @@ Buffer.prototype.toObject = function () {
 };
 
 class streamHandler {
-    constructor(data) {
+    constructor(data, message) {
         this.data = data;
-        this.data.on("data", this.onData);
+        this.message = message;
+        this.process = false;
         this.contentQueue = [];
-        // this.process = false;
+        this.data.on("data", this.onData);
     }
 
     onData(buffer) {
-        // const str = buffer.toString().replace("data: ", "");
         let str = buffer.toString();
-        str = str.splice(str.indexOf("{"));
+        str = str.substring(str.indexOf("{"));
+        console.log(str);
         if (str.includes("[DONE]")) {
             this.data.off("data", this.onData);
-            // console.log("DONE");
             return;
         }
         try {
@@ -52,12 +52,16 @@ class streamHandler {
             const delta = obj.choices[0].delta;
             if (!delta.content) return;
             console.log(delta.content);
-            streamedContent.push(delta.content);
+            this.contentQueue.push(delta.content);
             if (!this.process) {
                 this.process = true;
-                this.processEdit(reply, streamedContent);
+                this.processEdit(reply);
             }
         } catch (error) {}
+    }
+
+    async processEdit() {
+        
     }
 }
 
