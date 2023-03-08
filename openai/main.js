@@ -1,30 +1,37 @@
-const { Events, ChannelType } = require("discord.js");
+const { Events, ChannelType, Message } = require("discord.js");
 const { Configuration, OpenAIApi } = require("openai");
 const { openaiApiKey } = require("../config.json");
 const { PijonPersonnalChat } = require("./PijonChat");
 
 const client = global.client;
 client.openai = new OpenAIApi(new Configuration({ apiKey: openaiApiKey }));
-// new OpenAIApi(new Configuration({ apiKey: openaiApiKey })).createChatCompletion()
-// new OpenAIApi(new Configuration({ apiKey: openaiApiKey })).createCompletion()
 
-client.on(Events.MessageCreate, async (msg) => {
-    if (msg.author.bot) return;
+client.on(
+    Events.MessageCreate,
+    /** @param {Message} msg */
+    async (msg) => {
+        if (msg.author.bot || (msg.channel.name != "pijon-bot" && !msg.mentions.has(client.user.id) && msg.channel.type != ChannelType.DM))
+            return;
 
-    const botPing = "<@938380480565350411>";
-    if (msg.channel.name != "pijon-bot" && msg.content.indexOf(botPing) != 0 && msg.channel.type != ChannelType.DM) return;
+        msg.channel.sendTyping();
 
-    if (msg.content.includes(botPing)) msg.content = msg.content.replace(botPing, "");
-    if (msg.channel.type === ChannelType.DM) msg.channel.sendTyping();
+        const streamed = true;
+        msg.content = msg.mentions.has(client.user.id) ? msg.content.replace(`<@${client.user.id}>`, "") : msg.content;
+        const chat = msg.author.chat || (msg.author.chat = new PijonPersonnalChat(msg.author.username, 120));
 
-    if (!msg.author.chat) new PijonPersonnalChat(msg.author);
-    // let reply = (await msg.author.chat.send(msg.content)) || "TEMP";
-    // let reply = "TEsT";
-    await msg.author.chat.sendStreamed(msg);
+        const { message, replyContent } = await chat.send(msg, streamed);
 
-    // if (msg.channel.type === ChannelType.DM) msg.channel.send(reply);
-    // else await msg.reply(reply);
+        switch (true) {
+            case msg.channel.type === ChannelType.DM:
+                if (streamed) await message.edit(replyContent);
+                else await message.channel.send(replyContent);
+                break;
 
-    //  const reply = await PijonChat.chatAll(msg);
-    //  msg.channel.send({ content: reply, tts: false });
-});
+            case msg.channel.name === "pijon-bot":
+            case msg.mentions.has(client.user.id):
+                if (streamed) await message.edit(replyContent);
+                else await message.reply(replyContent);
+                break;
+        }
+    }
+);

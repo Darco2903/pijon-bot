@@ -1,235 +1,286 @@
+const { Message } = require("discord.js");
+const { IncomingMessage } = require("http");
+
 const client = global.client;
 
-class Message {
-    constructor(author, content) {
-        return { role: author, content };
-    }
-}
-
+/**
+ * Une classe représentant une conversation entre un utilisateur et un bot.
+ * @constructor
+ * @extends Array
+ * @param {string} initContent - Le message initial à ajouter à la conversation (optionnel).
+ */
 class Conversation extends Array {
     constructor(initContent) {
         super();
-        if (initContent) this.userMessage("system", initContent);
+        if (initContent) this.addMessage("system", initContent);
     }
 
-    userMessage(author, content) {
-        this.push(new Message(author, content));
+    /**
+     * Crée un nouvel objet de message à partir de l'auteur et du contenu fournis.
+     * @private
+     * @param {string} author - Le rôle de l'auteur du message.
+     * @param {string} content - Le contenu du message.
+     * @returns {object} - Un objet représentant un message.
+     */
+    #newMessage(author, content) {
+        return { role: author, content };
     }
 
-    botReply(message) {
-        this.push(message);
+    /**
+     * Ajoute un nouveau message à la conversation avec l'auteur et le contenu fournis.
+     * @param {string} author - Le rôle de l'auteur du message.
+     * @param {string} content - Le contenu du message.
+     */
+    addMessage(author, content) {
+        this.push(this.#newMessage(author, content));
     }
 
+    /**
+     * Ajoute un nouveau message de l'utilisateur à la conversation avec le contenu fourni.
+     * @param {string} content - Le contenu du message.
+     */
+    userMessage(content) {
+        this.addMessage("user", content);
+    }
+
+    /**
+     * Ajoute une réponse du bot à la conversation avec le contenu fourni.
+     * @param {string} content - Le contenu de la réponse.
+     */
+    botReply(content) {
+        this.addMessage("assistant", content);
+    }
+
+    /**
+     * Convertit la conversation en un tableau d'objets de message.
+     * @returns {array} - Un tableau d'objets de message.
+     */
     toFormat() {
         return Array.from(this);
     }
 }
 
-Buffer.prototype.toObject = function () {
-    try {
-        let str = this.toString();
-        str = str.substring(str.indexOf("{"));
-        console.log(str);
-        return JSON.parse(str);
-    } catch (error) {
-        console.log(error);
-        return this.toObject();
-    }
-};
-
+/**
+ * Un gestionnaire de flux qui écoute les données et met à jour un message Discord en conséquence.
+ */
 class streamHandler {
+    /**
+     * Crée une instance de streamHandler.
+     * @param {IncomingMessage} data - Le flux de données à traiter.
+     * @param {Message} message - Le message Discord à mettre à jour.
+     */
     constructor(data, message) {
         this.data = data;
         this.message = message;
+        /** @type {Boolean}*/
         this.process = false;
-        this.contentQueue = [];
+        /** @type {String}*/
         this.content = "";
-        this.data.on("data", this.onData);
+        /** @type {String}*/
+        this.prompt = ":white_small_square:";
+
+        // Ajoute les événements de traitement de données et de fermeture du flux.
+        this.data.on("data", this.#onData.bind(this));
+        this.data.on("close", () => {
+            this.content = this.content.replace(this.prompt, "");
+            // this.#processEdit();
+        });
     }
 
-    onData(buffer) {
-        const obj = buffer.toObject();
-        const delta = obj.choices[0].delta;
-        if (!delta.content) return;
-        console.log(delta.content);
-        this.push(delta.content);
+    /**
+     * Méthode qui gère les données reçues et met à jour le contenu du message Discord en conséquence.
+     *
+     * @param {Buffer} buffer - Le tampon de données à traiter.
+     */
+    #onData(buffer) {
+        const string = buffer.toString();
+        const strArr = string.split("\n");
+        strArr.map((str) => {
+            try {
+                const obj = JSON.parse(str.substring(str.indexOf("{")));
+                const delta = obj.choices[0].delta;
+                if (!delta.content) return;
+                this.content = this.content.replace(this.prompt, "");
+                this.content += delta.content + this.prompt;
+                if (!this.process && this.content) {
+                    this.process = true;
+                    this.#processEdit();
+                }
+            } catch (error) {}
+        });
     }
 
-    onData2(buffer) {
-        let str = buffer.toString();
-        str = str.substring(str.indexOf("{"));
-        // console.log(str);
-        if (str.includes("[DONE]")) {
-            console.log(this.data);
-            // this.data.off("data", this.onData);
-            this.process = false;
-            return;
-        }
-        try {
-            const obj = JSON.parse(str);
-            const delta = obj.choices[0].delta;
-            if (!delta.content) return;
-            console.log(delta.content);
-            this.contentQueue.push(delta.content);
-            if (!this.process) {
-                this.process = true;
-                // this.processEdit(reply);
-            }
-        } catch (error) {
-            console.log(str);
-            console.log(error);
-        }
-    }
-
-    async processEdit() {
-        while (this.process) {
-            if (this.contentQueue.length < 1) continue;
-            const content = this.contentQueue.shift();
-            console.log(content);
-            console.log(this.content + content);
-            this.message = await this.message.edit(this.message.content + content);
-        }
+    /**
+     * Méthode privée qui met à jour le contenu du message Discord après que toutes les données ont été traitées.
+     * Cette méthode est appelée après la fermeture du flux de données.
+     * Elle utilise la méthode `edit` du message Discord pour mettre à jour son contenu.
+     *
+     * @private
+     */
+    async #processEdit() {
+        this.message.edit(this.content).finally(() => {
+            setTimeout(() => {
+                this.process = false;
+            }, 500);
+        });
     }
 }
 
 class PijonChat {
+    /**
+     * Crée une instance de PijonChat.
+     * @constructor
+     * @param {Conversation|string} conversation - La conversation à utiliser pour initialiser la conversation.
+     */
     constructor(conversation) {
-        this.conversation = conversation;
-        this.process = false;
+        this.initConv = !conversation
+            ? new Conversation()
+            : conversation instanceof Conversation
+            ? conversation
+            : new Conversation(conversation);
+        this.conversation = this.initConv.slice();
     }
 
+    reset() {
+        this.conversation = this.initConv.slice();
+    }
+
+    /**
+     * Crée une configuration pour une demande de réponse au chatbot.
+     * @private
+     * @param {Conversation} conversation - La conversation à utiliser pour la demande.
+     * @param {boolean} streamed - Indique si la demande doit être effectuée en mode "streaming".
+     * @returns {Object} - La configuration pour la demande.
+     */
+    #createConfig(conversation, streamed) {
+        return {
+            model: "gpt-3.5-turbo",
+            messages: conversation.toFormat(),
+            max_tokens: 300,
+            temperature: 0.9,
+            top_p: 1,
+            n: 1,
+            stop: null,
+            stream: streamed,
+        };
+    }
+
+    /**
+     * Récupère une réponse du chatbot à partir d'une conversation donnée.
+     * @param {Conversation} conversation - La conversation à utiliser pour la demande.
+     * @returns {Promise<string>} - La réponse du chatbot.
+     * @throws {string} - "empty" si la réponse est vide, "err" si une erreur survient.
+     */
     getReply(conversation) {
-        return new Promise(async (resolve, reject) => {
+        return new Promise((resolve, reject) => {
             client.openai
-                .createChatCompletion({
-                    model: "gpt-3.5-turbo",
-                    messages: conversation.toFormat(),
-                    max_tokens: 300,
-                    temperature: 0.9,
-                    top_p: 1,
-                    n: 1,
-                    stream: false,
-                    stop: null,
-                })
-                .then((response) => {
-                    if (response.data.choices) resolve(response.data.choices[0].message);
+                .createChatCompletion(this.#createConfig(conversation, false))
+                .then((res) => {
+                    if (res.data.choices) resolve(res.data.choices[0].message.content);
                     else reject("empty");
                 })
-                .catch((error) => {
-                    console.log(error);
-                    resolve("err");
+                .catch((err) => {
+                    console.log(err);
+                    reject("err");
                 });
         });
     }
 
-    async getReplyStreamed(conversation, reply) {
-        let streamedContent = [];
-        let process = false;
-        const res = await client.openai.createChatCompletion(
-            {
-                model: "gpt-3.5-turbo",
-                messages: conversation.toFormat(),
-                max_tokens: 100,
-                temperature: 0.9,
-                top_p: 1,
-                n: 1,
-                stream: true,
-                stop: null,
-            },
-            { responseType: "stream" }
-        );
-        new streamHandler(res.data);
+    /**
+     * Récupère une réponse du chatbot en mode "streaming" à partir d'une conversation donnée.
+     * @param {Conversation} conversation - La conversation à utiliser pour la demande.
+     * @param {Message} message - Le message Discord à utiliser pour la réponse en mode "streaming".
+     * @returns {Promise<string>} - La réponse du chatbot.
+     * @throws {string} - "err" si une erreur survient.
+     */
+    async getReplyStreamed(conversation, message) {
+        return new Promise((resolve, reject) => {
+            client.openai
+                .createChatCompletion(this.#createConfig(conversation, true), { responseType: "stream" })
+                .then(async (res) => {
+                    const reply = await message.reply(":white_small_square:");
+                    const stream = new streamHandler(res.data, reply);
+                    stream.data.on("close", () => {
+                        resolve({ reply, replyContent: stream.content });
+                    });
+                })
+                .catch((err) => {
+                    console.log(err);
+                    reject("err");
+                });
+        });
     }
-
-    //     const onData = (buffer) => {
-    //         const str = buffer.toString().replace("data: ", "");
-    //         if (str.includes("[DONE]")) {
-    //             res.data.off("data", onData);
-    //             // console.log("DONE");
-    //             return;
-    //         }
-    //         try {
-    //             const obj = JSON.parse(str);
-    //             const delta = obj.choices[0].delta;
-    //             if (!delta.content) return;
-    //             console.log(delta.content);
-    //             streamedContent.push(delta.content);
-    //             if (!this.process) {
-    //                 this.process = true;
-    //                 this.processEdit(reply, streamedContent);
-    //             }
-    //         } catch (error) {}
-    //     };
-
-    //     res.data.on("data", onData);
-    // }
-
-    // async processEdit(reply, streamedContent) {
-    //     let content;
-    //     console.log(streamedContent.length);
-    //     if (streamedContent.length > 1) for (let i = 0; i < streamedContent.length - 1; i++) content += streamedContent.shift();
-    //     else content = streamedContent.shift();
-    //     // if (streamedContent.length > 3) content = streamedContent.shift() + streamedContent.shift() + streamedContent.shift() + streamedContent.shift();
-    //     // else if (streamedContent.length > 2) content = streamedContent.shift() + streamedContent.shift() + streamedContent.shift();
-    //     // else if (streamedContent.length > 1) content = streamedContent.shift() + streamedContent.shift();
-    //     // else content = streamedContent.shift();
-    //     // await reply.edit(reply.content.replace(":white_small_square:", "") + content);
-    //     // reply = await reply.fetch();
-    //     // console.log("content:", content);
-    //     // console.log("reply:", reply.content.replace(":white_small_square:", ""));
-    //     reply = await reply.edit(reply.content.replace(":white_small_square:", "") + content);
-    //     if (streamedContent.length != 0) this.processEdit(reply, streamedContent);
-    // }
 }
 
+/**
+ * Crée une instance de la classe PijonPersonnalChat.
+ * @constructor
+ * @extends PijonChat
+ * @param {string} username - Le nom d'utilisateur avec qui le bot discute sur Discord.
+ * @param {number} timeout - Le temps d'attente avant de réinitialiser la conversation, en secondes.
+ */
 class PijonPersonnalChat extends PijonChat {
-    constructor(user) {
-        super(new Conversation(`Tu es Pijon Bot. Tu parles avec ${user.username}`));
-        // this.username = user.username;
-        user.chat = this;
+    constructor(username, timeout) {
+        super(new Conversation(`Tu es Pijon Bot. Tu es en discussion avec ${username} sur Discord`));
+        this.username = username;
+        this.resetTimeout = timeout * 1000;
+        this.resetTimeoutId;
     }
 
-    send(content) {
-        return new Promise((resolve, reject) => {
-            this.conversation.userMessage("user", content);
+    reset() {
+        super.reset();
+        client.logDebug(`${this.username} personnal conversation reset`);
+    }
 
+    #initResetTimeout() {
+        if (this.resetTimeoutId) clearTimeout(this.resetTimeoutId);
+        this.resetTimeoutId = setTimeout(() => {
+            this.reset();
+        }, this.resetTimeout);
+    }
+
+    send(message, streamed) {
+        client.logDebug(`[PijonBot] ${message.author.username}: ${message.content}`);
+        const res = streamed ? this.#sendStreamed(message) : this.#sendNonStreamed(message);
+        res.then(({ replyContent }) => client.logDebug(`[PijonBot] bot: ${replyContent}`));
+        return res;
+    }
+
+    #sendNonStreamed(message) {
+        return new Promise((resolve, reject) => {
+            this.conversation.userMessage(message.content);
             this.getReply(this.conversation)
-                .then((reply) => {
-                    // console.log("reply:", reply);
-                    this.conversation.botReply(reply);
-                    console.log(this.conversation.toFormat());
-                    resolve(reply);
+                .then((replyContent) => {
+                    this.conversation.botReply(replyContent);
+                    resolve({ message, replyContent });
+                    this.#initResetTimeout();
                 })
                 .catch((error) => {
-                    // reject(error);
+                    resolve({ message, replyContent: error });
                 });
         });
     }
 
-    async sendStreamed(message) {
-        const reply = await message.reply(":white_small_square:");
-
-        this.conversation.userMessage("user", message.content);
-
-        this.getReplyStreamed(this.conversation, reply);
-        // .then((reply) => {
-        //     // console.log("reply:", reply);
-        //     this.conversation.botReply(reply);
-        //     console.log(this.conversation.toFormat());
-        //     resolve(reply);
-        // })
-        // .catch((error) => {
-        //     // reject(error);
-        // });
+    async #sendStreamed(message) {
+        return new Promise((resolve, reject) => {
+            this.conversation.userMessage(message.content);
+            this.getReplyStreamed(this.conversation, message)
+                .then(({ reply, replyContent }) => {
+                    this.conversation.botReply(replyContent);
+                    this.#initResetTimeout();
+                    resolve({ message: reply, replyContent });
+                })
+                .catch((error) => {
+                    resolve({ message: reply, replyContent: error });
+                });
+        });
     }
 }
 
-class PijonGlobalChat extends PijonChat {
-    constructor() {
-        client.chat = new PijonChat(new Conversation("Tu es Pijon Bot."));
-    }
-}
-
-// module.exports = new PijonChat();
+// class PijonGlobalChat extends PijonChat {
+//     constructor() {
+//         client.chat = new PijonChat(new Conversation("Tu es Pijon Bot."));
+//     }
+// }
 
 module.exports = { PijonPersonnalChat };

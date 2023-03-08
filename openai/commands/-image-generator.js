@@ -1,10 +1,10 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName("image-generator")
-        .setDescription("[image-creation] Generation d'image")
-        .addStringOption((option) => option.setName("prompt").setDescription("phrase decrivant l'image").setRequired(true)),
+    // data: new SlashCommandBuilder()
+    //     .setName("image-generator")
+    //     .setDescription("[image-creation] Generation d'image")
+    //     .addStringOption((option) => option.setName("prompt").setDescription("phrase decrivant l'image").setRequired(true)),
 
     async execute(interaction) {
         interaction.deferReply();
