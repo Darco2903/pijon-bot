@@ -1,6 +1,7 @@
 const path = require("node:path");
 const { ActivityType, Client, Collection, Events, GatewayIntentBits, Partials, PresenceUpdateStatus } = require("discord.js");
 const { token } = require("./config.json");
+const Utils = require("./Utils");
 const getCommandFiles = require("./getCommandFiles");
 const { color } = require("console-log-colors");
 const { argv } = require("node:process");
@@ -17,6 +18,7 @@ const intents = [
 const partials = [Partials.Channel];
 
 const client = new Client({ intents, partials });
+client.debug = argv[2] === "DEBUG";
 global.client = client;
 client.commands = new Collection();
 
@@ -68,32 +70,37 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
 });
 
-/**
- *
- * @param {String} name
- * @param {ActivityType} type
- * @param {PresenceUpdateStatus} status
- * @param {URL} [url]
- */
-function setPresence(name, type, status, url) {
-    client.user.setPresence({
-        activities: [{ name, type, url }],
-        status,
-    });
-}
-
 function setDefaultPresence() {
-    setPresence("J'suis un sniper", ActivityType.Listening, PresenceUpdateStatus.Online, "https://youtu.be/RyiDL-dVsIs");
+    client.user.setPresence({
+        activities: new Utils.ActivitiesOptions({
+            name: "J'suis un sniper",
+            type: ActivityType.Listening,
+            url: "https://youtu.be/RyiDL-dVsIs",
+        }),
+        status: PresenceUpdateStatus.Online,
+    });
 }
 
 function initPresence() {
     switch (argv[2]) {
         case "DEBUG":
-            setPresence("dev", ActivityType.Playing, PresenceUpdateStatus.DoNotDisturb);
+            client.user.setPresence({
+                activities: new Utils.ActivitiesOptions({
+                    name: "dev",
+                    type: ActivityType.Playing,
+                }),
+                status: PresenceUpdateStatus.DoNotDisturb,
+            });
             break;
 
         case "TEST":
-            setPresence("en test", ActivityType.Playing, PresenceUpdateStatus.Idle);
+            client.user.setPresence({
+                activities: new Utils.ActivitiesOptions({
+                    name: "en test",
+                    type: ActivityType.Playing,
+                }),
+                status: PresenceUpdateStatus.Idle,
+            });
             break;
 
         default:
@@ -105,10 +112,9 @@ function initPresence() {
 client.on("presence:setDefault", setDefaultPresence);
 
 client.once(Events.ClientReady, (c) => {
-    client.debug = argv[2] === "DEBUG";
-    client.logDebug("Client launched in debug mode");
-    require("./music/main");
-    require("./openai/main");
+    require("./music");
+    require("./openai");
+    client.logDebug("Launched in debug mode");
     console.log(color.green(`Logged in as ${c.user.tag}`));
     initPresence();
 });
