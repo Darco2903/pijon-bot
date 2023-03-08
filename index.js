@@ -102,6 +102,8 @@ function initPresence() {
     }
 }
 
+client.on("presence:setDefault", setDefaultPresence);
+
 client.once(Events.ClientReady, (c) => {
     client.debug = argv[2] === "DEBUG";
     client.logDebug("Client launched in debug mode");
@@ -110,7 +112,5 @@ client.once(Events.ClientReady, (c) => {
     console.log(color.green(`Logged in as ${c.user.tag}`));
     initPresence();
 });
-
-// client.on("presence:setDefault", setDefaultPresence);
 
 client.login(token);
