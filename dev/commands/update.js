@@ -2,7 +2,7 @@ const { SlashCommandBuilder, Events } = require("discord.js");
 const path = require("path");
 const { exec } = require("child_process");
 const { color } = require("console-log-colors");
-const { restart } = require("../main");
+// const { restart } = require("../main");
 
 const isWin = process.platform === "win32";
 const ext = isWin ? "bat" : "sh";

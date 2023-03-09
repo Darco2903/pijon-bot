@@ -1,7 +1,6 @@
 const { Message } = require("discord.js");
 const { IncomingMessage } = require("http");
-
-const client = global.client;
+const client = require("../client");
 
 /**
  * Une classe représentant une conversation entre un utilisateur et un bot.
@@ -32,7 +31,12 @@ class Conversation extends Array {
      * @param {string} content - Le contenu du message.
      */
     addMessage(author, content) {
+        if (this.length > 10) {
+            const removed = this.splice(1, 1)[0];
+            client.Log.verbose(`Removed message: ${removed.role} - ${removed.content}`);
+        }
         this.push(this.#newMessage(author, content));
+        client.Log.verbose(`Added message: ${author} - ${content}`);
     }
 
     /**
@@ -133,11 +137,12 @@ class PijonChat {
      * @param {Conversation|string} conversation - La conversation à utiliser pour initialiser la conversation.
      */
     constructor(conversation) {
-        this.initConv = !conversation
-            ? new Conversation()
-            : conversation instanceof Conversation
-            ? conversation
-            : new Conversation(conversation);
+        this.initConv =
+            conversation instanceof Conversation
+                ? conversation
+                : conversation instanceof String
+                ? new Conversation(conversation)
+                : new Conversation();
         this.conversation = this.initConv.slice();
     }
 
@@ -221,7 +226,7 @@ class PijonChat {
  */
 class PijonPersonnalChat extends PijonChat {
     constructor(username, timeout) {
-        super(new Conversation(`Tu es Pijon Bot. Tu es en discussion avec ${username} sur Discord`));
+        super(`Tu es Pijon Bot. Tu es en discussion avec ${username} sur Discord`);
         this.username = username;
         this.resetTimeout = timeout * 1000;
         this.resetTimeoutId;
@@ -229,7 +234,7 @@ class PijonPersonnalChat extends PijonChat {
 
     reset() {
         super.reset();
-        client.logDebug(`${this.username} personnal conversation reset`);
+        client.Log.debug(`${this.username} personnal conversation reset`);
     }
 
     #initResetTimeout() {
@@ -240,9 +245,9 @@ class PijonPersonnalChat extends PijonChat {
     }
 
     send(message, streamed) {
-        client.logDebug(`[PijonBot] ${message.author.username}: ${message.content}`);
+        client.Log.chat(`${message.author.username}: ${message.content}`);
         const res = streamed ? this.#sendStreamed(message) : this.#sendNonStreamed(message);
-        res.then(({ replyContent }) => client.logDebug(`[PijonBot] bot: ${replyContent}`));
+        res.then(({ replyContent }) => client.Log.chat(`bot: ${replyContent}`));
         return res;
     }
 

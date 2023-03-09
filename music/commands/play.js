@@ -1,5 +1,4 @@
 const { SlashCommandBuilder } = require("discord.js");
-//  const { playUrl } = require("../main");
 
 const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
 function youtube_parser(str) {

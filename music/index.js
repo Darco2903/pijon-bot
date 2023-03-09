@@ -1,7 +1,7 @@
 const { ActivityType } = require("discord.js");
 const { DisTube } = require("distube");
 
-const client = global.client;
+const client = require("../client");
 
 const distube = new DisTube(client, {
     leaveOnStop: true,

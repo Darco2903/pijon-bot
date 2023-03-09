@@ -3,7 +3,8 @@ const { Configuration, OpenAIApi } = require("openai");
 const { openaiApiKey } = require("../config.json");
 const { PijonPersonnalChat } = require("./PijonChat");
 
-const client = global.client;
+const client = require("../client");
+
 client.openai = new OpenAIApi(new Configuration({ apiKey: openaiApiKey }));
 
 client.on(

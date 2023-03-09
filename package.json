@@ -1,12 +1,13 @@
 {
     "name": "pijon-bot",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "",
     "main": "index.js",
     "scripts": {
         "start": "node .",
-        "debug": "node . DEBUG",
-        "test": "node . TEST",
+        "debug": "node . -DEBUG",
+        "test": "node . -TEST",
+        "verbose": "node . -VERBOSE",
         "deploy": "node deploy-commands.js",
         "deploy-dev": "node deploy-commands-dev.js",
         "distube-patch": "npm uninstall ffmpeg-static npm ci --no-optional npm update"

@@ -1,33 +1,15 @@
-const path = require("node:path");
 const { ActivityType, Client, Collection, Events, GatewayIntentBits, Partials, PresenceUpdateStatus } = require("discord.js");
-const { token } = require("./config.json");
+const client = require("./client");
 const Utils = require("./Utils");
 const getCommandFiles = require("./getCommandFiles");
 const { color } = require("console-log-colors");
+const path = require("node:path");
 const { argv } = require("node:process");
-const URL = require("url");
 
-const intents = [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildVoiceStates,
-    GatewayIntentBits.DirectMessages,
-];
+client.Log = new Utils.Log(client, argv.slice(2));
+client.Utils = Utils;
 
-const partials = [Partials.Channel];
-
-const client = new Client({ intents, partials });
-client.debug = argv[2] === "DEBUG";
-global.client = client;
 client.commands = new Collection();
-
-client.logWarn = (message) => console.warn(color.yellow(`[WARNING] ${message}`));
-client.logErr = (message) => console.error(color.red(`[ERROR] ${message}`));
-client.logDebug = (message) => {
-    if (client.debug) console.debug(color.blueBright(`[DEBUG] ${message}`));
-};
-
 let commandFiles = getCommandFiles();
 commandFiles.forEach((file) => {
     const filePath = path.join(__dirname, file);
@@ -36,29 +18,33 @@ commandFiles.forEach((file) => {
     if ("data" in command && "execute" in command) {
         client.commands.set(command.data.name, command);
     } else {
-        client.logWarn(`The command at ${filePath.replace(__dirname, ".")} is missing a required "data" or "execute" property.`);
+        client.Log.warn(`The command at ${filePath.replace(__dirname, ".")} is missing a required "data" or "execute" property.`);
     }
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
 
-    console.log(
-        color.blue(interaction.user.username),
-        color.cyan("/" + interaction.commandName),
-        ...interaction.options.data.map((option) => `${color.blue(color.magenta(option.name))} ${color.yellow(option.value)}`)
-    );
+    client.Log.command(interaction.user.username, interaction.commandName, interaction.options.data);
+
+    // console.log(
+    //     color.blue(interaction.user.username),
+    //     color.cyan("/" + interaction.commandName),
+    //     ...interaction.options.data.map((option) => `${color.blue(color.magenta(option.name))} ${color.yellow(option.value)}`)
+    // );
+
+    const a = interaction.options.data;
 
     const command = interaction.client.commands.get(interaction.commandName);
     if (!command) {
-        client.logErr(`No command matching ${color.yellow(interaction.commandName)} was found.`);
+        client.Log.error(`No command matching ${color.yellow(interaction.commandName)} was found.`);
         return;
     }
 
     try {
         await command.execute(interaction);
     } catch (error) {
-        client.logErr(`${interaction.commandName} failed:\n`, color.yellow(error));
+        client.Log.error(`${interaction.commandName} failed:\n`, color.yellow(error));
         const reply = { content: "Une erreur est survenue lors de l'execution de cette commande.", ephemeral: true };
         try {
             await interaction.reply(reply);
@@ -111,12 +97,11 @@ function initPresence() {
 
 client.on("presence:setDefault", setDefaultPresence);
 
-client.once(Events.ClientReady, (c) => {
+client.once(Events.ClientReady, () => {
     require("./music");
     require("./openai");
-    client.logDebug("Launched in debug mode");
-    console.log(color.green(`Logged in as ${c.user.tag}`));
+    client.Log.info(`Logged in as ${client.user.tag}`);
+    client.Log.debug("Launched in debug mode");
+    client.Log.verbose("Launched with verbose");
     initPresence();
 });
-
-client.login(token);
