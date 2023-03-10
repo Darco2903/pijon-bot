@@ -206,12 +206,13 @@ class PijonChat {
                     const reply = await message.reply(":white_small_square:");
                     const stream = new streamHandler(res.data, reply);
                     stream.data.on("close", () => {
-                        resolve({ reply, replyContent: stream.content });
+                        resolve({ message: reply, replyContent: stream.content });
                     });
                 })
-                .catch((err) => {
-                    console.log(err);
-                    reject("err");
+                .catch(async (err) => {
+                    const reply = await message.reply(":white_small_square:");
+                    client.Log.error(err.toString());
+                    reject({ message: reply, replyContent: "err" });
                 });
         });
     }
@@ -270,13 +271,13 @@ class PijonPersonnalChat extends PijonChat {
         return new Promise((resolve, reject) => {
             this.conversation.userMessage(message.content);
             this.getReplyStreamed(this.conversation, message)
-                .then(({ reply, replyContent }) => {
-                    this.conversation.botReply(replyContent);
+                .then((res) => {
+                    this.conversation.botReply(res.replyContent);
                     this.#initResetTimeout();
-                    resolve({ message: reply, replyContent });
+                    resolve(res);
                 })
                 .catch((error) => {
-                    resolve({ message: reply, replyContent: error });
+                    resolve(error);
                 });
         });
     }

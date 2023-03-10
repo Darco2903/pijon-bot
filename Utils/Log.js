@@ -1,7 +1,7 @@
-const { Client, CommandInteractionOption } = require("discord.js");
-const { color } = require("console-log-colors");
 const fs = require("fs");
 const path = require("path");
+const { color } = require("console-log-colors");
+const { Client, CommandInteractionOption } = require("discord.js");
 
 const LOG_DIRECTORY = path.join(process.cwd(), "logs");
 const MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 1 week
@@ -16,8 +16,9 @@ class LogManager {
     }
 
     #createNewLogFile() {
-        const currentDate = new Date().toLocaleTimeString("fr-FR", { hour12: false });
-        const filename = `log_${currentDate.replaceAll(":", "-")}.txt`;
+        const currentDate = new Date().toLocaleDateString("fr-FR", {}).replaceAll("/", "-");
+        const currentTime = new Date().toLocaleTimeString("fr-FR", { hour12: false }).replaceAll(":", "-");
+        const filename = `log_${currentDate}-${currentTime}.txt`;
         const filePath = path.join(LOG_DIRECTORY, filename);
         return fs.createWriteStream(filePath);
     }
