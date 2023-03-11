@@ -7,31 +7,65 @@ const LOG_DIRECTORY = path.join(process.cwd(), "logs");
 const MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 1 week
 
 class LogManager {
-    constructor() {
+    /**
+     * @constructor
+     * @param {Log} logger
+     */
+    constructor(logger) {
+        this.logger = logger;
+        this.logger.verbose("LogManager -> initialization");
         if (!fs.existsSync(LOG_DIRECTORY)) {
             fs.mkdirSync(LOG_DIRECTORY);
+            this.logger.debug(`Log directory "${LOG_DIRECTORY}" created`);
         }
         this.currentLogFile = this.#createNewLogFile();
         this.#cleanup();
+        this.logger.debug("LogManager initialized");
+        this.logger.verbose("LogManager -> initialized");
     }
 
     #createNewLogFile() {
+        this.logger.verbose(`- LogManager -> #createNewLogFile`);
         const currentDate = new Date().toLocaleDateString("fr-FR", {}).replaceAll("/", "-");
+        this.logger.verbose(`-- #createNewLogFile -> currentDate: ${currentDate}`);
         const currentTime = new Date().toLocaleTimeString("fr-FR", { hour12: false }).replaceAll(":", "-");
+        this.logger.verbose(`-- #createNewLogFile -> currentTime: ${currentTime}`);
         const filename = `log_${currentDate}-${currentTime}.txt`;
+        this.logger.verbose(`-- #createNewLogFile -> filename: ${filename}`);
         const filePath = path.join(LOG_DIRECTORY, filename);
-        return fs.createWriteStream(filePath);
+        this.logger.verbose(`-- #createNewLogFile -> filePath: ${filePath}`);
+        const writeStream = fs.createWriteStream(filePath);
+        this.logger.verbose(`-- #createNewLogFile -> writeStream: ${writeStream.writable}`);
+        this.logger.debug(`Current log file "${filename}"`);
+        return writeStream;
     }
 
     #cleanup() {
         const files = fs.readdirSync(LOG_DIRECTORY);
+        this.logger.verbose(`- LogManager -> #cleanup`);
+        let filesRemoved = 0;
         for (const file of files) {
+            this.logger.verbose(`-- #cleanup [${file}] -> file: ${file}`);
             const filePath = path.join(LOG_DIRECTORY, file);
+            this.logger.verbose(`-- #cleanup [${file}] -> filePath: ${filePath}`);
             const stats = fs.statSync(filePath);
+            this.logger.verbose(`-- #cleanup [${file}] -> stats isFile?: ${stats.isFile()}`);
             const age = Date.now() - stats.mtimeMs;
+            this.logger.verbose(`-- #cleanup [${file}] -> (age > MAX_AGE)?: ${age > MAX_AGE}`);
+            this.logger.verbose(`-- #cleanup [${file}] -> (stats.isFile() && age > MAX_AGE)?: ${stats.isFile() && age > MAX_AGE}`);
             if (stats.isFile() && age > MAX_AGE) {
                 fs.unlinkSync(filePath);
+                this.logger.verbose(`-- #cleanup [${file}] -> Log file "${file}" removed`);
+                this.logger.debug(`Log file "${file}" removed`);
+                filesRemoved++;
+            } else {
+                this.logger.verbose(`-- #cleanup [${file}] -> Skipping file ${file}`);
             }
+        }
+        if (filesRemoved === 0) {
+            this.logger.verbose(`-- #cleanup -> Aucun fichier de journal à supprimer`);
+        } else {
+            this.logger.verbose(`-- #cleanup -> Tous les fichiers de journal ont été supprimés`);
         }
     }
 
@@ -52,11 +86,19 @@ class Log {
      * @param {String|String[]} options
      */
     constructor(client, options) {
-        this.manager = new LogManager();
-        client.debug = options.includes("-DEBUG");
-        client.test = options.includes("-TEST");
-        client.verbose = options.includes("-VERBOSE");
         this.client = client;
+        this.client.debug = options.includes("-DEBUG");
+        this.client.test = options.includes("-TEST");
+        this.client.verbose = options.includes("-VERBOSE");
+        this.writeQueue = [];
+        this.verbose("Log -> initialization");
+        this.manager = new LogManager(this);
+        for (const message of this.writeQueue) {
+            this.manager.write(message);
+        }
+        this.verbose("- Log -> log queue dumped");
+        this.debug("Log initialized");
+        this.verbose("Log -> initialized");
     }
 
     /**
@@ -69,11 +111,19 @@ class Log {
         return `[${currentDate}] [${mode}] ${message}`;
     }
 
+    #writeToFile(message) {
+        if (!this.manager) {
+            this.writeQueue.push(message);
+        } else {
+            this.manager.write(message);
+        }
+    }
+
     /**
      * @param {String} message
      */
     #log(message) {
-        this.manager.write(message);
+        this.#writeToFile(message);
         console.log(color.blue(message));
     }
 
@@ -93,7 +143,7 @@ class Log {
     command(username, commandName, data) {
         const baseMessage = `${username} /${commandName}`;
         const message = `${baseMessage} ${data.reduce((acc, option) => `${acc} ${option.name} ${option.value}`, "")}`;
-        this.manager.write(this.#logger(message, "COMMAND"));
+        this.#writeToFile(this.#logger(message, "COMMAND"));
 
         const coloredMessage = `${username} ${color.cyan(`/${commandName}`)} ${data.reduce(
             (acc, option) => `${acc} ${color.magenta(option.name)} ${color.yellow(option.value)}`,
@@ -115,7 +165,7 @@ class Log {
      */
     warn(message) {
         message = this.#logger(message, "WARNING");
-        this.manager.write(message);
+        this.#writeToFile(message);
         console.warn(color.yellow(message));
     }
 
@@ -124,7 +174,7 @@ class Log {
      */
     error(message) {
         message = this.#logger(message, "ERROR");
-        this.manager.write(message);
+        this.#writeToFile(message);
         console.error(color.red(message));
     }
 
@@ -134,6 +184,7 @@ class Log {
     debug(message) {
         if (!this.client.debug) return;
         message = this.#logger(message, "DEBUG");
+        this.#writeToFile(message);
         console.debug(color.blueBright(message));
     }
 
@@ -143,7 +194,7 @@ class Log {
     verbose(message) {
         if (!this.client.verbose) return;
         message = this.#logger(message.replaceAll("\n", ""));
-        this.manager.write(message);
+        this.#writeToFile(message);
         console.info(message);
     }
 }
