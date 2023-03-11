@@ -1,10 +1,7 @@
+const Commande = require("../../Utils/Commande");
 const { ActivityType, SlashCommandBuilder } = require("discord.js");
-// const { restart } = require("../main");
 
-module.exports = {
-    // data: new SlashCommandBuilder().setName("restart").setDescription("[Dev] Redémarrer"),
+const data = null;
+const execute = null;
 
-    async execute(interaction) {
-        restart(interaction);
-    },
-};
+module.exports = new Commande(data, execute);

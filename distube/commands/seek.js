@@ -1,49 +1,53 @@
+const Commande = require("../../Utils/Commande");
 const { SlashCommandBuilder } = require("discord.js");
 
-module.exports = {
-    data: new SlashCommandBuilder()
-        .setName("seek")
-        .setDescription("[Music] Déplacer la lecture vers un temps spécific")
-        .addIntegerOption((option) => option.setName("hrs").setDescription("Hours"))
-        .addIntegerOption((option) => option.setName("min").setDescription("Minutes"))
-        .addIntegerOption((option) => option.setName("sec").setDescription("Seconds")),
+let data;
+let execute;
 
-    async execute(interaction) {
-        const distube = interaction.client.distube;
-        const queue = await distube.getQueue(interaction);
+data = new SlashCommandBuilder()
+    .setName("seek")
+    .setDescription("[Music] Déplacer la lecture vers un temps spécific")
+    .addIntegerOption((option) => option.setName("hrs").setDescription("Hours"))
+    .addIntegerOption((option) => option.setName("min").setDescription("Minutes"))
+    .addIntegerOption((option) => option.setName("sec").setDescription("Seconds"));
 
-        if (!queue) {
-            await interaction.reply("Faut mettre une musique avant de faire ça");
-            return;
-        }
+execute = async function (interaction) {
+    const distube = interaction.client.distube;
+    const queue = await distube.getQueue(interaction);
 
-        let s = interaction.options.getInteger("sec") || 0;
-        let m = interaction.options.getInteger("min") || 0;
-        let h = interaction.options.getInteger("hrs") || 0;
+    if (!queue) {
+        await interaction.reply("Faut mettre une musique avant de faire ça");
+        return;
+    }
 
-        s = s < 0 ? 0 : s;
-        m = m < 0 ? 0 : m;
-        h = h < 0 ? 0 : h;
+    let s = interaction.options.getInteger("sec") || 0;
+    let m = interaction.options.getInteger("min") || 0;
+    let h = interaction.options.getInteger("hrs") || 0;
 
-        const timeInSec = h * 3600 + m * 60 + s;
+    s = s < 0 ? 0 : s;
+    m = m < 0 ? 0 : m;
+    h = h < 0 ? 0 : h;
 
-        const song = queue.songs[0];
-        if (song.duration < timeInSec) {
-            await interaction.reply(`La durée dépasse celle de la vidéo **${song.formattedDuration}**`);
-            return;
-        }
+    const timeInSec = h * 3600 + m * 60 + s;
 
-        await queue.seek(timeInSec);
+    const song = queue.songs[0];
+    if (song.duration < timeInSec) {
+        await interaction.reply(`La durée dépasse celle de la vidéo **${song.formattedDuration}**`);
+        return;
+    }
 
-        if (s || m) s = s.toLocaleString("en-US", { minimumIntegerDigits: 2, useGrouping: false });
+    await queue.seek(timeInSec);
 
-        let formatedTime = `${s}s`;
-        if (m || h) {
-            m = m.toLocaleString("en-US", { minimumIntegerDigits: 2, useGrouping: false });
-            formatedTime = `${m}:` + formatedTime;
-        }
-        if (h) formatedTime = `${h}:` + formatedTime;
+    if (s || m) s = s.toLocaleString("en-US", { minimumIntegerDigits: 2, useGrouping: false });
 
-        await interaction.reply(`Reprise à **${formatedTime}**`);
-    },
+    let formatedTime = `${s}s`;
+    if (m || h) {
+        m = m.toLocaleString("en-US", { minimumIntegerDigits: 2, useGrouping: false });
+        formatedTime = `${m}:` + formatedTime;
+    }
+    if (h) formatedTime = `${h}:` + formatedTime;
+
+    await interaction.reply(`Reprise à **${formatedTime}**`);
 };
+
+module.exports = new Commande(data, execute);

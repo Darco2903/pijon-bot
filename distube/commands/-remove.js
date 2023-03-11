@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, Utils } = require("discord.js");
+const Commande = require("../../Utils/Commande");
 
 function waitForQueueUpdate(interaction) {
     return new Promise((resolve, reject) => {
@@ -24,43 +25,46 @@ function waitForQueueUpdate(interaction) {
     });
 }
 
-module.exports = {
-    //  data: new SlashCommandBuilder().setName("remove").setDescription("[Music] Enlever le morceau actuel de la liste de lecture"),
+let data;
+let execute;
 
-    async execute(interaction) {
-        const distube = interaction.client.distube;
-        const queue = distube.getQueue(interaction);
+// data = new SlashCommandBuilder().setName("remove").setDescription("[Music] Enlever le morceau actuel de la liste de lecture");
 
-        if (!queue) {
-            interaction.reply("Faut mettre une musique avant de faire ça");
-            return;
-        }
+execute = async function (interaction) {
+    const distube = interaction.client.distube;
+    const queue = distube.getQueue(interaction);
 
-        switch (true) {
-            case queue.songs.length > 1:
-                queue.skip();
-                skip = true;
-                break;
-            case queue.previousSongs.length > 1:
-                queue.previous();
-                skip = false;
-                break;
-
-            default:
-                //  distube.stop(interaction);
-                interaction.reply("Unique morceau dans la liste de lecture");
-                return;
-        }
-
-        interaction.reply(`**${removed.name}** à été enlevé de la liste de lecture\n:arrow_forward: Lecture de **${songName}**`);
-
+    if (!queue) {
+        interaction.reply("Faut mettre une musique avant de faire ça");
         return;
-        //  Wait for queue to update
-        await waitForQueueUpdate(interaction);
+    }
 
-        if (skip) queue.previousSongs.pop();
-        else queue.songs.splice(1, 1);
+    switch (true) {
+        case queue.songs.length > 1:
+            queue.skip();
+            skip = true;
+            break;
+        case queue.previousSongs.length > 1:
+            queue.previous();
+            skip = false;
+            break;
 
-        console.log("done");
-    },
+        default:
+            //  distube.stop(interaction);
+            interaction.reply("Unique morceau dans la liste de lecture");
+            return;
+    }
+
+    interaction.reply(`**${removed.name}** à été enlevé de la liste de lecture\n:arrow_forward: Lecture de **${songName}**`);
+
+    return;
+    //  Wait for queue to update
+    await waitForQueueUpdate(interaction);
+
+    if (skip) queue.previousSongs.pop();
+    else queue.songs.splice(1, 1);
+
+    console.log("done");
 };
+
+module.exports = new Commande(data, execute);

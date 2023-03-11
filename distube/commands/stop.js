@@ -1,19 +1,23 @@
+const Commande = require("../../Utils/Commande");
 const { SlashCommandBuilder } = require("discord.js");
 
-module.exports = {
-    data: new SlashCommandBuilder().setName("stop").setDescription("[Music] Arrêter la lecture"),
+let data;
+let execute;
 
-    async execute(interaction) {
-        const distube = interaction.client.distube;
-        const queue = await distube.getQueue(interaction);
+data = new SlashCommandBuilder().setName("stop").setDescription("[Music] Arrêter la lecture");
 
-        if (!queue) {
-            await interaction.reply("Faut mettre une musique avant de faire ça");
-            return;
-        }
+execute = async function (interaction) {
+    const distube = interaction.client.distube;
+    const queue = await distube.getQueue(interaction);
 
-        await distube.stop(interaction);
+    if (!queue) {
+        await interaction.reply("Faut mettre une musique avant de faire ça");
+        return;
+    }
 
-        await interaction.reply(":stop_button:");
-    },
+    await distube.stop(interaction);
+
+    await interaction.reply(":stop_button:");
 };
+
+module.exports = new Commande(data, execute);

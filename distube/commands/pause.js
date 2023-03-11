@@ -1,28 +1,32 @@
-const { ActivityType, SlashCommandBuilder } = require("discord.js");
+const Commande = require("../../Utils/Commande");
+const { SlashCommandBuilder } = require("discord.js");
 
-module.exports = {
-    data: new SlashCommandBuilder().setName("pause").setDescription("[Music] Mettre la lecture en pause"),
+let data;
+let execute;
 
-    async execute(interaction) {
-        const distube = interaction.client.distube;
-        const queue = await distube.getQueue(interaction);
+data = new SlashCommandBuilder().setName("pause").setDescription("[Music] Mettre la lecture en pause");
 
-        if (!queue) {
-            await interaction.reply("Faut mettre une musique avant de faire ça");
-            return;
-        }
+execute = async function (interaction) {
+    const distube = interaction.client.distube;
+    const queue = await distube.getQueue(interaction);
 
-        if (queue.paused) {
-            await interaction.reply("Déjà en pause");
-            return;
-        }
+    if (!queue) {
+        await interaction.reply("Faut mettre une musique avant de faire ça");
+        return;
+    }
 
-        await distube.pause(interaction);
+    if (queue.paused) {
+        await interaction.reply("Déjà en pause");
+        return;
+    }
 
-        await interaction.reply(":pause_button:");
+    await distube.pause(interaction);
 
-        const song = queue.songs[0];
+    await interaction.reply(":pause_button:");
 
-        interaction.client.emit("music:setSongPresence", `[Pause] ${song.name}`);
-    },
+    const song = queue.songs[0];
+
+    interaction.client.emit("music:setSongPresence", `[Pause] ${song.name}`);
 };
+
+module.exports = new Commande(data, execute);
