@@ -10,7 +10,8 @@
         "verbose": "node . -VERBOSE",
         "deploy": "node deploy-commands.js",
         "deploy-dev": "node deploy-commands-dev.js",
-        "distube-patch": "npm uninstall ffmpeg-static npm ci --no-optional npm update"
+        "distube-patch": "npm uninstall ffmpeg-static npm ci --no-optional npm update",
+        "discordjs-voice-patch": "node ./patch/index.js"
     },
     "repository": {
         "type": "git",
