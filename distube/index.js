@@ -1,7 +1,9 @@
-const { ActivityType } = require("discord.js");
 const { DisTube } = require("distube");
+const { ActivityType } = require("discord.js");
 
 const client = require("../client");
+
+client.Log.info("Starting Distube dependence");
 
 const distube = new DisTube(client, {
     leaveOnStop: true,
@@ -15,6 +17,8 @@ const distube = new DisTube(client, {
 
 client.distube = distube;
 
+client.registerCommand();
+
 distube.on("playSong", (queue, song) => setSongPresence(song.name));
 client.on("music:setSongPresence", setSongPresence);
 
@@ -27,3 +31,5 @@ function setSongPresence(name) {
         status: "online",
     });
 }
+
+client.Log.info("Distube started successfully");

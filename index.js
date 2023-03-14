@@ -1,7 +1,10 @@
-const Utils = require("./Utils");
 const { argv } = require("process");
-const client = require("./client");
+// const { spawn } = require("child_process");
 const { ActivityType, Events, PresenceUpdateStatus } = require("discord.js");
+
+const Utils = require("./Utils");
+const client = require("./client");
+const path = require("path");
 
 function setDefaultPresence() {
     client.user.setPresence({
@@ -42,8 +45,8 @@ function initPresence() {
     }
 }
 
-require("./distube");
-require("./openai");
+if (argv.includes("distube")) require("./distube");
+if (argv.includes("openai")) require("./openai");
 
 client.on("presence:setDefault", setDefaultPresence);
 client.once(Events.ClientReady, () => {
@@ -51,4 +54,5 @@ client.once(Events.ClientReady, () => {
     client.Log.debug("Launched in debug mode");
     client.Log.verbose("Launched with verbose");
     initPresence();
+    // new Utils.ConsoleHandler();
 });

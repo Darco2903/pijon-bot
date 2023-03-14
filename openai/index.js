@@ -1,18 +1,20 @@
-const { Events, ChannelType, Message } = require("discord.js");
 const { Configuration, OpenAIApi } = require("openai");
 const { openaiApiKey } = require("../config.json");
 const { PijonPersonnalChat } = require("./PijonChat");
+const { Events, ChannelType, Message } = require("discord.js");
 
 const client = require("../client");
 
-client.openai = new OpenAIApi(new Configuration({ apiKey: openaiApiKey }));
+client.Log.info("Starting OpenAI dependence");
+
+const openai = new OpenAIApi(new Configuration({ apiKey: openaiApiKey }));
+client.openai = openai;
 
 client.on(
     Events.MessageCreate,
     /** @param {Message} msg */
     async (msg) => {
-        if (msg.author.bot || (msg.channel.name != "pijon-bot" && !msg.mentions.has(client.user.id) && msg.channel.type != ChannelType.DM))
-            return;
+        if (msg.author.bot || (msg.channel.name != "pijon-bot" && !msg.mentions.has(client.user.id) && msg.channel.type != ChannelType.DM)) return;
 
         msg.channel.sendTyping();
 
@@ -36,3 +38,5 @@ client.on(
         }
     }
 );
+
+client.Log.info("OpenAI started successfully");

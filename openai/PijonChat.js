@@ -11,7 +11,11 @@ const client = require("../client");
 class Conversation extends Array {
     constructor(initContent) {
         super();
-        if (initContent) this.addMessage("system", initContent);
+        client.Log.verbose(`new Conversation content: ${initContent}`);
+        if (initContent) {
+            this.addMessage("system", initContent);
+            client.Log.verbose(`Conversation -> addMessage: ${initContent}`);
+        }
     }
 
     /**
@@ -22,6 +26,7 @@ class Conversation extends Array {
      * @returns {object} - Un objet représentant un message.
      */
     #newMessage(author, content) {
+        client.Log.verbose(`Conversation -> #newMessage: author ${author} content ${content}`);
         return { role: author, content };
     }
 
@@ -138,11 +143,7 @@ class PijonChat {
      */
     constructor(conversation) {
         this.initConv =
-            conversation instanceof Conversation
-                ? conversation
-                : conversation instanceof String
-                ? new Conversation(conversation)
-                : new Conversation();
+            conversation instanceof Conversation ? conversation : conversation instanceof String ? new Conversation(conversation) : new Conversation();
         this.conversation = this.initConv.slice();
     }
 
@@ -181,11 +182,17 @@ class PijonChat {
             client.openai
                 .createChatCompletion(this.#createConfig(conversation, false))
                 .then((res) => {
-                    if (res.data.choices) resolve(res.data.choices[0].message.content);
-                    else reject("empty");
+                    client.Log.verbose("getReply -> ")
+                    if (res.data.choices) {
+                        client.Log.verbose("getReply -> ")
+                        resolve(res.data.choices[0].message.content);
+                    } else {
+                        client.Log.warn("getReply: received empty content");
+                        reject("empty");
+                    }
                 })
                 .catch((err) => {
-                    console.log(err);
+                    client.Log.error("getReply:", err.toString());
                     reject("err");
                 });
         });
@@ -211,7 +218,7 @@ class PijonChat {
                 })
                 .catch(async (err) => {
                     const reply = await message.reply(":white_small_square:");
-                    client.Log.error(err.toString());
+                    client.Log.error("getReplyStreamed:", err.toString());
                     reject({ message: reply, replyContent: "err" });
                 });
         });

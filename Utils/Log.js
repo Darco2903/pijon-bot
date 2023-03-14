@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { color } = require("console-log-colors");
-const { Client, CommandInteractionOption } = require("discord.js");
+const { CommandInteractionOption } = require("discord.js");
 
 const LOG_DIRECTORY = path.join(process.cwd(), "logs");
 const MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 1 week
@@ -82,17 +82,18 @@ class LogManager {
 class Log {
     /**
      * @constructor
-     * @param {Client} client
-     * @param {String|String[]} options
+     * @param {String|String[]} logOptions
      */
-    constructor(client, options) {
-        this.client = client;
-        this.client.debug = options.includes("-DEBUG");
-        this.client.test = options.includes("-TEST");
-        this.client.verbose = options.includes("-VERBOSE");
+    constructor(logOptions) {
         this.writeQueue = [];
-        this.verbose("Log -> initialization");
         this.manager = new LogManager(this);
+        this.verbose("Log -> initialization");
+
+        this.debug = logOptions.includes("-DEBUG") ? this.debug : () => {};
+        this.debug(`debug enabled`);
+        this.verbose = logOptions.includes("-VERBOSE") ? this.verbose : () => {};
+        this.verbose(`verbose enabled`);
+        // this.test = options.includes("-TEST") ? this.test : () => {};
         for (const message of this.writeQueue) {
             this.manager.write(message);
         }
@@ -153,6 +154,17 @@ class Log {
     }
 
     /**
+     * @param {String} username
+     * @param {String} commandName
+     * @param {CommandInteractionOption[]} data
+     */
+    commandError(commandName, data, error) {
+        const message = `[COMMAND_FAILED] /${commandName} ${data.reduce((acc, option) => `${acc} ${option.name} ${option.value}`, "")}\n${error}`;
+        this.#writeToFile(message);
+        this.error(message);
+    }
+
+    /**
      * @param {String} message
      */
     chat(message) {
@@ -182,7 +194,6 @@ class Log {
      * @param {String} message
      */
     debug(message) {
-        if (!this.client.debug) return;
         message = this.#logger(message, "DEBUG");
         this.#writeToFile(message);
         console.debug(color.blueBright(message));
@@ -192,7 +203,6 @@ class Log {
      * @param {String} message
      */
     verbose(message) {
-        if (!this.client.verbose) return;
         message = this.#logger(message.replaceAll("\n", ""));
         this.#writeToFile(message);
         console.info(message);

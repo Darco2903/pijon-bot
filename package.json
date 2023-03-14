@@ -4,10 +4,10 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "start": "node .",
+        "start": "node . distube openai",
         "debug": "node . -DEBUG",
-        "test": "node . -TEST",
         "verbose": "node . -VERBOSE",
+        "test": "node . -TEST",
         "deploy": "node deploy-commands.js",
         "deploy-dev": "node deploy-commands-dev.js",
         "distube-patch": "npm uninstall ffmpeg-static npm ci --no-optional npm update",
