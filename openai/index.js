@@ -10,6 +10,8 @@ client.Log.info("Starting OpenAI dependence");
 const openai = new OpenAIApi(new Configuration({ apiKey: openaiApiKey }));
 client.openai = openai;
 
+client.CommandRegister.registerCommands(__dirname);
+
 client.on(
     Events.MessageCreate,
     /** @param {Message} msg */

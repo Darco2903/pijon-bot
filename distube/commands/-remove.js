@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, Utils } = require("discord.js");
-const Commande = require("../../Utils/Commande");
+const Command = require("../../Utils/Command");
 
 function waitForQueueUpdate(interaction) {
     return new Promise((resolve, reject) => {
@@ -67,4 +67,4 @@ execute = async function (interaction) {
     console.log("done");
 };
 
-module.exports = new Commande(data, execute);
+module.exports = new Command(data, execute);

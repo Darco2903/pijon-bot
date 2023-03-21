@@ -1,4 +1,4 @@
-const Commande = require("../../Utils/Commande");
+const Command = require("../../Utils/Command");
 const { ActivityType, SlashCommandBuilder } = require("discord.js");
 
 const data = null;
@@ -15,4 +15,4 @@ const execute = function () {
     process.exit();
 };
 
-module.exports = new Commande(data, execute);
+module.exports = new Command(data, execute);

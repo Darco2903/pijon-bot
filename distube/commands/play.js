@@ -1,4 +1,4 @@
-const Commande = require("../../Utils/Commande");
+const Command = require("../../Utils/Command");
 const { SlashCommandBuilder } = require("discord.js");
 
 let data;
@@ -53,4 +53,4 @@ execute = async function (interaction) {
     }
 };
 
-module.exports = new Commande(data, execute);
+module.exports = new Command(data, execute);

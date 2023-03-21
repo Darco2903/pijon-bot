@@ -17,7 +17,7 @@ const distube = new DisTube(client, {
 
 client.distube = distube;
 
-client.registerCommand();
+client.CommandRegister.registerCommands(__dirname);
 
 distube.on("playSong", (queue, song) => setSongPresence(song.name));
 client.on("music:setSongPresence", setSongPresence);
