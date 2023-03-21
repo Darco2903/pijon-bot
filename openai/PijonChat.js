@@ -94,6 +94,7 @@ class streamHandler {
             this.content = this.content.replace(this.prompt, "");
             // this.#processEdit();
         });
+        client.Log.debug("StreamHandler initialized");
     }
 
     /**
@@ -102,8 +103,11 @@ class streamHandler {
      * @param {Buffer} buffer - Le tampon de données à traiter.
      */
     #onData(buffer) {
+        client.Log.verbose("onData: received data");
         const string = buffer.toString();
+        client.Log.verbose(`onData -> bufferToString: ${string}`);
         const strArr = string.split("\n");
+        client.Log.verbose(`onData -> split \\n: ${strArr.toString()}`);
         strArr.map((str) => {
             try {
                 const obj = JSON.parse(str.substring(str.indexOf("{")));
@@ -115,7 +119,10 @@ class streamHandler {
                     this.process = true;
                     this.#processEdit();
                 }
-            } catch (error) {}
+            } catch (error) {
+                console.log(error);
+                // client.Log.verbose("failed to ");
+            }
         });
     }
 
@@ -182,9 +189,9 @@ class PijonChat {
             client.openai
                 .createChatCompletion(this.#createConfig(conversation, false))
                 .then((res) => {
-                    client.Log.verbose("getReply -> ")
+                    client.Log.verbose("getReply -> ");
                     if (res.data.choices) {
-                        client.Log.verbose("getReply -> ")
+                        client.Log.verbose("getReply -> ");
                         resolve(res.data.choices[0].message.content);
                     } else {
                         client.Log.warn("getReply: received empty content");
@@ -218,7 +225,7 @@ class PijonChat {
                 })
                 .catch(async (err) => {
                     const reply = await message.reply(":white_small_square:");
-                    client.Log.error("getReplyStreamed:", err.toString());
+                    client.Log.error(`getReplyStreamed: ${err.toString()}`);
                     reject({ message: reply, replyContent: "err" });
                 });
         });
