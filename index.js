@@ -1,10 +1,11 @@
+const path = require("path");
 const { argv } = require("process");
 // const { spawn } = require("child_process");
 const { ActivityType, Events, PresenceUpdateStatus } = require("discord.js");
+const { dependances } = require("./config.json");
 
 const Utils = require("./Utils");
 const client = require("./client");
-const path = require("path");
 
 function setDefaultPresence() {
     client.user.setPresence({
@@ -45,8 +46,22 @@ function initPresence() {
     }
 }
 
-if (argv.includes("distube")) require("./distube");
-if (argv.includes("openai")) require("./openai");
+if (argv.includes("-all")) {
+    dependances.forEach(startDependance);
+} else {
+    argv.slice(2).forEach(startDependance);
+}
+
+function startDependance(name) {
+    if (name.includes("-")) {
+        return;
+    }
+    if (!dependances.includes(name)) {
+        client.Log.warn(`Unknow dependance ${name}`);
+        return;
+    }
+    require(`./${name}`);
+}
 
 client.on("presence:setDefault", setDefaultPresence);
 client.once(Events.ClientReady, () => {
@@ -54,5 +69,4 @@ client.once(Events.ClientReady, () => {
     client.Log.debug("Launched in debug mode");
     client.Log.verbose("Launched with verbose");
     initPresence();
-    // new Utils.ConsoleHandler();
 });
