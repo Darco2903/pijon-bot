@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require("discord.js");
 
-class Commande {
+class Command {
     /**
      * @param {SlashCommandBuilder} data
      * @param {function(CommandInteraction): null} execute
@@ -18,4 +18,4 @@ class Commande {
     }
 }
 
-module.exports = Commande;
+module.exports = Command;

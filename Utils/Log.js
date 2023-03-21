@@ -86,14 +86,14 @@ class Log {
      */
     constructor(logOptions) {
         this.writeQueue = [];
-        this.manager = new LogManager(this);
-        this.verbose("Log -> initialization");
-
         this.debug = logOptions.includes("-DEBUG") ? this.debug : () => {};
         this.debug(`debug enabled`);
         this.verbose = logOptions.includes("-VERBOSE") ? this.verbose : () => {};
         this.verbose(`verbose enabled`);
         // this.test = options.includes("-TEST") ? this.test : () => {};
+        this.manager = new LogManager(this);
+        this.verbose("Log -> initialization");
+
         for (const message of this.writeQueue) {
             this.manager.write(message);
         }

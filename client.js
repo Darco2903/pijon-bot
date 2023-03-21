@@ -4,7 +4,7 @@ const { argv } = require("process");
 const { token } = require("./config.json");
 // const getCommandFiles = require("./getCommandFiles");
 const { Client, Collection, Events, GatewayIntentBits, Partials, SlashCommandBuilder, CommandInteraction } = require("discord.js");
-const Commande = require("./Utils/Commande");
+const Command = require("./Utils/Command");
 
 const intents = [
     GatewayIntentBits.Guilds,
@@ -20,12 +20,13 @@ const client = new Client({ intents, partials });
 
 const logOptions = argv.slice(2);
 client.Log = new Utils.Log(logOptions);
+client.CommandRegister = new Utils.CommandRegister(client);
+// client.Console = new Utils.ConsoleHandler();
+
 client.Utils = Utils;
 client.Log.debug("Client initialization");
 client.Log.verbose("Client initialization");
 client.Log.verbose(`logOptions: ${logOptions}`);
-
-client.commands = new Collection();
 
 // const commandFiles = getCommandFiles();
 // client.Log.verbose(`commandFiles: ${commandFiles.toString()}`);
@@ -34,7 +35,7 @@ client.commands = new Collection();
 //     const filePath = path.join(__dirname, file);
 //     client.Log.verbose(`commandFiles.forEach [${file}] -> filePath: ${filePath}`);
 //     /**
-//      * @type {Commande}
+//      * @type {Command}
 //      */
 //     const command = require(filePath);
 //     client.Log.verbose(`commandFiles.forEach [${file}] -> command: ${command.toString()}`);
