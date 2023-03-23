@@ -4,8 +4,8 @@ const { argv } = require("process");
 const { ActivityType, Events, PresenceUpdateStatus } = require("discord.js");
 const { dependances } = require("./config.json");
 
-const Utils = require("./Utils");
 const client = require("./client");
+const Utils = require("./Utils");
 
 function setDefaultPresence() {
     client.user.setPresence({
@@ -46,12 +46,6 @@ function initPresence() {
     }
 }
 
-if (argv.includes("-all")) {
-    dependances.forEach(startDependance);
-} else {
-    argv.slice(2).forEach(startDependance);
-}
-
 function startDependance(name) {
     if (name.includes("-")) {
         return;
@@ -65,8 +59,11 @@ function startDependance(name) {
 
 client.on("presence:setDefault", setDefaultPresence);
 client.once(Events.ClientReady, () => {
-    client.Log.info(`Logged in as ${client.user.tag}`);
-    client.Log.debug("Launched in debug mode");
-    client.Log.verbose("Launched with verbose");
     initPresence();
+
+    if (argv.includes("-all")) {
+        dependances.forEach(startDependance);
+    } else {
+        argv.slice(2).forEach(startDependance);
+    }
 });
