@@ -23,7 +23,7 @@ distube.on("playSong", (queue, song) => setSongPresence(song.name));
 client.on("music:setSongPresence", setSongPresence);
 
 distube.on("deleteQueue", (queue) => client.emit("presence:setDefault"));
-distube.on("empty", (queue) => console.log("empty"));
+// distube.on("empty", (queue) => console.log("empty"));
 
 function setSongPresence(name) {
     client.user.setPresence({

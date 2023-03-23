@@ -106,7 +106,7 @@ class streamHandler {
         client.Log.verbose("onData: received data");
         const string = buffer.toString();
         client.Log.verbose(`onData -> bufferToString: ${string}`);
-        const strArr = string.split("\n");
+        const strArr = string.split("\n").filter((line) => line.length > 0 && !line.includes("DONE"));
         client.Log.verbose(`onData -> split \\n: ${strArr.toString()}`);
         strArr.map((str) => {
             try {
@@ -120,8 +120,7 @@ class streamHandler {
                     this.#processEdit();
                 }
             } catch (error) {
-                console.log(error);
-                // client.Log.verbose("failed to ");
+                client.Log.error(`${error} -> '${str}'`);
             }
         });
     }

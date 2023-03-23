@@ -123,9 +123,9 @@ class Log {
     /**
      * @param {String} message
      */
-    #log(message) {
+    log(message) {
         this.#writeToFile(message);
-        console.log(color.blue(message));
+        console.log(message);
     }
 
     /**
@@ -133,7 +133,7 @@ class Log {
      */
     info(message) {
         message = this.#logger(message);
-        this.#log(message);
+        this.log(color.blue(message));
     }
 
     /**
@@ -150,7 +150,7 @@ class Log {
             (acc, option) => `${acc} ${color.magenta(option.name)} ${color.yellow(option.value)}`,
             ""
         )}`;
-        console.log(color.blue(this.#logger(coloredMessage, "COMMAND")));
+        this.log(color.blue(this.#logger(coloredMessage, "COMMAND")));
     }
 
     /**
@@ -169,7 +169,7 @@ class Log {
      */
     chat(message) {
         message = this.#logger(message, "PijonChat");
-        this.#log(message);
+        this.log(message);
     }
 
     /**
