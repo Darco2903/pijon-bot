@@ -1,10 +1,7 @@
-const path = require("path");
-const Utils = require("./Utils");
 const { argv } = require("process");
+const { Client, Events, GatewayIntentBits, Partials } = require("discord.js");
 const { token } = require("./config.json");
-// const getCommandFiles = require("./getCommandFiles");
-const { Client, Collection, Events, GatewayIntentBits, Partials, SlashCommandBuilder, CommandInteraction } = require("discord.js");
-const Command = require("./Utils/Command");
+const Utils = require("./Utils");
 
 const intents = [
     GatewayIntentBits.Guilds,
@@ -27,28 +24,6 @@ client.Utils = Utils;
 client.Log.debug("Client initialization");
 client.Log.verbose("Client initialization");
 client.Log.verbose(`logOptions: ${logOptions}`);
-
-// const commandFiles = getCommandFiles();
-// client.Log.verbose(`commandFiles: ${commandFiles.toString()}`);
-// commandFiles.forEach((file) => {
-//     client.Log.verbose(`commandFiles.forEach [${file}] -> file: ${file}`);
-//     const filePath = path.join(__dirname, file);
-//     client.Log.verbose(`commandFiles.forEach [${file}] -> filePath: ${filePath}`);
-//     /**
-//      * @type {Command}
-//      */
-//     const command = require(filePath);
-//     client.Log.verbose(`commandFiles.forEach [${file}] -> command: ${command.toString()}`);
-
-//     client.Log.debug(`${file} command valid: ${command.valid}`);
-//     if (command.valid) {
-//         // Set a new item in the Collection with the key as the command name and the value as the exported module
-//         client.commands.set(command.data.name, command);
-//         client.Log.verbose(`commandFiles -> [${file}] -> client.commands.set(): ${command.data.name} ${command}`);
-//     } else {
-//         client.Log.warn(`Command at ${filePath.replace(__dirname, ".")}  not valid.`);
-//     }
-// });
 
 client.on(Events.InteractionCreate, async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
@@ -80,13 +55,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
 });
 
-client.login(token);
-
-client.on("ready", () => {
-    client.Log.debug("Logged with token");
-    client.Log.debug("Client initialized");
-    client.Log.verbose("Logged with token");
-    client.Log.verbose("Client initialized");
+client.on(Events.ClientReady, () => {
+    client.Log.info(`Logged in as ${client.user.tag}`);
+    client.Log.debug("Launched in debug mode");
+    client.Log.verbose("Launched with verbose");
 });
+
+client.login(token);
 
 module.exports = client;
