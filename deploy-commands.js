@@ -1,18 +1,17 @@
 const { REST, Routes } = require("discord.js");
+const { color } = require("console-log-colors");
 const { clientId, token } = require("./config.json");
 const getCommandFiles = require("./getCommandFiles");
-const { color } = require("console-log-colors");
 
 // Construct and prepare an instance of the REST module
 const rest = new REST({ version: "10" }).setToken(token);
 
-const commands = [];
+let commands = [];
 // Grab all the command files from the commands directories
 const commandFiles = getCommandFiles();
 // Grab the SlashCommandBuilder#toJSON() output of each command's data for deployment
 
 commandFiles.forEach((file) => {
-    if (file.includes("dev")) return;
     try {
         const command = require(`./${file}`);
         commands.push(command.data.toJSON());
