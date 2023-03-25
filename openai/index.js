@@ -20,8 +20,8 @@ client.on(Events.MessageCreate, async (msg) => {
         msg.author.bot ||
         msg.content.indexOf("/") === 0 ||
         msg.content.indexOf("!") === 0 ||
-        repliedMessage?.author.id != client.user.id ||
-        (msg.channel.name != "pijon-bot" && msg.content.indexOf(`<@${client.user.id}>`) != 0 && msg.channel.type != ChannelType.DM)
+        (msg.channel.name != "pijon-bot" && msg.content.indexOf(`<@${client.user.id}>`) != 0 && msg.channel.type != ChannelType.DM) ||
+        (repliedMessage && repliedMessage.author.id != client.user.id)
     )
         return;
 
