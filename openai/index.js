@@ -16,13 +16,18 @@ client.on(
     Events.MessageCreate,
     /** @param {Message} msg */
     async (msg) => {
-        if (msg.author.bot || (msg.channel.name != "pijon-bot" && !msg.mentions.has(client.user.id) && msg.channel.type != ChannelType.DM)) return;
+        if (
+            msg.author.bot ||
+            msg.content.indexOf("/") === 0 ||
+            (msg.channel.name != "pijon-bot" && !msg.mentions.has(client.user.id) && msg.channel.type != ChannelType.DM)
+        )
+            return;
 
         msg.channel.sendTyping();
 
         const streamed = true;
         msg.content = msg.mentions.has(client.user.id) ? msg.content.replace(`<@${client.user.id}>`, "") : msg.content;
-        const chat = msg.author.chat || (msg.author.chat = new PijonPersonnalChat(msg.author.username, 120));
+        const chat = msg.author.chat || (msg.author.chat = new PijonPersonnalChat(msg.author.username, 300));
 
         const { message, replyContent } = await chat.send(msg, streamed);
 

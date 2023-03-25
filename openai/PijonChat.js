@@ -83,9 +83,9 @@ class streamHandler {
         this.message = message;
         /** @type {Boolean}*/
         this.process = false;
-        /** @type {String}*/
+        /** @type {string}*/
         this.content = "";
-        /** @type {String}*/
+        /** @type {string}*/
         this.prompt = ":white_small_square:";
 
         // Ajoute les événements de traitement de données et de fermeture du flux.
@@ -142,19 +142,21 @@ class streamHandler {
 }
 
 class PijonChat {
+    #initConv;
     /**
      * Crée une instance de PijonChat.
      * @constructor
      * @param {Conversation|string} conversation - La conversation à utiliser pour initialiser la conversation.
      */
     constructor(conversation) {
-        this.initConv =
-            conversation instanceof Conversation ? conversation : conversation instanceof String ? new Conversation(conversation) : new Conversation();
-        this.conversation = this.initConv.slice();
+        this.#initConv =
+            conversation instanceof Conversation ? conversation : typeof conversation === "string" ? new Conversation(conversation) : new Conversation();
+        this.conversation = this.#initConv.slice();
+        console.log(this.conversation);
     }
 
     reset() {
-        this.conversation = this.initConv.slice();
+        this.conversation = this.#initConv.slice();
     }
 
     /**
@@ -235,13 +237,26 @@ class PijonChat {
  * Crée une instance de la classe PijonPersonnalChat.
  * @constructor
  * @extends PijonChat
- * @param {string} username - Le nom d'utilisateur avec qui le bot discute sur Discord.
- * @param {number} timeout - Le temps d'attente avant de réinitialiser la conversation, en secondes.
  */
 class PijonPersonnalChat extends PijonChat {
+    /**
+     * @constructor
+     * @param {string} username - Le nom d'utilisateur avec qui le bot discute sur Discord.
+     * @param {number} timeout - Le temps d'attente avant de réinitialiser la conversation, en secondes.
+     * @throws {Error} - Si le nom d'utilisateur est vide.
+     * @throws {TypeError} - Si le timeout n'est pas un nombre.
+     * @throws {RangeError} - Si le timeout est inférieur à 1.
+     * @returns {PijonPersonnalChat} - L'instance de PijonPersonnalChat.
+     * */
     constructor(username, timeout) {
-        super(`Tu es Pijon Bot. Tu es en discussion avec ${username} sur Discord`);
+        super(`Tu es Pijon Bot. Tu es en discussion avec ${username} sur Discord.`);
+        if (!username) {
+            throw new Error("username cannot be empty");
+        }
         this.username = username;
+        if (!timeout || isNaN(timeout) || timeout < 1) {
+            throw new RangeError("timeout must be greater than 1");
+        }
         this.resetTimeout = timeout * 1000;
         this.resetTimeoutId;
     }
