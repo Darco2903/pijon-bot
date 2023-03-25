@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { dependances } = require("../config.json");
 
-module.exports = (function getCommandFiles() {
+module.exports = function getCommandFiles() {
     let commandFiles = [];
     dependances.forEach((dep) => {
         const commandsPath = path.join(dep, "commands");
@@ -14,4 +14,4 @@ module.exports = (function getCommandFiles() {
     });
     console.log(commandFiles.flat());
     return commandFiles.flat();
-});
+};
