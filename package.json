@@ -8,10 +8,11 @@
         "debug": "node . -all -DEBUG",
         "verbose": "node . -all -VERBOSE",
         "test": "node . -all -TEST",
-        "deploy": "node deploy-commands.js",
-        "deploy-dev": "node deploy-commands-dev.js",
-        "distube-patch": "npm uninstall ffmpeg-static npm ci --no-optional npm update",
-        "discordjs-voice-patch": "node ./patch/index.js"
+        "deploy": "node tools/deploy-commands.js",
+        "deploy-dev": "node tools/deploy-commands-dev.js",
+        "clean-logs": "node tools/clean-logs.js",
+        "patch-distube": "npm uninstall ffmpeg-static npm ci --no-optional npm update",
+        "patch-discordjs-voice": "node tools/patch/discordjs-voice.js"
     },
     "repository": {
         "type": "git",

@@ -1,8 +1,8 @@
 const fs = require("fs");
 const path = require("path");
 const Command = require("./Command");
-const { Client, Collection, REST, Routes } = require("discord.js");
-const { token, clientId } = require("../config.json");
+const { Client, Collection, REST } = require("discord.js");
+const { token } = require("../config.json");
 
 class CommandRegister {
     /**
@@ -11,7 +11,7 @@ class CommandRegister {
     constructor(client) {
         this.client = client;
         this.client.commands = new Collection();
-        this.rest = new REST({ version: "10" }).setToken(token);
+        this.rest = new REST({ version: "10" }).setToken(client.token);
         this.client.Log.debug("CommandRegister initialized");
     }
 

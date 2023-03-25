@@ -1,6 +1,5 @@
 const { argv } = require("process");
-// const { spawn } = require("child_process");
-const { ActivityType, Events, PresenceUpdateStatus } = require("discord.js");
+const { Events } = require("discord.js");
 const { dependances } = require("./config.json");
 
 const client = require("./client");

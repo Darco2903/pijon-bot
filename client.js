@@ -14,6 +14,7 @@ const intents = [
 const partials = [Partials.Channel];
 
 const client = new Client({ intents, partials });
+client.login(token);
 
 const clientStartOptions = argv.slice(2);
 client.test = clientStartOptions.includes("-TEST");
@@ -65,7 +66,5 @@ client.on(Events.ClientReady, () => {
     client.Log.verbose("Launched with verbose");
     client.Presence.setRandom();
 });
-
-client.login(token);
 
 module.exports = client;
