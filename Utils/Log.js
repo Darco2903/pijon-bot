@@ -82,7 +82,7 @@ class LogManager {
 class Log {
     /**
      * @constructor
-     * @param {String|String[]} logOptions
+     * @param {string|string[]} logOptions
      */
     constructor(logOptions) {
         this.writeQueue = [];
@@ -103,8 +103,8 @@ class Log {
     }
 
     /**
-     * @param {String} message
-     * @param {String} [mode]
+     * @param {string} message
+     * @param {string} [mode]
      */
     #logger(message, mode) {
         const currentDate = new Date().toLocaleTimeString("fr-FR", { hour12: false });
@@ -121,7 +121,7 @@ class Log {
     }
 
     /**
-     * @param {String} message
+     * @param {string} message
      */
     log(message) {
         this.#writeToFile(message);
@@ -129,7 +129,7 @@ class Log {
     }
 
     /**
-     * @param {String} message
+     * @param {string} message
      */
     info(message) {
         message = this.#logger(message);
@@ -137,8 +137,8 @@ class Log {
     }
 
     /**
-     * @param {String} username
-     * @param {String} commandName
+     * @param {string} username
+     * @param {string} commandName
      * @param {CommandInteractionOption[]} data
      */
     command(username, commandName, data) {
@@ -154,8 +154,8 @@ class Log {
     }
 
     /**
-     * @param {String} username
-     * @param {String} commandName
+     * @param {string} username
+     * @param {string} commandName
      * @param {CommandInteractionOption[]} data
      */
     commandError(commandName, data, error) {
@@ -165,7 +165,7 @@ class Log {
     }
 
     /**
-     * @param {String} message
+     * @param {string} message
      */
     chat(message) {
         message = this.#logger(message, "PijonChat");
@@ -173,7 +173,7 @@ class Log {
     }
 
     /**
-     * @param {String} message
+     * @param {string} message
      */
     warn(message) {
         message = this.#logger(message, "WARNING");
@@ -182,7 +182,7 @@ class Log {
     }
 
     /**
-     * @param {String} message
+     * @param {string} message
      */
     error(message) {
         message = this.#logger(message, "ERROR");
@@ -191,7 +191,7 @@ class Log {
     }
 
     /**
-     * @param {String} message
+     * @param {string} message
      */
     debug(message) {
         message = this.#logger(message, "DEBUG");
@@ -200,7 +200,7 @@ class Log {
     }
 
     /**
-     * @param {String} message
+     * @param {string} message
      */
     verbose(message) {
         message = this.#logger(message.replaceAll("\n", ""));

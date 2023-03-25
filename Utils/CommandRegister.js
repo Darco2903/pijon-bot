@@ -16,7 +16,7 @@ class CommandRegister {
     }
 
     /**
-     * @param {String} commandFullPath
+     * @param {string} commandFullPath
      */
     #register(relativePath) {
         let command;
@@ -43,7 +43,7 @@ class CommandRegister {
         }
     }
     /**
-     * @param {String} dependancePath
+     * @param {string} dependancePath
      */
     registerCommands(dependancePath) {
         try {
