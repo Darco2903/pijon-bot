@@ -152,7 +152,6 @@ class PijonChat {
         this.#initConv =
             conversation instanceof Conversation ? conversation : typeof conversation === "string" ? new Conversation(conversation) : new Conversation();
         this.conversation = this.#initConv.slice();
-        console.log(this.conversation);
     }
 
     reset() {

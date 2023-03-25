@@ -1,7 +1,7 @@
 const { Configuration, OpenAIApi } = require("openai");
 const { openaiApiKey } = require("../config.json");
 const { PijonPersonnalChat } = require("./PijonChat");
-const { Events, ChannelType, Message } = require("discord.js");
+const { Events, ChannelType } = require("discord.js");
 
 const client = require("../client");
 
@@ -12,38 +12,39 @@ client.openai = openai;
 
 client.CommandRegister.registerCommands(__dirname);
 
-client.on(
-    Events.MessageCreate,
-    /** @param {Message} msg */
-    async (msg) => {
-        if (
-            msg.author.bot ||
-            msg.content.indexOf("/") === 0 ||
-            (msg.channel.name != "pijon-bot" && !msg.mentions.has(client.user.id) && msg.channel.type != ChannelType.DM)
-        )
-            return;
+client.on(Events.MessageCreate, async (msg) => {
+    const repliedMessage = msg.reference ? await msg.channel.messages.fetch(msg.reference.messageId) : null;
+    if (repliedMessage?.author.id === client.user.id) {
+        // skip
+    } else if (
+        msg.author.bot ||
+        msg.content.indexOf("/") === 0 ||
+        msg.content.indexOf("!") === 0 ||
+        repliedMessage?.author.id != client.user.id ||
+        (msg.channel.name != "pijon-bot" && msg.content.indexOf(`<@${client.user.id}>`) != 0 && msg.channel.type != ChannelType.DM)
+    )
+        return;
 
-        msg.channel.sendTyping();
+    msg.channel.sendTyping();
 
-        const streamed = true;
-        msg.content = msg.mentions.has(client.user.id) ? msg.content.replace(`<@${client.user.id}>`, "") : msg.content;
-        const chat = msg.author.chat || (msg.author.chat = new PijonPersonnalChat(msg.author.username, 300));
+    const streamed = true;
+    msg.content = msg.mentions.has(client.user.id) ? msg.content.replace(`<@${client.user.id}>`, client.user.username) : msg.content;
+    const chat = msg.author.chat || (msg.author.chat = new PijonPersonnalChat(msg.author.username, 300));
 
-        const { message, replyContent } = await chat.send(msg, streamed);
+    const { message, replyContent } = await chat.send(msg, streamed);
 
-        switch (true) {
-            case msg.channel.type === ChannelType.DM:
-                if (streamed) await message.edit(replyContent);
-                else await message.channel.send(replyContent);
-                break;
+    switch (true) {
+        case msg.channel.type === ChannelType.DM:
+            if (streamed) await message.edit(replyContent);
+            else await message.channel.send(replyContent);
+            break;
 
-            case msg.channel.name === "pijon-bot":
-            case msg.mentions.has(client.user.id):
-                if (streamed) await message.edit(replyContent);
-                else await message.reply(replyContent);
-                break;
-        }
+        case msg.channel.name === "pijon-bot":
+        case msg.mentions.has(client.user.id):
+            if (streamed) await message.edit(replyContent);
+            else await message.reply(replyContent);
+            break;
     }
-);
+});
 
 client.Log.info("OpenAI started successfully");

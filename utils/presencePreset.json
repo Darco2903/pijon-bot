@@ -21,8 +21,7 @@
         "name": "Faire des dingz",
         "activities": {
             "name": "faire des dingz",
-            "type": "Playing",
-            "url": ""
+            "type": "Playing"
         },
         "status": "online"
     },
@@ -39,8 +38,7 @@
         "name": "Crane chauve",
         "activities": {
             "name": "ton crane chauve",
-            "type": "Watching",
-            "url": ""
+            "type": "Watching"
         },
         "status": "online"
     },
@@ -48,17 +46,15 @@
         "name": "Brap brap brap stututu",
         "activities": {
             "name": "brap brap brap stututu",
-            "type": "Listening",
-            "url": ""
+            "type": "Listening"
         },
         "status": "online"
     },
     "unV7.4 triTurbo": {
         "name": "V7.4 tri turbo",
         "activities": {
-            "name": "un V7,4 tri turbo",
-            "type": "Listening",
-            "url": ""
+            "name": "un V7.4 tri turbo",
+            "type": "Listening"
         },
         "status": "online"
     },
@@ -66,15 +62,14 @@
         "name": "Doin the do",
         "activities": {
             "name": "doin the do",
-            "type": "Playing",
-            "url": ""
+            "type": "Playing"
         },
         "status": "online"
     },
     "1000tipla130db": {
         "name": "1000 tipla 1294ch",
         "activities": {
-            "name": "le 1000tipla 1294ch :heart:",
+            "name": "le 1000tipla 1294ch",
             "type": "Listening",
             "url": "https://www.youtube.com/watch?v=D5-9ssNl4Ww"
         },

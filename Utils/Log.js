@@ -82,15 +82,16 @@ class LogManager {
 class Log {
     /**
      * @constructor
-     * @param {string|string[]} logOptions
+     * @param {Client} client
+     * @returns {Log}
      */
-    constructor(logOptions) {
+    constructor(client) {
+        this.client = client;
         this.writeQueue = [];
-        this.debug = logOptions.includes("-DEBUG") ? this.debug : () => {};
+        this.debug = this.client.debug ? this.debug : () => {};
         this.debug(`debug enabled`);
-        this.verbose = logOptions.includes("-VERBOSE") ? this.verbose : () => {};
+        this.verbose = this.client.verbose ? this.verbose : () => {};
         this.verbose(`verbose enabled`);
-        // this.test = options.includes("-TEST") ? this.test : () => {};
         this.manager = new LogManager(this);
         this.verbose("Log -> initialization");
 
@@ -133,7 +134,8 @@ class Log {
      */
     info(message) {
         message = this.#logger(message);
-        this.log(color.blue(message));
+        this.#writeToFile(message);
+        console.info(color.blue(message));
     }
 
     /**
@@ -144,13 +146,12 @@ class Log {
     command(username, commandName, data) {
         const baseMessage = `${username} /${commandName}`;
         const message = `${baseMessage} ${data.reduce((acc, option) => `${acc} ${option.name} ${option.value}`, "")}`;
-        this.#writeToFile(this.#logger(message, "COMMAND"));
-
         const coloredMessage = `${username} ${color.cyan(`/${commandName}`)} ${data.reduce(
             (acc, option) => `${acc} ${color.magenta(option.name)} ${color.yellow(option.value)}`,
             ""
         )}`;
-        this.log(color.blue(this.#logger(coloredMessage, "COMMAND")));
+        this.#writeToFile(this.#logger(message, "COMMAND"));
+        console.log(color.blue(this.#logger(coloredMessage, "COMMAND")));
     }
 
     /**

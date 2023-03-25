@@ -15,8 +15,11 @@ const partials = [Partials.Channel];
 
 const client = new Client({ intents, partials });
 
-const logOptions = argv.slice(2);
-client.Log = new utils.Log(logOptions);
+const clientStartOptions = argv.slice(2);
+client.test = clientStartOptions.includes("-TEST");
+client.debug = clientStartOptions.includes("-DEBUG");
+client.verbose = clientStartOptions.includes("-VERBOSE");
+client.Log = new utils.Log(client);
 client.CommandRegister = new utils.CommandRegister(client);
 // client.Console = new utils.ConsoleHandler();
 client.Presence = new utils.Presence(client);
@@ -24,7 +27,7 @@ client.Presence = new utils.Presence(client);
 client.utils = utils;
 client.Log.debug("Client initialization");
 client.Log.verbose("Client initialization");
-client.Log.verbose(`logOptions: ${logOptions}`);
+client.Log.verbose(`clientStartOptions: ${clientStartOptions}`);
 
 client.on(Events.InteractionCreate, async (interaction) => {
     if (!interaction.isChatInputCommand()) return;

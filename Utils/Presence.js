@@ -17,6 +17,9 @@ class Presence {
      * @param {ClientPresenceStatusData} status
      */
     set(activities, status) {
+        if (this.client.test && !activities.name.includes("[TEST]")) {
+            activities.name = `${activities.name} [TEST]`;
+        }
         const option = new PresenceOptions(activities, status);
         this.client.user.setPresence(option);
         this.client.Log.info(`Presence set to '${option.getType()} ${option.getName()}' with status '${option.getStatus()}'`);

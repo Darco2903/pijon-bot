@@ -7,7 +7,7 @@
         "start": "node . -all",
         "debug": "node . -all -DEBUG",
         "verbose": "node . -all -VERBOSE",
-        "test": "node . - all -TEST",
+        "test": "node . -all -TEST",
         "deploy": "node deploy-commands.js",
         "deploy-dev": "node deploy-commands-dev.js",
         "distube-patch": "npm uninstall ffmpeg-static npm ci --no-optional npm update",

@@ -9,10 +9,13 @@ const distube = new DisTube(client, {
     leaveOnStop: true,
     leaveOnEmpty: true,
     leaveOnFinish: false,
+    savePreviousSongs: true,
     emitNewSongOnly: false,
     emitAddSongWhenCreatingQueue: false,
     emitAddListWhenCreatingQueue: false,
     nsfw: true,
+    searchSongs: 10,
+    searchCooldown: 10,
 });
 
 client.distube = distube;
