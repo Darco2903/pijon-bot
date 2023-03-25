@@ -9,6 +9,7 @@ class Presence {
      */
     constructor(client) {
         this.client = client;
+        this.client.on("presence:setDefault", () => this.setRandom());
     }
 
     /**

@@ -56,8 +56,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
 });
 
-client.on("presence:setDefault", () => client.Presence.setRandom());
-
 client.on(Events.ClientReady, () => {
     client.Log.info(`Logged in as ${client.user.tag}`);
     client.Log.debug("Launched in debug mode");
