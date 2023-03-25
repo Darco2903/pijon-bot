@@ -1,7 +1,7 @@
 const { argv } = require("process");
 const { Client, Events, GatewayIntentBits, Partials } = require("discord.js");
 const { token } = require("./config.json");
-const Utils = require("./Utils");
+const utils = require("./utils");
 
 const intents = [
     GatewayIntentBits.Guilds,
@@ -16,11 +16,12 @@ const partials = [Partials.Channel];
 const client = new Client({ intents, partials });
 
 const logOptions = argv.slice(2);
-client.Log = new Utils.Log(logOptions);
-client.CommandRegister = new Utils.CommandRegister(client);
-// client.Console = new Utils.ConsoleHandler();
+client.Log = new utils.Log(logOptions);
+client.CommandRegister = new utils.CommandRegister(client);
+// client.Console = new utils.ConsoleHandler();
+client.Presence = new utils.Presence(client);
 
-client.Utils = Utils;
+client.utils = utils;
 client.Log.debug("Client initialization");
 client.Log.verbose("Client initialization");
 client.Log.verbose(`logOptions: ${logOptions}`);
@@ -55,10 +56,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
 });
 
+client.on("presence:setDefault", () => client.Presence.setRandom());
+
 client.on(Events.ClientReady, () => {
     client.Log.info(`Logged in as ${client.user.tag}`);
     client.Log.debug("Launched in debug mode");
     client.Log.verbose("Launched with verbose");
+    client.Presence.setRandom();
 });
 
 client.login(token);
