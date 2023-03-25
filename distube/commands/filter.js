@@ -1,5 +1,6 @@
-const Command = require("../../Utils/Command");
+const { Command } = require("../../utils");
 const { SlashCommandBuilder } = require("discord.js");
+const filters = require("../utils/filters.json");
 
 let data;
 let execute;
@@ -12,22 +13,11 @@ data = new SlashCommandBuilder()
             .setName("filter")
             .setDescription("Choose filter to apply")
             .setRequired(true)
-            .addChoices({ name: "Clear", value: "clear" })
-            .addChoices({ name: "3D", value: "3d" })
-            .addChoices({ name: "BassBoost", value: "bassboost" })
-            .addChoices({ name: "Echo", value: "echo" })
-            .addChoices({ name: "Karaoke", value: "karaoke" })
-            .addChoices({ name: "Nightcore", value: "nightcore" })
-            .addChoices({ name: "Vaporwave", value: "vaporwave" })
-            .addChoices({ name: "Flanger", value: "flanger" })
-            .addChoices({ name: "Gate", value: "gate" })
-            .addChoices({ name: "Haas", value: "haas" })
-            .addChoices({ name: "Reverse", value: "reverse" })
-            .addChoices({ name: "Surround", value: "surround" })
-            .addChoices({ name: "Mcompand", value: "mcompand" })
-            .addChoices({ name: "Phaser", value: "phaser" })
-            .addChoices({ name: "Tremolo", value: "tremolo" })
-            .addChoices({ name: "Earwax", value: "earwax" })
+            .addChoices(
+                ...Object.entries(filters).map(([key, value]) => {
+                    return { name: value, value: key };
+                })
+            )
     );
 
 execute = async function (interaction) {
@@ -39,11 +29,13 @@ execute = async function (interaction) {
         return;
     }
 
-    const filter = interaction.options.get("filter").value;
-    if (filter == "clear") queue.filters.clear();
-    else queue.filters.add(filter);
-
-    await interaction.reply(`Filtre: ${filter}`);
+    const filter = interaction.options.get("filter");
+    if (filter.value === "clear") {
+        queue.filters.clear();
+    } else {
+        queue.filters.add(filter.value);
+    }
+    await interaction.reply(`Filtre: ${filter.value}`);
 };
 
 module.exports = new Command(data, execute);
