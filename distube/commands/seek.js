@@ -1,4 +1,4 @@
-const Command = require("../../Utils/Command");
+const { Command } = require("../../utils");
 const { SlashCommandBuilder } = require("discord.js");
 
 let data;
@@ -7,9 +7,9 @@ let execute;
 data = new SlashCommandBuilder()
     .setName("seek")
     .setDescription("[Music] Déplacer la lecture vers un temps spécific")
-    .addIntegerOption((option) => option.setName("hrs").setDescription("Hours"))
-    .addIntegerOption((option) => option.setName("min").setDescription("Minutes"))
-    .addIntegerOption((option) => option.setName("sec").setDescription("Seconds"));
+    .addIntegerOption((option) => option.setName("hrs").setDescription("Hours").setMinValue(0))
+    .addIntegerOption((option) => option.setName("min").setDescription("Minutes").setMinValue(0))
+    .addIntegerOption((option) => option.setName("sec").setDescription("Seconds").setMinValue(0));
 
 execute = async function (interaction) {
     const distube = interaction.client.distube;

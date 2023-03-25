@@ -1,4 +1,4 @@
-const Command = require("../../Utils/Command");
+const { Command } = require("../../utils");
 const { SlashCommandBuilder } = require("discord.js");
 
 let data;

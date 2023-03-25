@@ -1,4 +1,4 @@
-const Command = require("../../Utils/Command");
+const { Command } = require("../../utils");
 const { SlashCommandBuilder } = require("discord.js");
 
 let data;
@@ -26,7 +26,7 @@ execute = async function (interaction) {
 
     const song = queue.songs[0];
 
-    interaction.client.emit("music:setSongPresence", `[Pause] ${song.name}`);
+    interaction.client.emit("presence:setSongPresence", `[Pause] ${song.name}`);
 };
 
 module.exports = new Command(data, execute);

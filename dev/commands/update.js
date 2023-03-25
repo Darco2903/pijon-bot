@@ -1,4 +1,4 @@
-const Command = require("../../Utils/Command");
+const { Command } = require("../../utils");
 const { SlashCommandBuilder, Events } = require("discord.js");
 const path = require("path");
 const { exec } = require("child_process");

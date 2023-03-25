@@ -1,4 +1,4 @@
-const Command = require("../../Utils/Command");
+const { Command } = require("../../utils");
 const { ActivityType, SlashCommandBuilder } = require("discord.js");
 
 const data = null;

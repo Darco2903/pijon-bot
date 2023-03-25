@@ -12,6 +12,7 @@ const commandFiles = getCommandFiles();
 commandFiles.forEach((file) => {
     try {
         const command = require(`./${file}`);
+        command.data.description = `[DEV] ${command.data.description}`;
         commands.push(command.data.toJSON());
     } catch (error) {
         console.error(color.red(`Error processing ${file}`));

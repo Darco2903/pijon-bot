@@ -1,5 +1,5 @@
-const { SlashCommandBuilder, Utils } = require("discord.js");
-const Command = require("../../Utils/Command");
+const { SlashCommandBuilder, utils } = require("discord.js");
+const { Command } = require("../../utils");
 
 function waitForQueueUpdate(interaction) {
     return new Promise((resolve, reject) => {
