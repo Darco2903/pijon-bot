@@ -10,6 +10,7 @@ class Presence {
     constructor(client) {
         this.client = client;
         this.client.on("presence:setDefault", () => this.setRandom());
+        this.currentPresence;
     }
 
     /**
@@ -21,6 +22,7 @@ class Presence {
             activities.name = `${activities.name} [TEST]`;
         }
         const option = new PresenceOptions(activities, status);
+        this.currentPresence = option;
         this.client.user.setPresence(option);
         this.client.Log.info(`Presence set to '${option.getType()} ${option.getName()}' with status '${option.getStatus()}'`);
     }
@@ -35,6 +37,10 @@ class Presence {
     setRandom() {
         const random = Math.floor(Math.random() * Object.keys(presencePreset).length);
         const preset = Object.values(presencePreset)[random];
+        if (preset == this.currentPresence) {
+            this.setRandom();
+            return;
+        }
         this.set(preset.activities, preset.status);
     }
 }
