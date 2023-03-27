@@ -1,6 +1,7 @@
-const { DisTube } = require("distube");
+const { DisTube, Events } = require("distube");
 const { ActivityType, PresenceUpdateStatus } = require("discord.js");
 const { ActivitiesOptions } = require("../utils");
+const { BackupQueue } = require("./utils");
 const client = require("../client");
 
 client.Log.info("Starting Distube dependence");
@@ -18,6 +19,7 @@ const distube = new DisTube(client, {
     searchCooldown: 10,
 });
 
+distube.BackupQueue = BackupQueue(distube);
 client.distube = distube;
 
 client.CommandRegister.registerCommands(__dirname);
@@ -27,7 +29,12 @@ function setSongPresence(name) {
 }
 
 client.on("presence:setSongPresence", (songName) => setSongPresence(songName));
-distube.on("playSong", (queue, song) => setSongPresence(song.name));
-distube.on("deleteQueue", (queue) => client.emit("presence:setDefault"));
+distube.on(Events.PLAY_SONG, (queue, song) => setSongPresence(song.name));
+distube.on(Events.DISCONNECT, (queue) => {
+    if (queue.playing) {
+        
+    }
+});
+// distube.on(Events.DELETE_QUEUE, (queue) => client.emit("presence:setDefault"));
 
 client.Log.info("Distube started successfully");

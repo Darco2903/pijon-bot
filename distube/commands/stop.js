@@ -16,6 +16,7 @@ execute = async function (interaction) {
     }
 
     await distube.stop(interaction);
+    distube.BackupQueue.clear();
 
     await interaction.reply(":stop_button:");
 };

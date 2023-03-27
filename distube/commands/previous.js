@@ -21,6 +21,7 @@ execute = async function (interaction) {
     }
 
     await queue.previous();
+    distube.BackupQueue.playPrevious();
 
     let n = queue.previousSongs.length - 1;
     let prevSong = queue.previousSongs[n];

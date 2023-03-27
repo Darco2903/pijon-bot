@@ -21,6 +21,7 @@ execute = async function (interaction) {
     }
 
     await queue.skip();
+    distube.BackupQueue.playNext();
 
     let nextSong = queue.songs[1];
     await interaction.reply(`:arrow_forward: Lecture de **${nextSong.name}**`);

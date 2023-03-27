@@ -21,7 +21,8 @@ execute = async function (interaction) {
     }
 
     await distube.resume(interaction);
-
+    distube.BackupQueue.setPlaying(true);
+    
     await interaction.reply(":arrow_forward:");
 
     const song = queue.songs[0];

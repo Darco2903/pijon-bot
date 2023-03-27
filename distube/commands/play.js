@@ -1,5 +1,6 @@
 const { Command } = require("../../utils");
 const { SlashCommandBuilder } = require("discord.js");
+const { DisTube } = require("distube");
 
 let data;
 let execute;
@@ -16,7 +17,7 @@ execute = async function (interaction) {
     }
 
     await interaction.deferReply();
-
+    /** @type {DisTube} distube */
     const distube = interaction.client.distube;
     const channel = interaction.member.voice.channel;
     const track = interaction.options.get("track").value;
@@ -45,6 +46,8 @@ execute = async function (interaction) {
 
     queue = await distube.getQueue(interaction);
     await distube.play(channel, url);
+    distube.BackupQueue.add(url);
+    distube.BackupQueue.setPlaying(true);
 
     if (!queue || queue.songs.length <= 1) {
         await interaction.editReply(`Zé parti la zik bande de noobs\n${url}`);
