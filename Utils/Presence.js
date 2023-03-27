@@ -29,7 +29,6 @@ class Presence {
      * @param {string} name
      */
     setPreset(name) {
-        console.log(name);
         this.set(presencePreset[name].activities, PresenceUpdateStatus[presencePreset[name].status]);
     }
 
