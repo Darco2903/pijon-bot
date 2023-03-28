@@ -1,13 +1,18 @@
 {
     "name": "pijon-bot",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "",
     "main": "index.js",
     "scripts": {
-        "start": "node .",
-        "deploy": "node deploy-commands.js",
-        "deploy-dev": "node deploy-commands-dev.js",
-        "distube-patch": "npm uninstall ffmpeg-static npm ci --no-optional npm update"
+        "start": "node . -all",
+        "test": "node . -all -TEST",
+        "debug": "node . -all -DEBUG",
+        "deploy": "node tools/deploy-commands.js",
+        "deploy-dev": "node tools/deploy-commands-dev.js",
+        "clean-logs": "node tools/clean-logs.js",
+        "patch-distube": "npm uninstall ffmpeg-static npm ci --no-optional npm update",
+        "patch-discordjs-voice": "node tools/patcher-discordjs-voice.js",
+        "reinstall": "npm prune && npm install"
     },
     "repository": {
         "type": "git",
@@ -27,7 +32,7 @@
         "console-log-colors": "^0.4.0",
         "discord.js": "^14.6.0",
         "distube": "^4.0.4",
-        "ffmpeg-static": "^5.1.0",
+        "openai": "^3.2.1",
         "tweetnacl": "^1.0.3"
     }
 }
