@@ -1,6 +1,6 @@
 const { argv } = require("process");
 const { Events } = require("discord.js");
-const { dependances } = require("./config.json");
+const { client: config } = require("./config.json");
 
 const client = require("./client");
 
@@ -8,7 +8,7 @@ function startDependance(name) {
     if (name.includes("-")) {
         return;
     }
-    if (!dependances.includes(name)) {
+    if (!config.dependances.includes(name)) {
         client.Log.warn(`Unknow dependance ${name}`);
         return;
     }
@@ -17,7 +17,7 @@ function startDependance(name) {
 
 client.once(Events.ClientReady, () => {
     if (argv.includes("-all")) {
-        dependances.forEach(startDependance);
+        config.dependances.forEach(startDependance);
     } else {
         argv.slice(2).forEach(startDependance);
     }

@@ -35,7 +35,6 @@ class DataBase {
             this.client.Log.info(`Database connection established`);
         } catch (error) {
             this.client.Log.error(`Unable to make database connection: ${error.toString()}`);
-            console.log(error);
         }
     }
 

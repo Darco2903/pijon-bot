@@ -1,6 +1,6 @@
 const { argv } = require("process");
 const { Client, Events, GatewayIntentBits, Partials } = require("discord.js");
-const { token } = require("./config.json");
+const { client: config } = require("./config.json");
 const utils = require("./utils");
 
 const intents = [
@@ -14,7 +14,7 @@ const intents = [
 const partials = [Partials.Channel];
 
 const client = new Client({ intents, partials });
-client.login(token);
+client.login(config.token);
 
 const clientStartOptions = argv.slice(2);
 client.test = clientStartOptions.includes("-TEST");

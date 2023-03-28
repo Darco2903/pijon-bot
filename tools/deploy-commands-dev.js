@@ -1,9 +1,9 @@
 const { REST, Routes } = require("discord.js");
 const { color } = require("console-log-colors");
-const { clientId, guildIdDev, token } = require("../config.json");
+const { client: config } = require("../config.json");
 const getCommandFiles = require("./getCommandFiles");
 
-const rest = new REST({ version: "10" }).setToken(token);
+const rest = new REST({ version: "10" }).setToken(config.token);
 const commands = [];
 const commandFiles = getCommandFiles();
 
@@ -20,7 +20,7 @@ commandFiles.forEach((file) => {
 (async () => {
     try {
         console.log(color.blueBright.bold(`Started refreshing ${color.magenta(commands.length)} application (/) commands in dev server.`));
-        const data = await rest.put(Routes.applicationGuildCommands(clientId, guildIdDev), { body: commands });
+        const data = await rest.put(Routes.applicationGuildCommands(config.clientId, config.guildIdDev), { body: commands });
         console.log(color.green.bold(`Successfully reloaded ${color.magenta(data.length)} application (/) commands in dev server.`));
     } catch (error) {
         console.error(color.red(error));
