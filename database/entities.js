@@ -1,7 +1,7 @@
 const orm = require("typeorm");
 
 const recentlyPlayed = new orm.EntitySchema({
-    name: "recentlyPlayed",
+    name: "recently_played",
     columns: {
         id: {
             type: "int",
@@ -55,7 +55,7 @@ const songs = new orm.EntitySchema({
 });
 
 const customPlayList = new orm.EntitySchema({
-    name: "customPlayList",
+    name: "custom_playlist",
     columns: {
         id: {
             type: "int",

@@ -4,6 +4,7 @@ class DataBase {
     constructor(client, type, host, port, username, password, database, entities) {
         this.client = client;
         this.connected = false;
+        this.startingConnection = false;
         this.dataSource = new orm.DataSource({
             type,
             host,
@@ -17,6 +18,15 @@ class DataBase {
     }
 
     async connect() {
+        switch (true) {
+            case !this.connected && this.startingConnection:
+                await this.waitUntilConnected();
+            // fallthrough
+            case this.connected:
+                return;
+        }
+
+        this.startingConnection = true;
         this.client.Log.info(`Starting Database Connection`);
         try {
             await this.dataSource.initialize();
@@ -29,14 +39,30 @@ class DataBase {
         }
     }
 
-
+    async waitUntilConnected() {
+        return new Promise((resolve, reject) => {
+            let timeout;
+            let interval;
+            interval = setInterval(() => {
+                if (this.connected) {
+                    clearInterval(interval);
+                    clearTimeout(timeout);
+                    resolve();
+                }
+            }, 200);
+            timeout = setTimeout(() => {
+                clearInterval(interval);
+                reject();
+            }, 5000);
+        });
+    }
 
     /**
      * Async Version
      * Look up a document by the fieldName and fieldValue in a repo by name.
-     * @param fieldName String of the field name.
+     * @param {string} fieldName String of the field name.
      * @param fieldValue String of the field value.
-     * @param repoName ie. "Account"
+     * @param {string} repoName ie. "Account"
      */
     fetchDataAsync(fieldName, fieldValue, repoName) {
         return new Promise((resolve, reject) => {
@@ -56,27 +82,26 @@ class DataBase {
     /**
      * Async Version
      * Look up document with the highest id in repo.
-     * @param repoName ie "Account"
+     * @param {string} repoName ie "Account"
      */
     fetchLastIdAsync(repoName) {
         return new Promise((resolve, reject) => {
             const repo = this.dataSource.getRepository(repoName);
+
             repo.findOne({ order: { id: "DESC" } })
                 .then((res) => {
                     return resolve(res);
                 })
                 .catch((err) => {
-                    alt.logError(err);
                     return reject(undefined);
                 });
         });
     }
 
     /**
-     *
-     * @param fieldName The name of the field.
+     * @param {string} fieldName The name of the field.
      * @param fieldValue The value of that field.
-     * @param repoName The reponame where to look.
+     * @param {string} repoName The reponame where to look.
      */
     fetchAllByFieldAsync(fieldName, fieldValue, repoName) {
         return new Promise((resolve, reject) => {
@@ -96,8 +121,8 @@ class DataBase {
     /**
      * Async Version
      * Update or Insert a new document.
-     * @param document Document pulled down from table.
-     * @param repoName The name of the table.
+     * @param {Object} document Document pulled down from table.
+     * @param {string} repoName The name of the table.
      */
     upsertDataAsync(document, repoName) {
         return new Promise((resolve, reject) => {
@@ -116,8 +141,8 @@ class DataBase {
 
     /**
      * Async Version
-     * @param document Document pulled down from table.
-     * @param repoName The name of the table.
+     * @param {Object} document Document pulled down from table.
+     * @param {string} repoName The name of the table.
      */
     insertDataAsync(document, repoName) {
         return new Promise((resolve, reject) => {
@@ -137,9 +162,9 @@ class DataBase {
     /**
      * Async Version
      * Update partial data for a document; based on object data based.
-     * @param id ID of Document
-     * @param partialObjectData Object
-     * @param repoName The name of the table.
+     * @param {Number} id ID of Document
+     * @param {Object} partialObjectData
+     * @param {string} repoName The name of the table.
      */
     updatePartialDataAsync(id, partialObjectData, repoName) {
         return new Promise((resolve, reject) => {
@@ -155,12 +180,10 @@ class DataBase {
                             return resolve(res);
                         })
                         .catch((err) => {
-                            alt.logError(err);
                             return reject(undefined);
                         });
                 })
                 .catch((err) => {
-                    alt.logError(err);
                     return reject(undefined);
                 });
         });
@@ -169,18 +192,14 @@ class DataBase {
     /**
      * Async Version
      * Fetch documents by ID or IDs.
-     * @param ids
-     * @param repoName The name of the table.
+     * @param {Number|Number[]} ids Can be array or single id.
+     * @param {string} repoName The name of the table.
      */
     fetchByIdsAsync(ids, repoName) {
         return new Promise((resolve, reject) => {
             const repo = this.dataSource.getRepository(repoName);
-            let idRef = ids;
 
-            if (!Array.isArray(ids)) {
-                idRef = [ids];
-            }
-
+            const idRef = Array.isArray(ids) ? ids : [ids];
             repo.findByIds(idRef)
                 .then((res) => {
                     if (res.length <= 0) return resolve(undefined);
@@ -196,19 +215,14 @@ class DataBase {
     /**
      * Async Version
      * Delete documents from the database by ID.
-     * @param ids Can be array or single id.
-     * @param repoName The name of the table.
+     * @param {Number|Number[]} ids Can be array or single id.
+     * @param {string} repoName The name of the table.
      */
     deleteByIdsAsync(ids, repoName) {
         return new Promise((resolve, reject) => {
             const repo = this.dataSource.getRepository(repoName);
 
-            let idRef = ids;
-
-            if (!Array.isArray(ids)) {
-                idRef = [ids];
-            }
-
+            const idRef = Array.isArray(ids) ? ids : [ids];
             repo.delete(idRef)
                 .then((res) => {
                     return resolve(res);
@@ -222,7 +236,7 @@ class DataBase {
 
     /**
      * Fetch all documents by repo name.
-     * @param repoName The name of the table.
+     * @param {string} repoName The name of the table.
      */
     fetchAllDataAsync(repoName) {
         return new Promise((resolve, reject) => {
@@ -243,19 +257,14 @@ class DataBase {
     /**
      * Async Version
      * Select a table by fieldNames that apply.
-     * @param repoName
-     * @param fieldNamesArray
+     * @param {string} repoName
+     * @param {string[]} fieldNamesArray
      */
     selectDataAsync(repoName, fieldNamesArray) {
         return new Promise((resolve, reject) => {
             const repo = this.dataSource.getRepository(repoName);
 
-            let selectionRef = fieldNamesArray;
-
-            if (!Array.isArray(fieldNamesArray)) {
-                selectionRef = [selectionRef];
-            }
-
+            const selectionRef = Array.isArray(selectionRef) ? selectionRef : [selectionRef];
             repo.find({ select: selectionRef })
                 .then((res) => {
                     if (res.length <= 0) return reject(undefined);

@@ -1,7 +1,8 @@
 const { DisTube, Queue } = require("distube");
-const { ActivityType, AuditLogEvent, PresenceUpdateStatus, Events, GatewayDispatchEvents } = require("discord.js");
+const { ActivityType, AuditLogEvent, PresenceUpdateStatus, Events, GatewayDispatchEvents, Client } = require("discord.js");
 const { ActivitiesOptions } = require("../utils");
 const { BackupQueueManager } = require("./utils");
+const db = require("../database");
 const client = require("../client");
 
 client.Log.info("Starting Distube dependence");
@@ -29,11 +30,22 @@ function setSongPresence(name) {
 }
 
 client.on("presence:setSongPresence", (songName) => setSongPresence(songName));
-distube.on("playSong", (queue, song) => setSongPresence(song.name));
+
+distube.on("playSong", (queue, song) => {
+    setSongPresence(song.name);
+    db.fetchDataAsync("url", song.url, "recently_played").then((data) => {
+        if (data) {
+            db.updatePartialDataAsync(data.id, { nbPlayed: data.nbPlayed + 1, lastPlayed: new Date() }, "recently_played");
+        } else {
+            db.upsertDataAsync({ name: song.name, url: song.url, nbPlayed: 1, lastPlayed: new Date() }, "recently_played");
+        }
+    });
+});
 
 client.Log.info("Distube started successfully");
 
-client.on(GatewayDispatchEvents.GuildAuditLogEntryCreate, async (auditLog) => {
+// client.on(GatewayDispatchEvents.GuildAuditLogEntryCreate, async (auditLog) => {
+client.on(Events.GuildAuditLogEntryCreate, async (auditLog) => {
     // const { action, executorId, targetId } = auditLog;
 
     console.log(auditLog);

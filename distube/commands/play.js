@@ -18,7 +18,7 @@ execute = async function (interaction) {
     }
 
     await interaction.deferReply();
-    
+
     /** @type {DisTube} distube */
     const distube = interaction.client.distube;
     const channel = interaction.member.voice.channel;
