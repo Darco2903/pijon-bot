@@ -33,7 +33,9 @@
         "discord.js": "^14.8.0",
         "distube": "^4.0.4",
         "ffmpeg-static": "^4.4.1",
+        "mysql": "^2.18.1",
         "openai": "^3.2.1",
-        "tweetnacl": "^1.0.3"
+        "tweetnacl": "^1.0.3",
+        "typeorm": "^0.3.12"
     }
 }
