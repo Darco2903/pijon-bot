@@ -1,5 +1,6 @@
 const { Command } = require("../../utils");
-const { SlashCommandBuilder } = require("discord.js");
+const { Interaction, SlashCommandBuilder } = require("discord.js");
+const { DisTube } = require("distube");
 
 let data;
 let execute;
@@ -11,9 +12,11 @@ data = new SlashCommandBuilder()
     .addIntegerOption((option) => option.setName("min").setDescription("Minutes").setMinValue(0))
     .addIntegerOption((option) => option.setName("sec").setDescription("Seconds").setMinValue(0));
 
+/** @param {Interaction} interaction */
 execute = async function (interaction) {
+    /** @type {DisTube} distube */
     const distube = interaction.client.distube;
-    const queue = await distube.getQueue(interaction);
+    const queue = distube.getQueue(interaction);
 
     if (!queue) {
         await interaction.reply("Faut mettre une musique avant de faire ça");
@@ -36,16 +39,20 @@ execute = async function (interaction) {
         return;
     }
 
-    await queue.seek(timeInSec);
+    queue.seek(timeInSec);
 
-    if (s || m) s = s.toLocaleString("en-US", { minimumIntegerDigits: 2, useGrouping: false });
+    if (s || m) {
+        s = s.toLocaleString("en-US", { minimumIntegerDigits: 2, useGrouping: false });
+    }
 
     let formatedTime = `${s}s`;
     if (m || h) {
         m = m.toLocaleString("en-US", { minimumIntegerDigits: 2, useGrouping: false });
         formatedTime = `${m}:` + formatedTime;
     }
-    if (h) formatedTime = `${h}:` + formatedTime;
+    if (h) {
+        formatedTime = `${h}:` + formatedTime;
+    }
 
     await interaction.reply(`Reprise à **${formatedTime}**`);
 };

@@ -1,14 +1,17 @@
 const { Command } = require("../../utils");
-const { SlashCommandBuilder } = require("discord.js");
+const { Interaction, SlashCommandBuilder } = require("discord.js");
+const { DisTube } = require("distube");
 
 let data;
 let execute;
 
 data = new SlashCommandBuilder().setName("previous").setDescription("[Music] Revenir au morceau précédent");
 
+/** @param {Interaction} interaction */
 execute = async function (interaction) {
+    /** @type {DisTube} */
     const distube = interaction.client.distube;
-    const queue = await distube.getQueue(interaction);
+    const queue = distube.getQueue(interaction);
 
     if (!queue) {
         await interaction.reply("Faut mettre une musique avant de faire ça");
@@ -21,14 +24,15 @@ execute = async function (interaction) {
     }
 
     await queue.previous();
-    distube.BackupQueue.playPrevious();
 
     let n = queue.previousSongs.length - 1;
     let prevSong = queue.previousSongs[n];
 
     await interaction.reply(`:arrow_forward: Lecture de **${prevSong.name}**`);
 
-    if (queue.paused) await distube.resume(interaction);
+    if (queue.paused) {
+        distube.resume(interaction);
+    }
 };
 
 module.exports = new Command(data, execute);

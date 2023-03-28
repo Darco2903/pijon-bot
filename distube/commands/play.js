@@ -1,5 +1,5 @@
 const { Command } = require("../../utils");
-const { SlashCommandBuilder } = require("discord.js");
+const { Interaction, SlashCommandBuilder } = require("discord.js");
 const { DisTube } = require("distube");
 
 let data;
@@ -10,6 +10,7 @@ data = new SlashCommandBuilder()
     .setDescription("[Music] Lecture de musique")
     .addStringOption((option) => option.setName("track").setDescription("Titre ou Lien ou ID YouTube").setRequired(true));
 
+/** @param {Interaction} interaction */
 execute = async function (interaction) {
     if (!interaction.member.voice.channel) {
         await interaction.reply("Va dans un salon vocal ou j'te bute.");
@@ -17,6 +18,7 @@ execute = async function (interaction) {
     }
 
     await interaction.deferReply();
+    
     /** @type {DisTube} distube */
     const distube = interaction.client.distube;
     const channel = interaction.member.voice.channel;
@@ -44,10 +46,8 @@ execute = async function (interaction) {
         url = `https://youtu.be/${id}`;
     }
 
-    queue = await distube.getQueue(interaction);
+    queue = distube.getQueue(interaction);
     await distube.play(channel, url);
-    distube.BackupQueue.add(url);
-    distube.BackupQueue.setPlaying(true);
 
     if (!queue || queue.songs.length <= 1) {
         await interaction.editReply(`Zé parti la zik bande de noobs\n${url}`);
