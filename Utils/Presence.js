@@ -22,7 +22,7 @@ class Presence {
         }
         const option = new PresenceOptions(activities, status);
         this.client.user.setPresence(option);
-        this.client.Log.info(`Presence set to '${option.getType()} ${option.getName()}' with status '${option.getStatus()}'`);
+        this.client.Log.debug(`Presence set to '${option.getType()} ${option.getName()}' with status '${option.getStatus()}'`);
     }
 
     /**

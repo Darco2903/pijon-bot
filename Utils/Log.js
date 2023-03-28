@@ -13,7 +13,6 @@ class LogManager {
      */
     constructor(logger) {
         this.logger = logger;
-        this.logger.verbose("LogManager -> initialization");
         if (!fs.existsSync(LOG_DIRECTORY)) {
             fs.mkdirSync(LOG_DIRECTORY);
             this.logger.debug(`Log directory "${LOG_DIRECTORY}" created`);
@@ -21,51 +20,35 @@ class LogManager {
         this.currentLogFile = this.#createNewLogFile();
         this.#cleanup();
         this.logger.debug("LogManager initialized");
-        this.logger.verbose("LogManager -> initialized");
     }
 
     #createNewLogFile() {
-        this.logger.verbose(`- LogManager -> #createNewLogFile`);
         const currentDate = new Date().toLocaleDateString("fr-FR", {}).replaceAll("/", "-");
-        this.logger.verbose(`-- #createNewLogFile -> currentDate: ${currentDate}`);
         const currentTime = new Date().toLocaleTimeString("fr-FR", { hour12: false }).replaceAll(":", "-");
-        this.logger.verbose(`-- #createNewLogFile -> currentTime: ${currentTime}`);
         const filename = `log_${currentDate}-${currentTime}.txt`;
-        this.logger.verbose(`-- #createNewLogFile -> filename: ${filename}`);
         const filePath = path.join(LOG_DIRECTORY, filename);
-        this.logger.verbose(`-- #createNewLogFile -> filePath: ${filePath}`);
         const writeStream = fs.createWriteStream(filePath);
-        this.logger.verbose(`-- #createNewLogFile -> writeStream: ${writeStream.writable}`);
         this.logger.debug(`Current log file "${filename}"`);
         return writeStream;
     }
 
     #cleanup() {
         const files = fs.readdirSync(LOG_DIRECTORY);
-        this.logger.verbose(`- LogManager -> #cleanup`);
         let filesRemoved = 0;
         for (const file of files) {
-            this.logger.verbose(`-- #cleanup [${file}] -> file: ${file}`);
             const filePath = path.join(LOG_DIRECTORY, file);
-            this.logger.verbose(`-- #cleanup [${file}] -> filePath: ${filePath}`);
             const stats = fs.statSync(filePath);
-            this.logger.verbose(`-- #cleanup [${file}] -> stats isFile?: ${stats.isFile()}`);
             const age = Date.now() - stats.mtimeMs;
-            this.logger.verbose(`-- #cleanup [${file}] -> (age > MAX_AGE)?: ${age > MAX_AGE}`);
-            this.logger.verbose(`-- #cleanup [${file}] -> (stats.isFile() && age > MAX_AGE)?: ${stats.isFile() && age > MAX_AGE}`);
             if (stats.isFile() && age > MAX_AGE) {
                 fs.unlinkSync(filePath);
-                this.logger.verbose(`-- #cleanup [${file}] -> Log file "${file}" removed`);
                 this.logger.debug(`Log file "${file}" removed`);
                 filesRemoved++;
-            } else {
-                this.logger.verbose(`-- #cleanup [${file}] -> Skipping file ${file}`);
             }
         }
         if (filesRemoved === 0) {
-            this.logger.verbose(`-- #cleanup -> Aucun fichier de journal à supprimer`);
+            this.logger.debug(`Aucun fichier de journal à supprimer`);
         } else {
-            this.logger.verbose(`-- #cleanup -> Tous les fichiers de journal ont été supprimés`);
+            this.logger.debug(`Tous les fichiers journaux ont été supprimés: ${filesRemoved}`);
         }
     }
 
@@ -90,17 +73,12 @@ class Log {
         this.writeQueue = [];
         this.debug = this.client.debug ? this.debug : () => {};
         this.debug(`debug enabled`);
-        this.verbose = this.client.verbose ? this.verbose : () => {};
-        this.verbose(`verbose enabled`);
         this.manager = new LogManager(this);
-        this.verbose("Log -> initialization");
 
         for (const message of this.writeQueue) {
             this.manager.write(message);
         }
-        this.verbose("- Log -> log queue dumped");
         this.debug("Log initialized");
-        this.verbose("Log -> initialized");
     }
 
     /**
@@ -168,7 +146,8 @@ class Log {
     /**
      * @param {string} message
      */
-    chat(message) {
+    chat(username, content) {
+        let message = `${username}: ${content}`;
         message = this.#logger(message, "PijonChat");
         this.log(message);
     }
@@ -198,15 +177,6 @@ class Log {
         message = this.#logger(message, "DEBUG");
         this.#writeToFile(message);
         console.debug(color.blueBright(message));
-    }
-
-    /**
-     * @param {string} message
-     */
-    verbose(message) {
-        message = this.#logger(message.replaceAll("\n", ""));
-        this.#writeToFile(message);
-        console.info(message);
     }
 }
 

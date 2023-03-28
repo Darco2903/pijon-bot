@@ -7,7 +7,6 @@
         "start": "node . -all",
         "test": "node . -all -TEST",
         "debug": "node . -all -DEBUG",
-        "verbose": "node . -all -VERBOSE",
         "deploy": "node tools/deploy-commands.js",
         "deploy-dev": "node tools/deploy-commands-dev.js",
         "clean-logs": "node tools/clean-logs.js",
