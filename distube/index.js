@@ -1,7 +1,7 @@
-const { DisTube, Events } = require("distube");
-const { ActivityType, PresenceUpdateStatus } = require("discord.js");
+const { DisTube, Queue } = require("distube");
+const { ActivityType, AuditLogEvent, PresenceUpdateStatus, Events, GatewayDispatchEvents } = require("discord.js");
 const { ActivitiesOptions } = require("../utils");
-const { BackupQueue } = require("./utils");
+const { BackupQueueManager } = require("./utils");
 const client = require("../client");
 
 client.Log.info("Starting Distube dependence");
@@ -19,7 +19,7 @@ const distube = new DisTube(client, {
     searchCooldown: 10,
 });
 
-distube.BackupQueue = BackupQueue(distube);
+distube.BackupQueueManager = new BackupQueueManager(distube);
 client.distube = distube;
 
 client.CommandRegister.registerCommands(__dirname);
@@ -29,12 +29,24 @@ function setSongPresence(name) {
 }
 
 client.on("presence:setSongPresence", (songName) => setSongPresence(songName));
-distube.on(Events.PLAY_SONG, (queue, song) => setSongPresence(song.name));
-distube.on(Events.DISCONNECT, (queue) => {
-    if (queue.playing) {
-        
-    }
-});
-// distube.on(Events.DELETE_QUEUE, (queue) => client.emit("presence:setDefault"));
+distube.on("playSong", (queue, song) => setSongPresence(song.name));
 
 client.Log.info("Distube started successfully");
+
+client.on(GatewayDispatchEvents.GuildAuditLogEntryCreate, async (auditLog) => {
+    // const { action, executorId, targetId } = auditLog;
+
+    console.log(auditLog);
+
+    // Check only for kicked users.
+    // if (action !== AuditLogEvent.MemberKick) return;
+
+    // // Ensure the executor is cached.
+    // const user = await client.users.fetch(executorId);
+
+    // // Ensure the kicked guild member is cached.
+    // const kickedUser = await client.users.fetch(targetId);
+
+    // // Now you can log the output!
+    // console.log(`${kickedUser.tag} was kicked by ${user.tag}.`);
+});
