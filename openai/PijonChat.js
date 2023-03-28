@@ -11,10 +11,8 @@ const client = require("../client");
 class Conversation extends Array {
     constructor(initContent) {
         super();
-        client.Log.verbose(`new Conversation content: ${initContent}`);
         if (initContent) {
             this.addMessage("system", initContent);
-            client.Log.verbose(`Conversation -> addMessage: ${initContent}`);
         }
     }
 
@@ -26,7 +24,6 @@ class Conversation extends Array {
      * @returns {object} - Un objet représentant un message.
      */
     #newMessage(author, content) {
-        client.Log.verbose(`Conversation -> #newMessage: author ${author} content ${content}`);
         return { role: author, content };
     }
 
@@ -38,10 +35,8 @@ class Conversation extends Array {
     addMessage(author, content) {
         if (this.length > 10) {
             const removed = this.splice(1, 1)[0];
-            client.Log.verbose(`Removed message: ${removed.role} - ${removed.content}`);
         }
         this.push(this.#newMessage(author, content));
-        client.Log.verbose(`Added message: ${author} - ${content}`);
     }
 
     /**
@@ -99,15 +94,11 @@ class streamHandler {
 
     /**
      * Méthode qui gère les données reçues et met à jour le contenu du message Discord en conséquence.
-     *
      * @param {Buffer} buffer - Le tampon de données à traiter.
      */
     #onData(buffer) {
-        client.Log.verbose("onData: received data");
         const string = buffer.toString();
-        client.Log.verbose(`onData -> bufferToString: ${string}`);
         const strArr = string.split("\n").filter((line) => line.length > 0 && !line.includes("DONE"));
-        client.Log.verbose(`onData -> split \\n: ${strArr.toString()}`);
         strArr.map((str) => {
             try {
                 const obj = JSON.parse(str.substring(str.indexOf("{")));
@@ -154,6 +145,9 @@ class PijonChat {
         this.conversation = this.#initConv.slice();
     }
 
+    /**
+     * Réinitialise la conversation à l'état initial.
+     */
     reset() {
         this.conversation = this.#initConv.slice();
     }
@@ -189,9 +183,7 @@ class PijonChat {
             client.openai
                 .createChatCompletion(this.#createConfig(conversation, false))
                 .then((res) => {
-                    client.Log.verbose("getReply -> ");
                     if (res.data.choices) {
-                        client.Log.verbose("getReply -> ");
                         resolve(res.data.choices[0].message.content);
                     } else {
                         client.Log.warn("getReply: received empty content");
@@ -272,13 +264,22 @@ class PijonPersonnalChat extends PijonChat {
         }, this.resetTimeout);
     }
 
+    /**
+     * @param {Message} message
+     * @param {Boolean} streamed
+     * @returns {Promise<{message: Message, replyContent: string}>}
+     */
     send(message, streamed) {
-        client.Log.chat(`${message.author.username}: ${message.content}`);
+        client.Log.chat(message.author.username, message.content);
         const res = streamed ? this.#sendStreamed(message) : this.#sendNonStreamed(message);
-        res.then(({ replyContent }) => client.Log.chat(`bot: ${replyContent}`));
+        res.then(({ replyContent }) => client.Log.chat("bot", replyContent));
         return res;
     }
 
+    /**
+     * @param {Message} message
+     * @returns {Promise<{message: Message, replyContent: string}>}
+     */
     #sendNonStreamed(message) {
         return new Promise((resolve, reject) => {
             this.conversation.userMessage(message.content);
@@ -294,6 +295,10 @@ class PijonPersonnalChat extends PijonChat {
         });
     }
 
+    /**
+     * @param {Message} message
+     * @returns {Promise<{message: Message, replyContent: string}>}
+     */
     async #sendStreamed(message) {
         return new Promise((resolve, reject) => {
             this.conversation.userMessage(message.content);

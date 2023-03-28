@@ -19,7 +19,6 @@ client.login(token);
 const clientStartOptions = argv.slice(2);
 client.test = clientStartOptions.includes("-TEST");
 client.debug = clientStartOptions.includes("-DEBUG");
-client.verbose = clientStartOptions.includes("-VERBOSE");
 client.Log = new utils.Log(client);
 client.CommandRegister = new utils.CommandRegister(client);
 // client.Console = new utils.ConsoleHandler();
@@ -27,19 +26,15 @@ client.Presence = new utils.Presence(client);
 
 client.utils = utils;
 client.Log.debug("Client initialization");
-client.Log.verbose("Client initialization");
-client.Log.verbose(`clientStartOptions: ${clientStartOptions}`);
 
 client.on(Events.InteractionCreate, async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
-    client.Log.verbose(`- onInteractionCreate [${interaction.user.username} | ${interaction.commandName}]`);
     client.Log.command(interaction.user.username, interaction.commandName, interaction.options.data);
     const command = interaction.client.commands.get(interaction.commandName);
 
     if (!command) {
         const reply = { content: `Aucune commande ${interaction.commandName} trouvé.`, ephemeral: true };
         client.Log.warn(`No command matching ${interaction.commandName} was found.`);
-        client.Log.verbose(`onInteractionCreate [${interaction.user.username} | ${interaction.commandName}] -> reply: ${reply}`);
         await interaction.reply(reply);
         return;
     }
@@ -48,7 +43,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
         await command.execute(interaction);
     } catch (error) {
         const reply = { content: "Une erreur est survenue lors de l'execution de cette commande.", ephemeral: true };
-        client.Log.verbose(`onInteractionCreate [${interaction.user.username} | ${interaction.commandName}] (ERROR) -> reply: ${reply}`);
         client.Log.commandError(interaction.commandName, interaction.options.data, error);
         try {
             await interaction.reply(reply);
@@ -63,7 +57,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
 client.on(Events.ClientReady, () => {
     client.Log.info(`Logged in as ${client.user.tag}`);
     client.Log.debug("Launched in debug mode");
-    client.Log.verbose("Launched with verbose");
     client.Presence.setRandom();
 });
 
