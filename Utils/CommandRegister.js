@@ -2,7 +2,6 @@ const fs = require("fs");
 const path = require("path");
 const Command = require("./Command");
 const { Client, Collection, REST } = require("discord.js");
-const { token } = require("../config.json");
 
 class CommandRegister {
     /**
