@@ -1,5 +1,6 @@
 const { Configuration, OpenAIApi } = require("openai");
-const { openai: config } = require("../config.json");
+const { openai: openaiConfig } = require("../config.json");
+const { apiKey } = openaiConfig;
 const { PijonPersonnalChat } = require("./PijonChat");
 const { Events, ChannelType } = require("discord.js");
 
@@ -7,8 +8,8 @@ const client = require("../client");
 
 client.Log.info("Starting OpenAI dependence");
 
-const openaiConfig = new OpenAIApi(new Configuration({ apiKey: config.apiKey }));
-client.openai = openaiConfig;
+const openai = new OpenAIApi(new Configuration({ apiKey }));
+client.openai = openai;
 
 client.CommandRegister.registerCommands(__dirname);
 

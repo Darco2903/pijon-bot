@@ -1,6 +1,7 @@
 const { argv } = require("process");
 const { Client, Events, GatewayIntentBits, Partials } = require("discord.js");
-const { client: config } = require("./config.json");
+const { client: clientConfig } = require("./config.json");
+const { token } = clientConfig;
 const utils = require("./utils");
 
 const intents = [

@@ -1,10 +1,11 @@
 const fs = require("fs");
 const path = require("path");
-const { client: config } = require("../config.json");
+const { client: clientConfig } = require("../config.json");
+const { dependances } = clientConfig;
 
 module.exports = function getCommandFiles() {
     let commandFiles = [];
-    config.dependances.forEach((dep) => {
+    dependances.forEach((dep) => {
         const commandsPath = path.join(dep, "commands");
         const files = fs
             .readdirSync(commandsPath)
