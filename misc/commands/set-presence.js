@@ -1,6 +1,6 @@
 const { Command } = require("../../utils");
 const { SlashCommandBuilder, PermissionsBitField } = require("discord.js");
-const { presencePreset } = require("../../utils");
+const { presence: presenceConfig } = require("../../config.json");
 
 let data;
 let execute;
@@ -14,7 +14,7 @@ data = new SlashCommandBuilder()
             .setDescription("Preset de présence")
             .setRequired(true)
             .addChoices(
-                ...Object.entries(presencePreset).map(([key, { name }]) => {
+                ...Object.entries(presenceConfig.preset).map(([key, { name }]) => {
                     return { name, value: key };
                 })
             )
