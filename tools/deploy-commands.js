@@ -23,6 +23,6 @@ commandFiles.forEach((file) => {
         const data = await rest.put(Routes.applicationCommands(clientId), { body: commands });
         console.log(color.green.bold(`Successfully reloaded ${color.magenta(data.length)} application (/) commands.`));
     } catch (error) {
-        console.error(color.red(error));
+        console.error(color.red(error.toString()));
     }
 })();

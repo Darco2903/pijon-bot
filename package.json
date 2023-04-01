@@ -8,7 +8,6 @@
         "test": "node . -all -TEST",
         "debug": "node . -all -DEBUG",
         "deploy": "node tools/deploy-commands.js",
-        "deploy-dev": "node tools/deploy-commands-dev.js",
         "clean-logs": "node tools/clean-logs.js",
         "patch-distube": "npm uninstall ffmpeg-static npm ci --no-optional npm update",
         "patch-discordjs-voice": "node tools/patcher-discordjs-voice.js",
