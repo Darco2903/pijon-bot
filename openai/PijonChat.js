@@ -1,6 +1,7 @@
 const { Message } = require("discord.js");
 const { IncomingMessage } = require("http");
 const client = require("../client");
+const openai = require("./index");
 
 /**
  * Une classe représentant une conversation entre un utilisateur et un bot.
@@ -89,7 +90,7 @@ class streamHandler {
             this.content = this.content.replace(this.prompt, "");
             // this.#processEdit();
         });
-        client.Log.debug("StreamHandler initialized");
+        client.Logger.debug("StreamHandler initialized");
     }
 
     /**
@@ -111,7 +112,7 @@ class streamHandler {
                     this.#processEdit();
                 }
             } catch (error) {
-                client.Log.error(`${error} -> '${str}'`);
+                client.Logger.error(`${error} -> '${str}'`);
             }
         });
     }
@@ -180,18 +181,18 @@ class PijonChat {
      */
     getReply(conversation) {
         return new Promise((resolve, reject) => {
-            client.openai
+            openai
                 .createChatCompletion(this.#createConfig(conversation, false))
                 .then((res) => {
                     if (res.data.choices) {
                         resolve(res.data.choices[0].message.content);
                     } else {
-                        client.Log.warn("getReply: received empty content");
+                        client.Logger.warn("getReply: received empty content");
                         reject("empty");
                     }
                 })
                 .catch((err) => {
-                    client.Log.error("getReply:", err.toString());
+                    client.Logger.error("getReply:", err.toString());
                     reject("err");
                 });
         });
@@ -206,7 +207,7 @@ class PijonChat {
      */
     async getReplyStreamed(conversation, message) {
         return new Promise((resolve, reject) => {
-            client.openai
+            openai
                 .createChatCompletion(this.#createConfig(conversation, true), { responseType: "stream" })
                 .then(async (res) => {
                     const reply = await message.reply(":white_small_square:");
@@ -217,7 +218,7 @@ class PijonChat {
                 })
                 .catch(async (err) => {
                     const reply = await message.reply(":white_small_square:");
-                    client.Log.error(`getReplyStreamed: ${err.toString()}`);
+                    client.Logger.error(`getReplyStreamed: ${err.toString()}`);
                     reject({ message: reply, replyContent: "err" });
                 });
         });
@@ -254,7 +255,7 @@ class PijonPersonnalChat extends PijonChat {
 
     reset() {
         super.reset();
-        client.Log.debug(`${this.username} personnal conversation reset`);
+        client.Logger.debug(`${this.username} personnal conversation reset`);
     }
 
     #initResetTimeout() {
@@ -270,9 +271,9 @@ class PijonPersonnalChat extends PijonChat {
      * @returns {Promise<{message: Message, replyContent: string}>}
      */
     send(message, streamed) {
-        client.Log.chat(message.author.username, message.content);
+        client.Logger.chat(message.author.username, message.content);
         const res = streamed ? this.#sendStreamed(message) : this.#sendNonStreamed(message);
-        res.then(({ replyContent }) => client.Log.chat("bot", replyContent));
+        res.then(({ replyContent }) => client.Logger.chat("bot", replyContent));
         return res;
     }
 

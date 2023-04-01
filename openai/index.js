@@ -6,10 +6,7 @@ const { Events, ChannelType } = require("discord.js");
 
 const client = require("../client");
 
-client.Log.info("Starting OpenAI dependence");
-
 const openai = new OpenAIApi(new Configuration({ apiKey }));
-client.openai = openai;
 
 client.CommandRegister.registerCommands(__dirname);
 
@@ -48,4 +45,4 @@ client.on(Events.MessageCreate, async (msg) => {
     }
 });
 
-client.Log.info("OpenAI started successfully");
+module.exports = openai;

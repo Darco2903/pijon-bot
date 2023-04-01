@@ -1,11 +1,15 @@
-const { Client, ClientPresenceStatusData, PresenceUpdateStatus } = require("discord.js");
+const { ClientPresenceStatusData, PresenceUpdateStatus } = require("discord.js");
 const ActivitiesOptions = require("./ActivitiesOptions");
 const PresenceOptions = require("./PresenceOptions");
-const presencePreset = require("./presencePreset.json");
+
+const { presence: presenceConfig } = require("../config.json");
+const CustomClient = require("../CustomClient");
+const { preset: presencePreset } = presenceConfig;
 
 class Presence {
     /**
-     * @param {Client} client
+     * @param {CustomClient} client
+     * @returns {Presence}
      */
     constructor(client) {
         this.client = client;
@@ -24,7 +28,7 @@ class Presence {
         const option = new PresenceOptions(activities, status);
         this.currentPresence = option;
         this.client.user.setPresence(option);
-        this.client.Log.debug(`Presence set to '${option.getType()} ${option.getName()}' with status '${option.getStatus()}'`);
+        this.client.Logger.debug(`Presence set to '${option.getType()} ${option.getName()}' with status '${option.getStatus()}'`);
     }
 
     /**

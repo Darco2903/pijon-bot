@@ -2,24 +2,26 @@ const fs = require("fs");
 const path = require("path");
 const { color } = require("console-log-colors");
 const { CommandInteractionOption } = require("discord.js");
+const CustomClient = require("../CustomClient");
 
 const LOG_DIRECTORY = path.join(process.cwd(), "logs");
 const MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 1 week
 
-class LogManager {
+class Logger {
     /**
-     * @constructor
-     * @param {Log} logger
+     * @param {CustomClient} client
+     * @returns {Logger}
      */
-    constructor(logger) {
-        this.logger = logger;
+    constructor(client) {
+        this.writeQueue = [];
+        this.debug = client.debug ? this.debug : () => {};
         if (!fs.existsSync(LOG_DIRECTORY)) {
             fs.mkdirSync(LOG_DIRECTORY);
-            this.logger.debug(`Log directory "${LOG_DIRECTORY}" created`);
+            this.debug(`Log directory "${LOG_DIRECTORY}" created`);
         }
         this.currentLogFile = this.#createNewLogFile();
         this.#cleanup();
-        this.logger.debug("LogManager initialized");
+        this.debug("Logger initialized");
     }
 
     #createNewLogFile() {
@@ -28,7 +30,7 @@ class LogManager {
         const filename = `log_${currentDate}-${currentTime}.txt`;
         const filePath = path.join(LOG_DIRECTORY, filename);
         const writeStream = fs.createWriteStream(filePath);
-        this.logger.debug(`Current log file "${filename}"`);
+        this.debug(`Current log file "${filename}"`);
         return writeStream;
     }
 
@@ -41,62 +43,30 @@ class LogManager {
             const age = Date.now() - stats.mtimeMs;
             if (stats.isFile() && age > MAX_AGE) {
                 fs.unlinkSync(filePath);
-                this.logger.debug(`Log file "${file}" removed`);
+                this.debug(`Log file "${file}" removed`);
                 filesRemoved++;
             }
         }
         if (filesRemoved === 0) {
-            this.logger.debug(`Aucun fichier de journal à supprimer`);
+            this.debug(`No log file to remove`);
         } else {
-            this.logger.debug(`Tous les fichiers journaux ont été supprimés: ${filesRemoved}`);
+            this.debug(`${filesRemoved} log file(s) removed`);
         }
     }
 
-    write(data) {
-        const logLine = `${data}\n`;
-        this.currentLogFile.write(logLine);
-    }
-}
-
-/**
- * Représente une option d'activité.
- * @class
- */
-class Log {
-    /**
-     * @constructor
-     * @param {Client} client
-     * @returns {Log}
-     */
-    constructor(client) {
-        this.client = client;
-        this.writeQueue = [];
-        this.debug = this.client.debug ? this.debug : () => {};
-        this.debug(`debug enabled`);
-        this.manager = new LogManager(this);
-
-        for (const message of this.writeQueue) {
-            this.manager.write(message);
+    #writeToFile(data) {
+        if (!this.currentLogFile) {
+            this.writeQueue.push(data);
+        } else {
+            const logLine = `${data}\n`;
+            this.currentLogFile.write(logLine);
         }
-        this.debug("Log initialized");
     }
 
-    /**
-     * @param {string} message
-     * @param {string} [mode]
-     */
-    #logger(message, mode) {
+    #formatter(message, mode) {
         const currentDate = new Date().toLocaleTimeString("fr-FR", { hour12: false });
         if (!mode) return `[${currentDate}] ${message}`;
         return `[${currentDate}] [${mode}] ${message}`;
-    }
-
-    #writeToFile(message) {
-        if (!this.manager) {
-            this.writeQueue.push(message);
-        } else {
-            this.manager.write(message);
-        }
     }
 
     /**
@@ -111,7 +81,7 @@ class Log {
      * @param {string} message
      */
     info(message) {
-        message = this.#logger(message);
+        message = this.#formatter(message);
         this.#writeToFile(message);
         console.info(color.blue(message));
     }
@@ -128,8 +98,8 @@ class Log {
             (acc, option) => `${acc} ${color.magenta(option.name)} ${color.yellow(option.value)}`,
             ""
         )}`;
-        this.#writeToFile(this.#logger(message, "COMMAND"));
-        console.log(color.blue(this.#logger(coloredMessage, "COMMAND")));
+        this.#writeToFile(this.#formatter(message, "COMMAND"));
+        console.log(color.blue(this.#formatter(coloredMessage, "COMMAND")));
     }
 
     /**
@@ -148,7 +118,7 @@ class Log {
      */
     chat(username, content) {
         let message = `${username}: ${content}`;
-        message = this.#logger(message, "PijonChat");
+        message = this.#formatter(message, "PijonChat");
         this.log(message);
     }
 
@@ -156,7 +126,7 @@ class Log {
      * @param {string} message
      */
     warn(message) {
-        message = this.#logger(message, "WARNING");
+        message = this.#formatter(message, "WARNING");
         this.#writeToFile(message);
         console.warn(color.yellow(message));
     }
@@ -165,7 +135,7 @@ class Log {
      * @param {string} message
      */
     error(message) {
-        message = this.#logger(message, "ERROR");
+        message = this.#formatter(message, "ERROR");
         this.#writeToFile(message);
         console.error(color.red(message));
     }
@@ -174,10 +144,10 @@ class Log {
      * @param {string} message
      */
     debug(message) {
-        message = this.#logger(message, "DEBUG");
+        message = this.#formatter(message, "DEBUG");
         this.#writeToFile(message);
         console.debug(color.blueBright(message));
     }
 }
 
-module.exports = Log;
+module.exports = Logger;

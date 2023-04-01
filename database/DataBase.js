@@ -1,10 +1,19 @@
 const orm = require("typeorm");
 
 class DataBase {
-    constructor(client, type, host, port, username, password, database, entities) {
-        this.client = client;
+    /**
+     * @param {orm.DatabaseType} type
+     * @param {string} host
+     * @param {Number} port
+     * @param {string} username
+     * @param {string} password
+     * @param {string} database
+     * @param {orm.EntitySchema[]} entities
+     * @returns {DataBase}
+     */
+    constructor(type, host, port, username, password, database, entities) {
         this.connected = false;
-        this.startingConnection = false;
+        this.initConn = false;
         this.dataSource = new orm.DataSource({
             type,
             host,
@@ -17,44 +26,43 @@ class DataBase {
         });
     }
 
+    /**
+     * @returns {Promise<void>}
+     */
     async connect() {
-        switch (true) {
-            case !this.connected && this.startingConnection:
-                await this.waitUntilConnected();
-            // fallthrough
-            case this.connected:
-                return;
-        }
-
-        this.startingConnection = true;
-        this.client.Log.info(`Starting Database Connection`);
+        if (this.connected || this.initConn) return;
+        this.initConn = true;
+        // this.client.Logger.info(`Starting Database Connection`);
         try {
             await this.dataSource.initialize();
-            this.dataSource.synchronize();
+            await this.dataSource.synchronize();
             this.connected = true;
-            this.client.Log.info(`Database connection established`);
+            // this.client.Logger.info(`Database connection established`);
+            // this.client.emit("database:connected");
+            return Promise.resolve();
         } catch (error) {
-            this.client.Log.error(`Unable to make database connection: ${error.toString()}`);
+            // this.client.Logger.error(`Unable to make database connection: ${error.toString()}`);
+            return Promise.reject(error);
         }
     }
 
-    async waitUntilConnected() {
-        return new Promise((resolve, reject) => {
-            let timeout;
-            let interval;
-            interval = setInterval(() => {
-                if (this.connected) {
-                    clearInterval(interval);
-                    clearTimeout(timeout);
-                    resolve();
-                }
-            }, 200);
-            timeout = setTimeout(() => {
-                clearInterval(interval);
-                reject();
-            }, 5000);
-        });
-    }
+    // async waitUntilConnected() {
+    //     return new Promise((resolve, reject) => {
+    //         let timeout;
+    //         let interval;
+    //         interval = setInterval(() => {
+    //             if (this.connected) {
+    //                 clearInterval(interval);
+    //                 clearTimeout(timeout);
+    //                 resolve();
+    //             }
+    //         }, 200);
+    //         timeout = setTimeout(() => {
+    //             clearInterval(interval);
+    //             reject();
+    //         }, 5000);
+    //     });
+    // }
 
     /**
      * Async Version
