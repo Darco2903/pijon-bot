@@ -108,9 +108,8 @@ class Logger {
      * @param {CommandInteractionOption[]} data
      */
     commandError(commandName, data, error) {
-        const message = `[COMMAND_FAILED] /${commandName} ${data.reduce((acc, option) => `${acc} ${option.name} ${option.value}`, "")}\n${error}`;
-        this.#writeToFile(message);
-        this.error(message);
+        const message = `[COMMAND_FAILED] /${commandName} ${data.reduce((acc, option) => `${acc} ${option.name} ${option.value}`, "")}`;
+        this.error(message, error);
     }
 
     /**
