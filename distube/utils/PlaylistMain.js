@@ -68,7 +68,7 @@ async function getByUserId(userid) {
  */
 async function getAllListenable(userid) {
     try {
-        const data = await db.fetchAllAsync(tables.playlist);
+        const data = await db.fetchAllDataAsync(tables.playlist);
         const playlists = data
             .filter((data) => data.privacy === Privacy.PUBLIC || data.privacy === Privacy.PROTECTED || data.userid === userid)
             .map((playlist) => createTyped(playlist));
