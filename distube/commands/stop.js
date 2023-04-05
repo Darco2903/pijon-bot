@@ -23,4 +23,4 @@ execute = async function (interaction) {
     await interaction.reply(":stop_button:");
 };
 
-module.exports = new Command(data, execute);
+module.exports = new Command({ data, execute });

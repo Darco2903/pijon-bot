@@ -6,7 +6,7 @@ let data;
 let execute;
 
 data = new SlashCommandBuilder()
-    .setName("setpresence")
+    .setName("set-presence")
     .setDescription("[Misc] Définir un preset de présence du bot")
     .addStringOption((option) =>
         option
@@ -30,4 +30,4 @@ execute = async function (interaction) {
     interaction.reply("Présence définie");
 };
 
-module.exports = new Command(data, execute);
+module.exports = new Command({ data, execute });

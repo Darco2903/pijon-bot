@@ -42,4 +42,4 @@ execute = async function (interaction) {
     await interaction.reply(`Filtre: ${filter.value}`);
 };
 
-module.exports = new Command(data, execute);
+module.exports = new Command({ data, execute });

@@ -16,4 +16,4 @@ execute = async function (interaction) {
     interaction.channel.send({ content: content.value, tts: true });
 };
 
-module.exports = new Command(data, execute);
+module.exports = new Command({ data, execute });

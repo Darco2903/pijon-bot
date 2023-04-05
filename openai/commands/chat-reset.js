@@ -13,4 +13,4 @@ execute = async function (interaction) {
     interaction.reply("Conversation réinitialisée");
 };
 
-module.exports = new Command(data, execute);
+module.exports = new Command({ data, execute });

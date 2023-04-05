@@ -57,4 +57,4 @@ execute = async function (interaction) {
     await interaction.reply(`Reprise à **${formatedTime}**`);
 };
 
-module.exports = new Command(data, execute);
+module.exports = new Command({ data, execute });

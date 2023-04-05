@@ -1,12 +1,14 @@
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, ApplicationCommandOptionChoiceData, AutocompleteInteraction, ButtonInteraction, CommandInteraction } = require("discord.js");
 
 class Command {
     /**
      * @param {SlashCommandBuilder} data
-     * @param {function(CommandInteraction): null} execute
-     * @param {function(CommandInteraction): Promise<ApplicationCommandOptionChoiceData<string | number>[]>} [autocomplete]
+     * @param {function(CommandInteraction): Promise<void>} execute
+     * @param {object} [options]
+     * @param {function(AutocompleteInteraction): Promise<ApplicationCommandOptionChoiceData>} [options.autocomplete]
+     * @param {function(ButtonInteraction): Promise<void>} [options.button]
      */
-    constructor(data, execute, autocomplete) {
+    constructor({ data, execute, autocomplete }) {
         this.data = data;
         this.execute = execute;
         this.autocomplete = autocomplete;

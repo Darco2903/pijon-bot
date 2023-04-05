@@ -67,4 +67,4 @@ execute = async function (interaction) {
     console.log("done");
 };
 
-module.exports = new Command(data, execute);
+module.exports = new Command({ data, execute });

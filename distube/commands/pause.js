@@ -32,4 +32,4 @@ execute = async function (interaction) {
     interaction.client.emit("presence:setSongPresence", `[Pause] ${song.name}`);
 };
 
-module.exports = new Command(data, execute);
+module.exports = new Command({ data, execute });
