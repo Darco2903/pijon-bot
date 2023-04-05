@@ -1,7 +1,10 @@
 const orm = require("typeorm");
 
+const { database: dbConfig } = require("../config.json");
+const { tables } = dbConfig;
+
 const recentlyPlayed = new orm.EntitySchema({
-    name: "recently_played",
+    name: tables.songRecent,
     columns: {
         id: {
             type: "int",
@@ -12,7 +15,70 @@ const recentlyPlayed = new orm.EntitySchema({
             type: "text",
             nullable: false,
         },
-        url: {
+        author: {
+            type: "text",
+            nullable: false,
+        },
+        ytId: {
+            type: "text",
+            nullable: false,
+        },
+        streamURL: {
+            type: "text",
+            nullable: false,
+        },
+        duration: {
+            type: "int",
+            nullable: false,
+        },
+        user: {
+            type: "text",
+            nullable: true,
+        },
+        nbPlayed: {
+            type: "int",
+            nullable: false,
+        },
+        creationDate: {
+            type: "text",
+            nullable: false,
+        },
+        lastPlayed: {
+            type: "text",
+            nullable: false,
+        },
+    },
+});
+
+const song = new orm.EntitySchema({
+    name: tables.song,
+    columns: {
+        id: {
+            type: "int",
+            primary: true,
+            generated: true,
+        },
+        name: {
+            type: "text",
+            nullable: false,
+        },
+        author: {
+            type: "text",
+            nullable: false,
+        },
+        ytId: {
+            type: "text",
+            nullable: false,
+        },
+        streamURL: {
+            type: "text",
+            nullable: true,
+        },
+        duration: {
+            type: "int",
+            nullable: false,
+        },
+        user: {
             type: "text",
             nullable: false,
         },
@@ -20,96 +86,64 @@ const recentlyPlayed = new orm.EntitySchema({
             type: "int",
             nullable: false,
         },
-        lastPlayed: {
-            type: "timestamp",
+        creationDate: {
+            type: "text",
             nullable: false,
+        },
+        lastPlayed: {
+            type: "text",
+            nullable: true,
         },
     },
 });
 
-const songs = new orm.EntitySchema({
-    name: "songs",
+const playList = new orm.EntitySchema({
+    name: tables.playlist,
     columns: {
         id: {
             type: "int",
             primary: true,
             generated: true,
         },
+        type: {
+            type: "text",
+            nullable: false,
+        },
         name: {
+            type: "text",
+            nullable: false,
+        },
+        author: {
+            type: "text",
+            nullable: false,
+        },
+        userid: {
+            type: "text",
+            nullable: false,
+        },
+        privacy: {
             type: "text",
             nullable: false,
         },
         url: {
             type: "text",
-            nullable: false,
-        },
-        lastPlayed: {
-            type: "timestamp",
-            nullable: false,
-        },
-        added: {
-            type: "timestamp",
-            nullable: false,
-        },
-    },
-});
-
-const customPlayList = new orm.EntitySchema({
-    name: "custom_playlist",
-    columns: {
-        id: {
-            type: "int",
-            primary: true,
-            generated: true,
-        },
-        name: {
-            type: "text",
-            nullable: false,
+            nullable: true,
         },
         songs: {
             type: "simple-array",
-            nullable: false,
+            nullable: true,
         },
-        author: {
+        creationDate: {
             type: "text",
-            nullable: false,
-        },
-        private: {
-            type: "boolean",
             nullable: false,
         },
         lastModified: {
-            type: "timestamp",
-            nullable: false,
+            type: "text",
+            nullable: true,
         },
     },
 });
 
-const ytPlayList = new orm.EntitySchema({
-    name: "playList",
-    columns: {
-        id: {
-            type: "int",
-            primary: true,
-            generated: true,
-        },
-        name: {
-            type: "text",
-            nullable: false,
-        },
-        url: {
-            type: "text",
-            nullable: false,
-        },
-        author: {
-            type: "text",
-            nullable: false,
-        },
-        private: {
-            type: "boolean",
-            nullable: false,
-        },
-    },
-});
+const entities = [song, recentlyPlayed, playList];
 
-module.exports = [recentlyPlayed, songs, customPlayList, ytPlayList];
+module.exports = entities;
