@@ -66,8 +66,7 @@ async function autocomplete(interaction) {
         const completion = await command.autocomplete(interaction);
         await interaction.respond(completion);
     } catch (error) {
-        // console.log(error);
-        console.log("autocomplete error: ", error.toString());
+        client.Logger.error("autocomplete", error);
     }
 }
 

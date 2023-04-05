@@ -32,16 +32,12 @@ class DataBase {
     async connect() {
         if (this.connected || this.initConn) return;
         this.initConn = true;
-        // this.client.Logger.info(`Starting Database Connection`);
         try {
             await this.dataSource.initialize();
             await this.dataSource.synchronize();
             this.connected = true;
-            // this.client.Logger.info(`Database connection established`);
-            // this.client.emit("database:connected");
             return Promise.resolve();
         } catch (error) {
-            // this.client.Logger.error(`Unable to make database connection: ${error.toString()}`);
             return Promise.reject(error);
         }
     }

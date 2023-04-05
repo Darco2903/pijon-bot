@@ -1,4 +1,5 @@
 const { Client } = require("discord.js");
+const { DisTube } = require("distube");
 const Utils = require("./utils");
 
 const { client: clientConfig } = require("./config.json");
@@ -22,7 +23,7 @@ class CustomClient extends Client {
             await this.db.connect();
             this.Logger.info("Database connected");
         } catch (error) {
-            this.Logger.error("Database connection failed");
+            this.Logger.error("Database connection failed", error);
         }
     }
 }

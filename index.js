@@ -18,7 +18,7 @@ function startDependance(name) {
         require(`./${name}`);
         client.Logger.info(`${name} started successfully`);
     } catch (error) {
-        client.Logger.error(`Failed to start ${name}`);
+        client.Logger.error(`Failed to start ${name}`, error);
     }
 }
 

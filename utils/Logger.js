@@ -133,9 +133,10 @@ class Logger {
 
     /**
      * @param {string} message
+     * @param {Error} error
      */
-    error(message) {
-        message = this.#formatter(message, "ERROR");
+    error(message, error) {
+        message = this.#formatter(`${message}: ${error.toString()}`, "ERROR");
         this.#writeToFile(message);
         console.error(color.red(message));
     }

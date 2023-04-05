@@ -45,7 +45,7 @@ class BackupQueueManager extends QueueManager {
             voiceChannel: queue.voice.channel,
         };
         this.collection.set(this.#getGuildId(queue), savedQueue);
-        // this.distube.client.Log.debug("Queue saved");
+        // this.distube.client.Logger.debug("Queue saved");
         // console.log(savedQueue.currentTime, savedQueue.jump);
     }
 
@@ -64,7 +64,7 @@ class BackupQueueManager extends QueueManager {
         if (time > 0) {
             this.distube.seek(this.#getGuildId(queue), time);
         }
-        this.distube.client.Log.debug("Queue Restored");
+        this.distube.client.Logger.debug("Queue Restored");
     }
 
     /**
