@@ -26,6 +26,14 @@ class CustomClient extends Client {
             this.Logger.error("Database connection failed", error);
         }
     }
+
+    /**
+     * @param {DisTube} distube
+     * @returns {void}
+     */
+    setDistube(distube) {
+        this.distube = distube;
+    }
 }
 
 module.exports = CustomClient;

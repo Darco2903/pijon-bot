@@ -1,12 +1,11 @@
-const { Configuration, OpenAIApi } = require("openai");
-const { openai: openaiConfig } = require("../config.json");
-const { apiKey } = openaiConfig;
-const { PijonPersonnalChat } = require("./PijonChat");
-const { Events, ChannelType } = require("discord.js");
-
+const { Events, ChannelType, User } = require("discord.js");
+const { PijonPersonnalChat } = require("./utils");
 const client = require("../client");
+// const openai = require("./openai");
 
-const openai = new OpenAIApi(new Configuration({ apiKey }));
+const {
+    openai: { streamed },
+} = require("../config.json");
 
 client.CommandRegister.registerCommands(__dirname);
 
@@ -25,24 +24,29 @@ client.on(Events.MessageCreate, async (msg) => {
 
     msg.channel.sendTyping();
 
-    const streamed = true;
     msg.content = msg.mentions.has(client.user.id) ? msg.content.replace(`<@${client.user.id}>`, client.user.username) : msg.content;
-    const chat = msg.author.chat || (msg.author.chat = new PijonPersonnalChat(msg.author.username, 300));
+
+    // const chat = msg.author.getChat();
+    const chat = msg.author.chat || (msg.author.chat = new PijonPersonnalChat(msg.author.username));
 
     const { message, replyContent } = await chat.send(msg, streamed);
 
     switch (true) {
         case msg.channel.type === ChannelType.DM:
-            if (streamed) await message.edit(replyContent);
-            else await message.channel.send(replyContent);
+            if (streamed) {
+                await message.edit(replyContent);
+            } else {
+                await message.channel.send(replyContent);
+            }
             break;
 
         case msg.channel.name === "pijon-bot":
         case msg.mentions.has(client.user.id):
-            if (streamed) await message.edit(replyContent);
-            else await message.reply(replyContent);
+            if (streamed) {
+                await message.edit(replyContent);
+            } else {
+                await message.reply(replyContent);
+            }
             break;
     }
 });
-
-module.exports = openai;
