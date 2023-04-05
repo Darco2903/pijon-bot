@@ -1,11 +1,11 @@
 const { argv } = require("process");
-const { Events, GatewayIntentBits, Partials, Client } = require("discord.js");
-// const db = require("./database");
-// const Utils = require("./utils");
+const { Events, GatewayIntentBits, Partials } = require("discord.js");
 const CustomClient = require("./CustomClient");
+const { Command } = require("./utils");
 
-const { client: clientConfig } = require("./config.json");
-const { token } = clientConfig;
+const {
+    client: { token },
+} = require("./config.json");
 
 const intents = [
     GatewayIntentBits.Guilds,
@@ -17,25 +17,12 @@ const intents = [
 const partials = [Partials.Channel];
 const startOptions = argv.slice(2);
 
-// const client = new Client({ intents, partials });
 const client = new CustomClient({ intents, partials }, startOptions);
 client.login(token);
 
-// client.db = db;
-// client.db.connect();
-
-// client.test = startOptions.includes("-TEST");
-// client.debug = startOptions.includes("-DEBUG");
-// client.dependencies = startOptions.includes("-all") ? clientConfig.dependances : startOptions.filter((option) => !option.startsWith("-"));
-// client.Logger = new Utils.Log(client.debug);
-// client.CommandRegister = new Utils.CommandRegister(token);
-// client.ConsoleHandler = new ConsoleHandler(client);
-// client.Presence = new Utils.Presence(client);
-
-// client.Logger.debug("Client initialization");
-
 async function chatCommand(interaction) {
     client.Logger.command(interaction.user.username, interaction.commandName, interaction.options.data);
+    /** @type {Command} */
     const command = interaction.client.commands.get(interaction.commandName);
 
     if (!command) {
@@ -71,33 +58,13 @@ async function autocomplete(interaction) {
 }
 
 client.on(Events.InteractionCreate, async (interaction) => {
-    // console.log("isAnySelectMenu:", interaction.isAnySelectMenu());
-    // console.log("isAutocomplete:", interaction.isAutocomplete());
-    // console.log("isButton:", interaction.isButton());
-    // console.log("isChannelSelectMenu:", interaction.isChannelSelectMenu());
-    // console.log("isChatInputCommand:", interaction.isChatInputCommand());
-    // console.log("isCommand:", interaction.isCommand());
-    // console.log("isContextMenuCommand:", interaction.isContextMenuCommand());
-    // console.log("isMentionableSelectMenu:", interaction.isMentionableSelectMenu());
-    // console.log("isMessageComponent:", interaction.isMessageComponent());
-    // console.log("isMessageContextMenuCommand:", interaction.isMessageContextMenuCommand());
-    // console.log("isModalSubmit:", interaction.isModalSubmit());
-    // console.log("isRepliable:", interaction.isRepliable());
-    // console.log("isRoleSelectMenu:", interaction.isRoleSelectMenu());
-    // console.log("isStringSelectMenu:", interaction.isStringSelectMenu());
-    // console.log("isUserContextMenuCommand:", interaction.isUserContextMenuCommand());
-    // console.log("isUserSelectMenu:", interaction.isUserSelectMenu());
-    // console.log("\n");
-
     switch (true) {
         case interaction.isAutocomplete():
             autocomplete(interaction);
             break;
+
         case interaction.isChatInputCommand():
             chatCommand(interaction);
-            break;
-
-        default:
             break;
     }
 });
