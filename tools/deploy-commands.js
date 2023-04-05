@@ -13,7 +13,7 @@ commandFiles.forEach((file) => {
         const command = require(`../${file}`);
         commands.push(command.data.toJSON());
     } catch (error) {
-        console.error(color.red(`Error processing ${file}`));
+        console.error(color.red(`Error processing ${file}: ${error.toString()}`));
     }
 });
 
