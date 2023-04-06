@@ -1,5 +1,5 @@
 const { Playlist, Privacy, Type } = require("./Playlist");
-const { getById: getByIds, Song } = require("./Song");
+const { getByIds: getByIds, Song } = require("./Song");
 
 class PlaylistCustom extends Playlist {
     /**

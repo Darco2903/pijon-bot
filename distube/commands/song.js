@@ -95,7 +95,7 @@ async function executeRegister(interaction) {
 /* @param {Interaction} interaction */
 async function executeDelete(interaction) {
     const id = interaction.options.getString("song");
-    const song = await Song.getById(id);
+    const song = await Song.getByIds(id);
     
     if (!song) {
         interaction.editReply("Ce morceau n'est pas enregistré");

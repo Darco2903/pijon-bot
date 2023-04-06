@@ -13,9 +13,26 @@ class PlaylistYoutube extends Playlist {
      * @param {string} [data.lastModified]
      * @returns {PlaylistYoutube}
      */
-    constructor({ id, name, author, userid, privacy, url, creationDate, lastModified }) {
+    constructor({ id, name, author, userid, privacy, ytId, creationDate, lastModified }) {
         super({ id, type: Type.YOUTUBE, name, userid, author, privacy, creationDate, lastModified });
-        this.url = url;
+        this.ytId = ytId;
+    }
+
+    getUrl() {
+        return `https://www.youtube.com/playlist?list=${this.ytId}`;
+    }
+
+    // getImage() {
+    //     return `https://i.ytimg.com/vi/I0hNpCFOgog/maxresdefault.jpg?rs=${this.ytId}`;
+    // }
+
+    embed() {
+        return (
+            super
+                .embed()
+                // .setImage(this.getImage())
+                .setURL(this.getUrl())
+        );
     }
 }
 

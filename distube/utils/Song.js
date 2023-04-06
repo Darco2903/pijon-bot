@@ -134,14 +134,13 @@ class Song extends BaseMusicObject {
     }
 
     display() {
-        return `${this.name} - ${this.author}`;
+        return this.name.toLowerCase().includes(this.author.toLowerCase()) ? this.name : `${this.name} - ${this.author}`;
     }
 
     embed() {
         return (
             new EmbedBuilder()
                 .setTitle(this.display())
-                // .setThumbnail(this.getThumbnail())
                 .setImage(this.getImage())
                 .setURL(this.getUrl())
                 .addFields({ name: "Nom", value: this.name }, { name: "Auteur", value: this.author }, { name: "Durée", value: this.getFormattedDuration() })
@@ -168,11 +167,9 @@ function getYoutubeVidId(url) {
 /**
  * @description Convert a Distube Song to a Song
  * @param {DistubeSong|SearchResultVideo} songData
- * @param {string} ytId
- * @param {string} username
  * @returns {Song}
  */
-function distubeSongToSong({ name, uploader, url, streamURL, duration }, username) {
+function distubeSongToSong({ name, uploader, url, streamURL, duration }) {
     const ytId = getYoutubeVidId(url);
     return new Song({
         name,
@@ -180,7 +177,21 @@ function distubeSongToSong({ name, uploader, url, streamURL, duration }, usernam
         ytId,
         streamURL,
         duration,
-        user: username,
+    });
+}
+
+/**
+ * @description Convert a Song to a Distube Song
+ * @param {Song} song
+ * @returns {DistubeSong}
+ */
+function songToDistubeSong(song) {
+    return new DistubeSong({
+        name: song.name,
+        uploader: { name: song.author },
+        url: song.getUrl(),
+        streamURL: song.streamURL,
+        duration: song.duration,
     });
 }
 
@@ -248,7 +259,8 @@ async function getByName(name) {
 module.exports = {
     getYoutubeVidId,
     distubeSongToSong,
-    getById: getByIds,
+    songToDistubeSong,
+    getByIds,
     getByYtId,
     getByName,
     Song,

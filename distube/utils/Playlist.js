@@ -1,3 +1,4 @@
+const { EmbedBuilder } = require("discord.js");
 const BaseMusicObject = require("./BaseMusicObject");
 
 /**
@@ -105,6 +106,20 @@ class Playlist extends BaseMusicObject {
      */
     display() {
         return `${this.name} - ${this.type} | ${this.privacy} - ${this.author}`;
+    }
+
+    embed() {
+        return super
+            .embed()
+            .setTitle(this.name)
+            .addFields(
+                { name: "Nom", value: this.name || "null" },
+                { name: "Auteur", value: this.author || "null" },
+                { name: "Type", value: this.type || "null" },
+                { name: "Visibilité", value: this.privacy || "null" },
+                { name: "Date de création", value: this.creationDate || "null" },
+                { name: "Dernière modification", value: this.lastModified || "null" }
+            );
     }
 }
 

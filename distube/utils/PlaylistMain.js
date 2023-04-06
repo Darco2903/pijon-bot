@@ -39,7 +39,8 @@ async function getById(id) {
         let data = await db.fetchByIdsAsync(id, tables.playlist);
         data = data[0];
         if (!data) {
-            throw new Error("Playlist not found");
+            // throw new Error("Playlist not found");
+            return Promise.resolve(null);
         }
         const playlist = createTyped(data);
         return Promise.resolve(playlist);

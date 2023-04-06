@@ -1,11 +1,9 @@
+const { EmbedBuilder } = require("discord.js");
 const db = require("../../database");
 
 /**
  * @typedef {"playlist"|"song"|"songRecent"} Table
  */
-const {
-    database: { tables },
-} = require("../../config.json");
 
 class BaseMusicObject {
     /**
@@ -78,6 +76,10 @@ class BaseMusicObject {
         } catch (error) {
             return Promise.reject(error);
         }
+    }
+
+    embed() {
+        return new EmbedBuilder();
     }
 }
 

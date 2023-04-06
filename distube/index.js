@@ -56,7 +56,7 @@ client.on(Events.GuildAuditLogEntryCreate, async (auditLog) => {
 //     } catch (error) {}
 //     try {
 //         let pl = new Playlist();
-//         pl = await pl.getById(3);
+//         pl = await pl.getByIds(3);
 //         console.log(pl);
 //     } catch (error) {}
 // });

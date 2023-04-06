@@ -42,7 +42,9 @@ data = new SlashCommandBuilder()
                             .setRequired(true)
                             .addChoices({ name: "Publique", value: "public" }, { name: "Protégée", value: "protected" }, { name: "Privée", value: "private" })
                     )
-                    .addStringOption((option) => option.setName("url").setDescription("Lien de la playlist").setRequired(true))
+                    .addStringOption((option) =>
+                        option.setName("url").setDescription("Lien de la playlist (doit être publique ou non répertoriée)").setRequired(true)
+                    )
             )
     )
     .addSubcommand((subcommand) =>
@@ -116,7 +118,7 @@ execute = async function (interaction) {
             const playlist = await Playlist.getById(id);
             if (!playlist) {
                 interaction.editReply("Aucune playlist trouvé");
-                cont;
+                break;
             }
             await playlist.delete();
             await interaction.editReply(`Playlist **${playlist.name}** supprimée !`);
@@ -150,7 +152,7 @@ execute = async function (interaction) {
                 break;
             }
 
-            const songs = await Song.getById(songid);
+            const songs = await Song.getByIds(songid);
             const song = songs[0];
             if (!song) {
                 interaction.editReply("Aucune musique trouvé");
@@ -221,10 +223,15 @@ const autocomplete = async function (interaction) {
 
         case interaction.options.getSubcommand() === "add" && option.name === "songname": {
             const songName = option.value;
-            const songs = await Song.getByName(songName);
-            choices = songs
-                .filter((song) => song.display().toLowerCase().includes(songName.toLowerCase()))
-                .map((song) => ({ name: song.display(), value: song.id }));
+            const playlistId = interaction.options.getInteger("playlistcustomname");
+            const playlist = await Playlist.getById(playlistId);
+            let songs = await Song.getByName(songName);
+            songs = songs.filter((song) => song.display().toLowerCase().includes(songName.toLowerCase()));
+            if (playlist?.type === Playlist.Type.CUSTOM) {
+                const playlistSongs = await playlist.getSongs();
+                songs = songs.filter((song) => !playlistSongs.some((playlistSong) => playlistSong.id === song.id));
+            }
+            choices = songs.map((song) => ({ name: song.display(), value: song.id }));
             if (!songName) {
                 choices.sort(() => Math.random() - 0.5);
             }
@@ -232,15 +239,19 @@ const autocomplete = async function (interaction) {
         }
 
         case interaction.options.getSubcommand() === "remove" && option.name === "songname": {
-            const songName = option.value;
             const playlistId = interaction.options.getInteger("playlistcustomname");
-
-            const playlist = await Playlist.getById(playlistId);
-            if (!playlist) {
-                interaction.editReply("Aucune playlist trouvé");
+            if (!playlistId) {
+                interaction.editReply("Veuillez spécifier une playlist");
                 break;
             }
 
+            const playlist = await Playlist.getById(playlistId);
+            if (!playlist) {
+                interaction.editReply("Aucune playlist trouvée");
+                break;
+            }
+
+            const songName = option.value;
             const songs = await playlist.getSongs();
             choices = songs
                 .filter((song) => song.display().toLowerCase().includes(songName.toLowerCase()))

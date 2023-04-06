@@ -125,20 +125,20 @@ const playList = new orm.EntitySchema({
             type: "text",
             nullable: false,
         },
-        url: {
-            type: "text",
-            nullable: true,
-        },
-        songs: {
-            type: "simple-array",
-            nullable: true,
-        },
         creationDate: {
             type: "text",
             nullable: false,
         },
         lastModified: {
             type: "text",
+            nullable: true,
+        },
+        ytId: {
+            type: "text",
+            nullable: true,
+        },
+        songs: {
+            type: "simple-array",
             nullable: true,
         },
     },

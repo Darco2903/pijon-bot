@@ -25,6 +25,14 @@ class CustomDistube extends DisTube {
     }
 
     /**
+     * @param {string} url
+     * @returns {boolean}
+     */
+    isYoutubePlaylistLink(url) {
+        return url.includes("https://www.youtube.com/playlist?list=") && url.length === 72;
+    }
+
+    /**
      * @param {string} search
      * @returns {Promise<DistubeSong>} url of the youtube video
      */
@@ -48,6 +56,10 @@ class CustomDistube extends DisTube {
         } catch (error) {
             Promise.reject(error);
         }
+    }
+
+    async checkPlaylist(url) {
+        this.createCustomPlaylist();
     }
 }
 
