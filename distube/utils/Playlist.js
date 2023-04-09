@@ -1,4 +1,3 @@
-const { EmbedBuilder } = require("discord.js");
 const BaseMusicObject = require("./BaseMusicObject");
 
 /**
@@ -42,7 +41,7 @@ class Playlist extends BaseMusicObject {
         super({ id, name, author, creationDate });
         this.type = type;
         this.userid = userid;
-        this.privacy = privacy;
+        this.privacy = privacy ?? Privacy.PUBLIC;
         this.lastModified = lastModified;
     }
 
@@ -108,18 +107,18 @@ class Playlist extends BaseMusicObject {
         return `${this.name} - ${this.type} | ${this.privacy} - ${this.author}`;
     }
 
+    getEmbedFields() {
+        return [];
+    }
+
     embed() {
-        return super
-            .embed()
-            .setTitle(this.name)
-            .addFields(
-                { name: "Nom", value: this.name || "null" },
-                { name: "Auteur", value: this.author || "null" },
-                { name: "Type", value: this.type || "null" },
-                { name: "Visibilité", value: this.privacy || "null" },
-                { name: "Date de création", value: this.creationDate || "null" },
-                { name: "Dernière modification", value: this.lastModified || "null" }
-            );
+        return super.embed().addFields({ name: "Type", value: this.type, inline: true }, { name: "Visibilité", value: this.privacy, inline: true });
+    }
+
+    fullEmbed() {
+        const embed = this.embed();
+        embed.addFields(super.fullEmbed().data.fields.filter((field) => embed.data.fields.every((f) => f.name !== field.name)));
+        return embed;
     }
 }
 

@@ -79,7 +79,13 @@ class BaseMusicObject {
     }
 
     embed() {
-        return new EmbedBuilder();
+        return new EmbedBuilder()
+            .setTitle(this.name)
+            .addFields({ name: "Nom", value: this.name, inline: true }, { name: "Auteur", value: this.author, inline: true });
+    }
+
+    fullEmbed() {
+        return this.embed().addFields({ name: "ID", value: this.id.toString() }, { name: "Date de création", value: this.creationDate });
     }
 }
 

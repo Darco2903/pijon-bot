@@ -79,4 +79,29 @@ async function getAllListenable(userid) {
     }
 }
 
-module.exports = { createTyped, getById, getByUserId, getAllListenable, Playlist, PlaylistCustom, PlaylistYoutube, Type, Privacy };
+/**
+ * @param {string} url
+ * @returns {string} id of the youtube video
+ * @throws {Error} if the url is not a valid youtube url
+ */
+function getYtId(url) {
+    const regExp = /^.*(youtu.be\/|list=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    if (match && match[2].length === 34) {
+        return match[2];
+    }
+    throw new Error("Invalid youtube playlist url");
+}
+
+module.exports = {
+    Playlist,
+    PlaylistCustom,
+    PlaylistYoutube,
+    Type,
+    Privacy,
+    createTyped,
+    getById,
+    getByUserId,
+    getAllListenable,
+    getYtId,
+};

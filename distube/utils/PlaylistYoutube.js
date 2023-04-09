@@ -22,17 +22,21 @@ class PlaylistYoutube extends Playlist {
         return `https://www.youtube.com/playlist?list=${this.ytId}`;
     }
 
+    setYtId(ytId) {
+        this.ytId = ytId;
+        super.saveModif({ ytId });
+    }
+
     // getImage() {
     //     return `https://i.ytimg.com/vi/I0hNpCFOgog/maxresdefault.jpg?rs=${this.ytId}`;
     // }
 
     embed() {
-        return (
-            super
-                .embed()
-                // .setImage(this.getImage())
-                .setURL(this.getUrl())
-        );
+        return super.embed().setColor("Red").setURL(this.getUrl());
+    }
+
+    fullEmbed() {
+        return super.fullEmbed().setURL(this.getUrl()).addFields({ name: "URL", value: this.getUrl() });
     }
 }
 

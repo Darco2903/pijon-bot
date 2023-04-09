@@ -14,8 +14,8 @@ class Song extends BaseMusicObject {
     /**
      * @param {Object} data
      * @param {Number} [data.id]
-     * @param {string} data.url
-     * @param {string} data.streamUrl
+     * @param {string} data.ytId
+     * @param {string} data.streamURL
      * @param {string} data.name
      * @param {Number} data.duration
      * @param {Number} [data.nbPlayed]
@@ -23,7 +23,17 @@ class Song extends BaseMusicObject {
      * @param {string} [data.creationDate]
      * @returns {Song}
      */
-    constructor({ id, ytId, streamURL, name, author, duration, nbPlayed, user, lastPlayed, creationDate }) {
+    constructor(data) {
+        if (data instanceof DistubeSong || data instanceof SearchResultVideo) {
+            data = {
+                ytId: data.id,
+                streamURL: data.url,
+                name: data.name,
+                author: data.uploader.name,
+                duration: data.duration,
+            };
+        }
+        const { id, ytId, streamURL, name, author, duration, nbPlayed, user, lastPlayed, creationDate } = data;
         super({ id, name, author, creationDate });
         this.ytId = ytId;
         this.streamURL = streamURL;
@@ -111,26 +121,7 @@ class Song extends BaseMusicObject {
      * @returns {string}
      */
     getFormattedDuration() {
-        const hours = Math.floor(this.duration / 3600);
-        const minutes = Math.floor((this.duration % 3600) / 60);
-        const seconds = Math.floor(this.duration % 60);
-        let formattedDuration = "";
-
-        if (hours > 0) {
-            formattedDuration += `${hours}:`;
-        }
-
-        if (minutes < 10 && hours > 0) {
-            formattedDuration += `0`;
-        }
-        formattedDuration += `${minutes}:`;
-
-        if (seconds < 10) {
-            formattedDuration += `0`;
-        }
-        formattedDuration += `${seconds}`;
-
-        return formattedDuration;
+        return formatTime(this.duration);
     }
 
     display() {
@@ -138,61 +129,61 @@ class Song extends BaseMusicObject {
     }
 
     embed() {
-        return (
-            new EmbedBuilder()
-                .setTitle(this.display())
-                .setImage(this.getImage())
-                .setURL(this.getUrl())
-                .addFields({ name: "Nom", value: this.name }, { name: "Auteur", value: this.author }, { name: "Durée", value: this.getFormattedDuration() })
+        return new EmbedBuilder()
+            .setTitle(this.display())
+            .setColor("Blurple")
+            .setImage(this.getImage())
+            .setURL(this.getUrl())
+            .addFields({ name: "Nom", value: this.name }, { name: "Auteur", value: this.author }, { name: "Durée", value: this.getFormattedDuration() });
+    }
+
+    /**
+     * @description Convert a Distube Song to a Song
+     * @param {DistubeSong|SearchResultVideo} songData
+     * @returns {Song}
+     */
+    toDistubeSongToSong(songData) {
+        const data = Object.assign(
+            {
+                ytId: getYtId(songData.url),
+                author: songData.uploader.name,
+            },
+            songData
         );
+        return new Song(data);
+    }
+
+    /**
+     * @description Convert a Song to a Distube Song
+     * @param {Song} song
+     * @returns {DistubeSong}
+     */
+    toDistubeSong() {
+        const data = Object.assign(
+            {
+                uploader: { name: this.author },
+                url: this.getUrl(),
+            },
+            this
+        );
+        return new DistubeSong(data);
     }
 }
 
-const YT_REG_EXP = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+const YT_VID_REG_EXP = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
 
 /**
  * @param {string} url
  * @returns {string} id of the youtube video
  * @throws {Error} if the url is not a valid youtube url
  */
-function getYoutubeVidId(url) {
-    const match = url.match(YT_REG_EXP);
+function getYtId(url) {
+    const match = url.match(YT_VID_REG_EXP);
     if (match && match[7].length == 11) {
         return match[7];
     } else {
         throw new Error("Invalid YouTube URL");
     }
-}
-
-/**
- * @description Convert a Distube Song to a Song
- * @param {DistubeSong|SearchResultVideo} songData
- * @returns {Song}
- */
-function distubeSongToSong({ name, uploader, url, streamURL, duration }) {
-    const ytId = getYoutubeVidId(url);
-    return new Song({
-        name,
-        author: uploader.name,
-        ytId,
-        streamURL,
-        duration,
-    });
-}
-
-/**
- * @description Convert a Song to a Distube Song
- * @param {Song} song
- * @returns {DistubeSong}
- */
-function songToDistubeSong(song) {
-    return new DistubeSong({
-        name: song.name,
-        uploader: { name: song.author },
-        url: song.getUrl(),
-        streamURL: song.streamURL,
-        duration: song.duration,
-    });
 }
 
 /**
@@ -256,12 +247,39 @@ async function getByName(name) {
     }
 }
 
+/**
+ * @description Format a time in seconds to a readable format
+ * @param {number} time in seconds
+ * @returns {string}
+ */
+function formatTime(time) {
+    const hours = Math.floor(time / 3600);
+    const minutes = Math.floor((time % 3600) / 60);
+    const seconds = Math.floor(time % 60);
+    let formattedDuration = "";
+
+    if (hours > 0) {
+        formattedDuration += `${hours}:`;
+    }
+
+    if (minutes < 10 && hours > 0) {
+        formattedDuration += `0`;
+    }
+    formattedDuration += `${minutes}:`;
+
+    if (seconds < 10) {
+        formattedDuration += `0`;
+    }
+    formattedDuration += `${seconds}`;
+
+    return formattedDuration;
+}
+
 module.exports = {
-    getYoutubeVidId,
-    distubeSongToSong,
-    songToDistubeSong,
+    Song,
+    getYtId,
     getByIds,
     getByYtId,
     getByName,
-    Song,
+    formatTime,
 };

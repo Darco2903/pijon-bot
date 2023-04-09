@@ -1,5 +1,5 @@
 const { Playlist, Privacy, Type } = require("./Playlist");
-const { getByIds: getByIds, Song } = require("./Song");
+const { getByIds, Song } = require("./Song");
 
 class PlaylistCustom extends Playlist {
     /**
@@ -80,6 +80,16 @@ class PlaylistCustom extends Playlist {
         } catch (error) {
             return Promise.reject(error);
         }
+    }
+
+    embed() {
+        return super.embed().setColor("Blue").addFields({ name: "Nombre de chansons", value: this.songs.length.toString() });
+    }
+
+    fullEmbed() {
+        const embed = this.embed();
+        embed.addFields(super.fullEmbed().data.fields.filter((field) => embed.data.fields.every((f) => f.name !== field.name)));
+        return embed;
     }
 }
 
