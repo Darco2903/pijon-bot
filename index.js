@@ -1,5 +1,4 @@
 const { Events } = require("discord.js");
-// const { Log } = require("./utils");
 const client = require("./client");
 
 const { client: clientConfig } = require("./config.json");

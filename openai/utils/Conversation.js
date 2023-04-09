@@ -1,5 +1,3 @@
-const Utils = require("../../utils");
-
 /**
  * * Une classe représentant une conversation entre un utilisateur et un bot.
  */

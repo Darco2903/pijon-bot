@@ -1,7 +1,6 @@
-const { Events, ChannelType, User } = require("discord.js");
+const { Events, ChannelType } = require("discord.js");
 const { PijonPersonnalChat } = require("./utils");
 const client = require("../client");
-// const openai = require("./openai");
 
 const {
     openai: { streamed },
@@ -26,7 +25,6 @@ client.on(Events.MessageCreate, async (msg) => {
 
     msg.content = msg.mentions.has(client.user.id) ? msg.content.replace(`<@${client.user.id}>`, client.user.username) : msg.content;
 
-    // const chat = msg.author.getChat();
     const chat = msg.author.chat || (msg.author.chat = new PijonPersonnalChat(msg.author.username));
 
     const { message, replyContent } = await chat.send(msg, streamed);
