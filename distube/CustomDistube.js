@@ -1,5 +1,7 @@
-const { DisTube, Options, SearchResultType, SearchResultVideo, Song: DistubeSong } = require("distube");
+const { ActivityType, PresenceUpdateStatus } = require("discord.js");
+const { DisTube, Options, SearchResultType, Song: DistubeSong } = require("distube");
 const { BackupQueueManager, Song } = require("./utils");
+const { ActivitiesOptions } = require("../utils");
 const CustomClient = require("../CustomClient");
 
 const YT_SHORT_URL = "https://youtu.be/";
@@ -12,16 +14,28 @@ class CustomDistube extends DisTube {
      */
     constructor(client, options) {
         super(client, options);
+        this.client = client;
         this.BackupQueueManager = new BackupQueueManager(this);
     }
 
+    /**
+     * @param {string} name
+     * @returns {void}
+     */
+    setSongPresence(name) {
+        this.client.Presence.set(new ActivitiesOptions({ name, type: ActivityType.Listening }), PresenceUpdateStatus.Online);
+    }
+
+    /**
+     * @param {string} search
+     * @returns {URL|false}
+     */
     isLink(search) {
+        let url = false;
         try {
-            new URL(search);
-            return true;
-        } catch (error) {
-            return false;
-        }
+            url = new URL(search);
+        } catch (error) {}
+        return url;
     }
 
     /**
@@ -29,7 +43,8 @@ class CustomDistube extends DisTube {
      * @returns {boolean}
      */
     isYoutubePlaylistLink(url) {
-        return url.includes("https://www.youtube.com/playlist?list=") && url.length === 72;
+        const link = this.isLink(url);
+        return link && link.searchParams.has("list") && link.searchParams.get("list").length === 34;
     }
 
     /**
@@ -39,7 +54,7 @@ class CustomDistube extends DisTube {
     async customSearch(search) {
         try {
             if (this.isLink(search)) {
-                const ytId = Song.getYoutubeVidId(search);
+                const ytId = Song.getYtId(search);
                 search = YT_SHORT_URL + ytId;
             }
 

@@ -28,8 +28,7 @@ execute = async function (interaction) {
     await interaction.reply(":pause_button:");
 
     const song = queue.songs[0];
-
-    interaction.client.emit("presence:setSongPresence", `[Pause] ${song.name}`);
+    distube.setSongPresence(`[Pause] ${song.name}`);
 };
 
 module.exports = new Command({ data, execute });

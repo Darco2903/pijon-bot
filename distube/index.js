@@ -1,20 +1,15 @@
-const { ActivityType, AuditLogEvent, PresenceUpdateStatus, Events, GatewayDispatchEvents, Client } = require("discord.js");
-const { ActivitiesOptions } = require("../utils");
-const { Song } = require("./utils");
-
+const { Events } = require("discord.js");
 const client = require("../client");
 const distube = require("./distube");
 
 client.CommandRegister.registerCommands(__dirname);
 
-function setSongPresence(name) {
-    client.Presence.set(new ActivitiesOptions({ name, type: ActivityType.Listening }), PresenceUpdateStatus.Online);
-}
-
-client.on("presence:setSongPresence", (songName) => setSongPresence(songName));
-
 distube.on("playSong", (queue, song) => {
-    setSongPresence(song.name);
+    distube.setSongPresence(song.name);
+});
+
+distube.on("deleteQueue", (queue) => {
+    client.Presence.setRandom();
 });
 
 // client.on(GatewayDispatchEvents.GuildAuditLogEntryCreate, async (auditLog) => {
@@ -22,6 +17,7 @@ client.on(Events.GuildAuditLogEntryCreate, async (auditLog) => {
     // const { action, executorId, targetId } = auditLog;
 
     console.log("auditLog:", auditLog);
+    console.log(auditLog.actionType);
 
     // Check only for kicked users.
     // if (action !== AuditLogEvent.MemberKick) return;
@@ -35,31 +31,3 @@ client.on(Events.GuildAuditLogEntryCreate, async (auditLog) => {
     // // Now you can log the output!
     // console.log(`${kickedUser.tag} was kicked by ${user.tag}.`);
 });
-
-// client.on("database:connected", async () => {
-//     const { PlaylistCustom, PlaylistYoutube, Playlist } = require("./utils/Playlist");
-
-//     const plc = new PlaylistCustom("test1", "Darco2903", "public", [1, 3]);
-//     const ply = new PlaylistYoutube("test2", "Darco2903", "private", "https://www.youtube.com/playlist?list=PLtDdyMqzMueY31ul_jK6ikDg7vFzvE6CA");
-
-//     try {
-//         const plTah = new PlaylistYoutube("tah", "Darco2903", "private", "https://www.youtube.com/playlist?list=PLtDdyMqzMueY31ul_jK6ikDg7vFzvE6CA");
-//         // console.log(plTah);
-//         // await plTah.saveNew();
-//         // console.log("saved");
-//     } catch (error) {}
-
-//     try {
-//         let pl = new Playlist();
-//         pl = await pl.getByName("tah");
-//         console.log(pl);
-//     } catch (error) {}
-//     try {
-//         let pl = new Playlist();
-//         pl = await pl.getByIds(3);
-//         console.log(pl);
-//     } catch (error) {}
-// });
-
-// const playlistCommand = require("./commands/playlist");
-// console.log(playlistCommand.data.options[3].options[0].choices.concat({ name: "test", value: 2 }));

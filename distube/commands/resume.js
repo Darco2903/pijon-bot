@@ -28,7 +28,7 @@ execute = async function (interaction) {
     await interaction.reply(":arrow_forward:");
 
     const song = queue.songs[0];
-    interaction.client.emit("presence:setSongPresence", song.name);
+    distube.setSongPresence(song.name);
 };
 
 module.exports = new Command({ data, execute });
