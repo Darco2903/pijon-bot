@@ -1,6 +1,6 @@
 const { Command } = require("../../utils");
-const { Interaction, SlashCommandBuilder, ChannelType, EmbedBuilder } = require("discord.js");
-const { Song: DistubeSong, Playlist: DistubePlaylist, SearchResultPlaylist, SearchResultType, SearchResultVideo } = require("distube");
+const { Interaction, SlashCommandBuilder, ChannelType, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
+const CustomClient = require("../../CustomClient");
 const CustomDistube = require("../CustomDistube");
 const { Song, Playlist } = require("../utils");
 const PlaylistYoutube = require("../utils/PlaylistYoutube");
@@ -31,8 +31,10 @@ data = new SlashCommandBuilder()
 
 /** @param {Interaction} interaction */
 execute = async function (interaction) {
+    /** @type {CustomClient} */
+    const client = interaction.client;
     /** @type {CustomDistube} */
-    const distube = interaction.client.distube;
+    const distube = client.distube;
     let queue = distube.getQueue(interaction);
     const shuffle = interaction.options.getBoolean("shuffle");
     const channel = interaction.options.getChannel("channel") || interaction.member.voice.channel;
@@ -47,24 +49,30 @@ execute = async function (interaction) {
     switch (interaction.options.getSubcommand()) {
         case "song":
             const songString = interaction.options.getString("song");
-            const song = await distube.customSearch(songString);
+            const distubeSong = await distube.customSearch(songString);
 
-            await distube.play(channel, song);
+            await distube.play(channel, distubeSong);
 
-            if (queue?.songs.length > 0) {
-                await interaction.editReply(`Ajout de à la liste de lecture\n${song.name}`);
-            } else {
-                await interaction.editReply(`Zé parti la zik bande de noobs\n${song.name}`);
-            }
+            let content = queue?.songs.length > 0 ? "Ajout de à la liste de lecture" : "Zé parti la zik bande de noobs";
+            const song = new Song.Song(distubeSong);
+
+            await interaction.editReply({
+                content,
+                embeds: [song.embed()],
+            });
             break;
 
         case "playlist":
             const name = interaction.options.getString("playlist");
             let playlist;
             if (distube.isYoutubePlaylistLink(name)) {
-                playlist = new PlaylistYoutube({ ytId: name.replace("https://www.youtube.com/playlist?list=", ""), name: name });
-            } else {
-                playlist = await Playlist.getByIds(name);
+                playlist = new PlaylistYoutube({
+                    ytId: Playlist.getYtId(name),
+                    name: name,
+                    author: interaction.user.username,
+                });
+            } else if (!isNaN(name)) {
+                playlist = await Playlist.getById(name);
             }
 
             if (!playlist) {
@@ -91,32 +99,40 @@ execute = async function (interaction) {
             }
 
             try {
+                await queue?.stop();
                 await distube.play(channel, distubePlaylist);
                 if (shuffle) {
                     await distube.shuffle(interaction);
                 }
             } catch (error) {
-                // interaction.client.Logger.error(error);
+                client.Logger.error("Unable to start playing", error);
                 await interaction.editReply("Impossible de lire le contenu demandé.");
                 if (distube.isLink(distubePlaylist)) {
-                    interaction.followUp(
-                        `Vérifiez que le lien est correct ainsi que la visibilité de la playlist, si elle est publique ou bien non répertoriée.\n${distubePlaylist}`
-                    );
+                    interaction.followUp({
+                        content:
+                            "Vérifiez que le lien est correct ainsi que la visibilité de la playlist: elle doit être ***publique*** ou ***non répertoriée***.\n" +
+                            "**/playlist edit-link** pour modifier le lien et/ou cliquez sur le boutton pour vérifier qu'elle possède la configuration requise.",
+
+                        components: [
+                            new ActionRowBuilder().setComponents(
+                                new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel("Vérifier la configuration").setURL(playlist.getUrl()).setEmoji("🔗")
+                            ),
+                        ],
+                    });
                 }
                 break;
             }
 
-            if (queue?.songs.length > 0) {
-                await interaction.editReply({
-                    content: `Ajout de la playlist **${playlist.name}** à la liste de lecture`,
-                    embeds: [playlist.embed()],
-                });
-            } else {
-                await interaction.editReply({
-                    content: `Lecture de la playlist **${playlist.name}**`,
-                    embeds: [playlist.embed()],
-                });
-            }
+            await interaction.editReply({
+                content: `Lecture de la playlist **${playlist.name}**`,
+                embeds: [playlist.embed()],
+            });
+
+            queue = distube.getQueue(interaction);
+            const song1 = new Song.Song(queue.songs[0]);
+            await interaction.followUp({
+                embeds: [song1.embed()],
+            });
             break;
     }
     return Promise.resolve();
@@ -148,16 +164,22 @@ autocomplete = async function (interaction) {
 
         case "playlist":
             const playlists = await Playlist.getAllListenable(interaction.user.id);
-            choices = playlists.map((playlist) => {
-                return {
-                    name: playlist.display(),
-                    value: playlist.id.toString(),
-                };
-            });
+            choices = playlists
+                .filter((playlist) => playlist.name.toLowerCase().includes(name.toLowerCase()))
+                .map((playlist) => {
+                    return {
+                        name: playlist.display(),
+                        value: playlist.id.toString(),
+                    };
+                });
+
             if (distube.isYoutubePlaylistLink(name)) {
                 choices.unshift({ name, value: name });
             }
             break;
+    }
+    if (choices.length > 25) {
+        choices = choices.slice(0, 25);
     }
     return Promise.resolve(choices);
 };

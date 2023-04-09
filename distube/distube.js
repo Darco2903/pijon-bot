@@ -6,7 +6,7 @@ const options = new Options({
     emitNewSongOnly: false,
     leaveOnEmpty: true,
     leaveOnFinish: false,
-    leaveOnStop: true,
+    leaveOnStop: false,
     savePreviousSongs: true,
     searchSongs: 1,
     youtubeCookie: undefined,
@@ -24,6 +24,8 @@ const options = new Options({
 });
 
 const distube = new CustomDistube(client, options);
+
+distube.setMaxListeners(3);
 
 client.setDistube(distube);
 

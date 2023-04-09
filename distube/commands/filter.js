@@ -32,14 +32,14 @@ execute = async function (interaction) {
     }
 
     const filter = interaction.options.get("filter");
-    
+
     if (filter.value === "clear") {
         queue.filters.clear();
     } else {
         queue.filters.add(filter.value);
     }
 
-    await interaction.reply(`Filtre: ${filter.value}`);
+    await interaction.reply(`Filtre appliqué **${filter.value}**`);
 };
 
 module.exports = new Command({ data, execute });

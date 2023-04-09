@@ -1,14 +1,5 @@
 const { Command } = require("../../utils");
-const {
-    Interaction,
-    SlashCommandBuilder,
-    AutocompleteInteraction,
-    ButtonInteraction,
-    ActionRowBuilder,
-    ButtonBuilder,
-    ButtonStyle,
-    Events,
-} = require("discord.js");
+const { Interaction, SlashCommandBuilder, AutocompleteInteraction, ButtonInteraction, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const CustomDistube = require("../CustomDistube");
 const { Song } = require("../utils");
 
@@ -35,7 +26,6 @@ data = new SlashCommandBuilder()
 /** @param {ButtonInteraction} interaction */
 async function executeRegister(interaction) {
     const songString = interaction.options.getString("song");
-    // const songString = "out of time";
 
     if (songString === "undefined") {
         interaction.editReply("Ce morceau est déjà enregistré");
@@ -45,15 +35,14 @@ async function executeRegister(interaction) {
     /** @type {CustomDistube} */
     const distube = interaction.client.distube;
     const distubeSong = await distube.customSearch(songString);
-    const song = Song.distubeSongToSong(distubeSong);
+    const song = new Song.Song(distubeSong);
 
     const buttons = [
-        new ButtonBuilder().setCustomId("addSongConfirm").setLabel("Enregistrer").setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId("confirm").setLabel("Enregistrer").setStyle(ButtonStyle.Primary),
         new ButtonBuilder().setCustomId("dismiss").setLabel("Annuler").setStyle(ButtonStyle.Danger),
     ];
 
     await interaction.editReply({
-        // content: "J'ai trouvé ceci sur YouTube:",
         embeds: [song.embed()],
         components: [new ActionRowBuilder().setComponents(buttons)],
     });
@@ -67,7 +56,7 @@ async function executeRegister(interaction) {
     collector.on("collect", async (interaction) => {
         let button;
         switch (interaction.customId) {
-            case "addSongConfirm":
+            case "confirm":
                 song.user = interaction.user.username;
                 await song.saveNew();
                 button = new ButtonBuilder().setCustomId("null").setLabel("Enregistré").setStyle(ButtonStyle.Success).setDisabled(true);
@@ -80,7 +69,6 @@ async function executeRegister(interaction) {
 
         collector.stop();
         await interaction.update({
-            // content: `Enregistrer le morceau ${song.display()} ?`,
             components: [new ActionRowBuilder().setComponents(button)],
         });
     });
@@ -96,7 +84,7 @@ async function executeRegister(interaction) {
 async function executeDelete(interaction) {
     const id = interaction.options.getString("song");
     const song = await Song.getByIds(id);
-    
+
     if (!song) {
         interaction.editReply("Ce morceau n'est pas enregistré");
         return;
@@ -132,7 +120,6 @@ async function executeDelete(interaction) {
         }
         collector.stop();
         await interaction.update({
-            // content: `Enregistrer le morceau ${song.display()} ?`,
             components: [new ActionRowBuilder().setComponents(button)],
         });
     });

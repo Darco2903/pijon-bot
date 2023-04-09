@@ -1,11 +1,7 @@
 const { Command } = require("../../utils");
-const { Interaction, SlashCommandBuilder } = require("discord.js");
-const db = require("../../database");
+const { Interaction, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
+const CustomDistube = require("../CustomDistube");
 const { Playlist, Song } = require("../utils");
-
-const {
-    database: { tables },
-} = require("../../config.json");
 
 let data;
 let execute;
@@ -27,7 +23,11 @@ data = new SlashCommandBuilder()
                             .setName("privacy")
                             .setDescription("Visibilité")
                             .setRequired(true)
-                            .addChoices({ name: "Publique", value: "public" }, { name: "Protégée", value: "protected" }, { name: "Privée", value: "private" })
+                            .addChoices(
+                                { name: "Publique - Tout le monde peut écouter et éditer", value: "public" },
+                                { name: "Protégée - Tout le monde peut écouter mais seul le propriétaire peut éditer", value: "protected" },
+                                { name: "Privée - Seulement le propriétaire peut écouter et éditer", value: "private" }
+                            )
                     )
             )
             .addSubcommand((subcommand) =>
@@ -40,7 +40,11 @@ data = new SlashCommandBuilder()
                             .setName("privacy")
                             .setDescription("Visibilité")
                             .setRequired(true)
-                            .addChoices({ name: "Publique", value: "public" }, { name: "Protégée", value: "protected" }, { name: "Privée", value: "private" })
+                            .addChoices(
+                                { name: "Publique - Tout le monde peut écouter et éditer", value: "public" },
+                                { name: "Protégée - Tout le monde peut écouter mais seul le propriétaire peut éditer", value: "protected" },
+                                { name: "Privée - Seulement le propriétaire peut écouter et éditer", value: "private" }
+                            )
                     )
                     .addStringOption((option) =>
                         option.setName("url").setDescription("Lien de la playlist (doit être publique ou non répertoriée)").setRequired(true)
@@ -60,6 +64,20 @@ data = new SlashCommandBuilder()
             .addIntegerOption((option) => option.setName("playlistname").setDescription("Nom de la playlist").setRequired(true).setAutocomplete(true))
             .addStringOption((option) => option.setName("newname").setDescription("Nouveau nom de la playlist").setRequired(true).setAutocomplete(true))
     )
+    .addSubcommand((subcommand) =>
+        subcommand
+            .setName("info")
+            .setDescription("Afficher les informations d'une playlist")
+            .addIntegerOption((option) => option.setName("playlistname").setDescription("Nom de la playlist").setRequired(true).setAutocomplete(true))
+    )
+    .addSubcommand((subcommand) =>
+        subcommand
+            .setName("edit-link")
+            .setDescription("Modifier le lien d'une playlist YouTube")
+            .addIntegerOption((option) => option.setName("playlistyoutubename").setDescription("Nom de la playlist").setRequired(true).setAutocomplete(true))
+            .addStringOption((option) => option.setName("url").setDescription("Lien de la playlist (doit être publique ou non répertoriée)").setRequired(true))
+    )
+    // .addSubcommand((subcommand) => subcommand.setName("list").setDescription("Afficher les playlists"))
     .addSubcommandGroup((group) =>
         group
             .setName("song")
@@ -90,6 +108,8 @@ execute = async function (interaction) {
 
     switch (true) {
         case interaction.options.getSubcommandGroup() === "create": {
+            /** @type {CustomDistube} */
+            const distube = interaction.client.distube;
             const name = interaction.options.getString("playlistname");
             if (name === "undefined") {
                 await interaction.editReply("La playlist existe déjà !");
@@ -105,7 +125,15 @@ execute = async function (interaction) {
                 playlist = new Playlist.PlaylistCustom({ name, author, userid, privacy });
             } else if (interaction.options.getSubcommand() === "youtube") {
                 const url = interaction.options.getString("url");
-                playlist = new Playlist.PlaylistYoutube({ name, author, userid, privacy, url });
+                let ytId;
+                try {
+                    ytId = Playlist.getYtId(url);
+                } catch (error) {
+                    await interaction.editReply("Le lien n'est pas valide !");
+                    break;
+                }
+
+                playlist = new Playlist.PlaylistYoutube({ name, author, userid, privacy, ytId });
             }
 
             await playlist.saveNew();
@@ -120,25 +148,122 @@ execute = async function (interaction) {
                 interaction.editReply("Aucune playlist trouvé");
                 break;
             }
-            await playlist.delete();
-            await interaction.editReply(`Playlist **${playlist.name}** supprimée !`);
+
+            if (playlist.userid !== interaction.user.id) {
+                interaction.editReply("Vous n'êtes pas le propriétaire de cette playlist !");
+                break;
+            }
+
+            const buttons = [
+                new ButtonBuilder().setCustomId("confirm").setLabel("Supprimer").setStyle(ButtonStyle.Danger),
+                new ButtonBuilder().setCustomId("dismiss").setLabel("Annuler").setStyle(ButtonStyle.Primary),
+            ];
+
+            await interaction.editReply({
+                content: "Êtes-vous sûr de vouloir supprimer cette playlist ?",
+                embeds: [playlist.embed()],
+                components: [new ActionRowBuilder().setComponents(buttons)],
+            });
+
+            const filter = (interaction) => buttons.map((button) => button.data.custom_id).includes(interaction.customId);
+            const collector = interaction.channel.createMessageComponentCollector({
+                filter,
+                time: 15000,
+            });
+
+            collector.on("collect", async (interaction) => {
+                let button;
+                switch (interaction.customId) {
+                    case "confirm":
+                        await playlist.delete();
+                        button = new ButtonBuilder().setCustomId("null").setLabel("Supprimée").setStyle(ButtonStyle.Success).setDisabled(true);
+                        break;
+
+                    case "dismiss":
+                        button = new ButtonBuilder().setCustomId("null").setLabel("Annulé").setStyle(ButtonStyle.Primary).setDisabled(true);
+                        break;
+                }
+
+                collector.stop();
+                await interaction.update({
+                    components: [new ActionRowBuilder().setComponents(button)],
+                });
+            });
+
+            collector.on("end", async (collected, reason) => {
+                await interaction.editReply({
+                    components: [new ActionRowBuilder().setComponents(buttons.map((button) => button.setDisabled(true)))],
+                });
+            });
+
             break;
         }
 
         case interaction.options.getSubcommand() === "rename": {
             const id = interaction.options.getInteger("playlistname");
             const newname = interaction.options.getString("newname");
+
             if (newname === "undefined") {
                 await interaction.editReply("Une playlist avec ce nom existe déjà !");
                 break;
             }
+
             const playlist = await Playlist.getById(id);
             if (!playlist) {
                 interaction.editReply("Aucune playlist trouvé");
                 break;
             }
+
+            if (playlist.userid !== interaction.user.id) {
+                interaction.editReply("Vous n'êtes pas le propriétaire de cette playlist !");
+                break;
+            }
+
             await playlist.setName(newname);
             await interaction.editReply(`Playlist **${playlist.name}** renommée en **${newname}** !`);
+            break;
+        }
+
+        case interaction.options.getSubcommand() === "info": {
+            const id = interaction.options.getInteger("playlistname");
+
+            const playlist = await Playlist.getById(id);
+            if (!playlist) {
+                interaction.editReply("Aucune playlist trouvé");
+                break;
+            }
+
+            await interaction.editReply({
+                embeds: [playlist.fullEmbed()],
+            });
+            break;
+        }
+
+        case interaction.options.getSubcommand() === "edit-link": {
+            const id = interaction.options.getInteger("playlistyoutubename");
+            const url = interaction.options.getString("url");
+            let ytId;
+
+            try {
+                ytId = Playlist.getYtId(url);
+            } catch (error) {
+                await interaction.editReply("Le lien n'est pas valide !");
+                break;
+            }
+
+            const playlist = await Playlist.getById(id);
+            if (!playlist) {
+                interaction.editReply("Aucune playlist trouvé");
+                break;
+            }
+
+            if (playlist.userid !== interaction.user.id) {
+                interaction.editReply("Vous n'êtes pas le propriétaire de cette playlist !");
+                break;
+            }
+
+            await playlist.setYtId(ytId);
+            await interaction.editReply(`Playlist **${playlist.name}** modifiée !`);
             break;
         }
 
@@ -149,6 +274,11 @@ execute = async function (interaction) {
             const playlist = await Playlist.getById(playlistid);
             if (!playlist) {
                 interaction.editReply("Aucune playlist trouvé");
+                break;
+            }
+
+            if (playlist.userid !== interaction.user.id && playlist.privacy != "public") {
+                interaction.editReply("Vous n'êtes pas le propriétaire de cette playlist !");
                 break;
             }
 
@@ -194,7 +324,7 @@ const autocomplete = async function (interaction) {
 
     switch (true) {
         case interaction.options.getSubcommandGroup() === "create":
-        case interaction.options.getSubcommand() === "rename" && option.name === "newname": {
+        case option.name === "newname": {
             const playlists = await Playlist.getByUserId(interaction.user.id);
             choices = playlists
                 .filter((playlist) => playlist.display().toLowerCase().includes(option.value.toLowerCase()))
@@ -205,18 +335,26 @@ const autocomplete = async function (interaction) {
             break;
         }
 
-        case interaction.options.getSubcommand() === "delete":
-        case interaction.options.getSubcommand() === "rename" && option.name === "playlistname": {
+        case option.name === "playlistname": {
             const playlists = await Playlist.getByUserId(interaction.user.id);
             choices = playlists
                 .filter((playlist) => playlist.display().toLowerCase().includes(option.value.toLowerCase()))
                 .map((playlist) => ({ name: playlist.display(), value: playlist.id }));
             break;
         }
+
         case interaction.options.getSubcommandGroup() === "song" && option.name === "playlistcustomname": {
             const playlists = await Playlist.getByUserId(interaction.user.id);
             choices = playlists
                 .filter((playlist) => playlist.type === Playlist.Type.CUSTOM && playlist.display().toLowerCase().includes(option.value.toLowerCase()))
+                .map((playlist) => ({ name: playlist.display(), value: playlist.id }));
+            break;
+        }
+
+        case option.name === "playlistyoutubename": {
+            const playlists = await Playlist.getByUserId(interaction.user.id);
+            choices = playlists
+                .filter((playlist) => playlist.type === Playlist.Type.YOUTUBE && playlist.display().toLowerCase().includes(option.value.toLowerCase()))
                 .map((playlist) => ({ name: playlist.display(), value: playlist.id }));
             break;
         }

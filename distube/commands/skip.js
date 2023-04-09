@@ -1,6 +1,7 @@
 const { Command } = require("../../utils");
 const { Interaction, SlashCommandBuilder } = require("discord.js");
 const { DisTube } = require("distube");
+const { Song } = require("../utils");
 
 let data;
 let execute;
@@ -13,24 +14,30 @@ execute = async function (interaction) {
     const distube = interaction.client.distube;
     const queue = distube.getQueue(interaction);
 
+    await interaction.deferReply();
+
     if (!queue) {
-        await interaction.reply("Faut mettre une musique avant de faire ça");
-        return;
+        await interaction.editReply("Aucune lecture en cours");
+        return Promise.resolve();
     }
 
-    if (queue.songs.length < 2) {
-        await interaction.reply(`Rien à suivre`);
-        return;
+    if (!queue.songs[1] && !queue.autoplay) {
+        await interaction.editReply(`Rien à suivre`);
+        return Promise.resolve();
     }
 
     await queue.skip();
 
-    let nextSong = queue.songs[1];
-    await interaction.reply(`:arrow_forward: Lecture de **${nextSong.name}**`);
-
     if (queue.paused) {
-        distube.resume(interaction);
+        queue.resume();
     }
+
+    let song = new Song.Song(queue.songs[1]);
+
+    await interaction.editReply({
+        embeds: [song.embed()],
+    });
+    return Promise.resolve();
 };
 
 module.exports = new Command({ data, execute });
