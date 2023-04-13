@@ -1,10 +1,11 @@
 const { ClientPresenceStatusData, PresenceUpdateStatus } = require("discord.js");
 const ActivitiesOptions = require("./ActivitiesOptions");
 const PresenceOptions = require("./PresenceOptions");
-
-const { presence: presenceConfig } = require("../config.json");
 const CustomClient = require("../CustomClient");
-const { preset: presencePreset } = presenceConfig;
+
+const {
+    presence: { preset: presencePresets },
+} = require("../config.json");
 
 class Presence {
     /**
@@ -35,12 +36,12 @@ class Presence {
      * @param {string} name
      */
     setPreset(name) {
-        this.set(presencePreset[name].activities, PresenceUpdateStatus[presencePreset[name].status]);
+        this.set(presencePresets[name].activities, PresenceUpdateStatus[presencePresets[name].status]);
     }
 
     setRandom() {
-        const random = Math.floor(Math.random() * Object.keys(presencePreset).length);
-        const preset = Object.values(presencePreset)[random];
+        const random = Math.floor(Math.random() * Object.keys(presencePresets).length);
+        const preset = Object.values(presencePresets)[random];
         if (preset == this.currentPresence) {
             this.setRandom();
             return;
