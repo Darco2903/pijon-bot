@@ -93,6 +93,21 @@ function getYtId(url) {
     throw new Error("Invalid youtube playlist url");
 }
 
+/**
+ * @param {Number} songId
+ * @returns {Promise<boolean>}
+ */
+async function isSongInAnyPlaylist(songId) {
+    songId = songId.toString();
+    const playlists = await db.fetchAllByFieldAsync("type", Type.CUSTOM, tables.playlist);
+    for (const playlist of playlists) {
+        if (playlist.songs.includes(songId)) {
+            return Promise.resolve(true);
+        }
+    }
+    return Promise.resolve(false);
+}
+
 module.exports = {
     Playlist,
     PlaylistCustom,
@@ -104,4 +119,5 @@ module.exports = {
     getByUserId,
     getAllListenable,
     getYtId,
+    isSongInAnyPlaylist,
 };
