@@ -1,5 +1,6 @@
 const { Client } = require("discord.js");
-const { DisTube } = require("distube");
+const CustomDistube = require("./distube/CustomDistube");
+const CustomOpenAI = require("./openai/CustomOpenAI");
 const Utils = require("./utils");
 
 const { client: clientConfig } = require("./config.json");
@@ -28,11 +29,19 @@ class CustomClient extends Client {
     }
 
     /**
-     * @param {DisTube} distube
+     * @param {CustomDistube} distube
      * @returns {void}
      */
     setDistube(distube) {
         this.distube = distube;
+    }
+
+    /**
+     * @param {CustomOpenAI} openai
+     * @returns {void}
+     */
+    setOpenAI(openai) {
+        this.openai = openai;
     }
 }
 
