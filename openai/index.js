@@ -10,13 +10,13 @@ client.CommandRegister.registerCommands(__dirname);
 
 client.on(Events.MessageCreate, async (msg) => {
     const repliedMessage = msg.reference ? await msg.channel.messages.fetch(msg.reference.messageId) : null;
-    if (repliedMessage?.author.id === client.user.id) {
+    if (repliedMessage?.author.id === client.user.id && !msg.author.bot) {
         // skip
     } else if (
         msg.author.bot ||
-        msg.content.indexOf("/") === 0 ||
-        msg.content.indexOf("!") === 0 ||
-        (msg.channel.name != "pijon-bot" && msg.content.indexOf(`<@${client.user.id}>`) != 0 && msg.channel.type != ChannelType.DM) ||
+        msg.content.startsWith("/") ||
+        msg.content.startsWith("!") ||
+        (msg.channel.name != "pijon-bot" && !msg.content.startsWith(`<@${client.user.id}>`) && msg.channel.type != ChannelType.DM) ||
         (repliedMessage && repliedMessage.author.id != client.user.id)
     )
         return;
