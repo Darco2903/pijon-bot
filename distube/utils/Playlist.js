@@ -63,7 +63,7 @@ class Playlist extends BaseMusicObject {
      */
     async saveModif(data) {
         try {
-            Object.assign(data, { lastModified: new Date().toLocaleString("fr-FR", { hour12: false }) });
+            Object.assign(data, { lastModified: this.getStringDate() });
             await super.saveModif(data, tables.playlist);
             return Promise.resolve(data);
         } catch (error) {
@@ -104,7 +104,7 @@ class Playlist extends BaseMusicObject {
      * @returns {string}
      */
     display() {
-        return `${this.name} - ${this.type} | ${this.privacy} - ${this.author}`;
+        return `${this.name} - ${this.author}`;
     }
 
     getEmbedFields() {
@@ -112,7 +112,7 @@ class Playlist extends BaseMusicObject {
     }
 
     embed() {
-        return super.embed().addFields({ name: "Type", value: this.type, inline: true }, { name: "Visibilité", value: this.privacy, inline: true });
+        return super.embed().addFields({ name: "Type", value: this.type, inline: true }, { name: "Visibilité", value: this.privacy, inline: true }, { name: "Dernière modification", value: this.lastModified });
     }
 
     fullEmbed() {
