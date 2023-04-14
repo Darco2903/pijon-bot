@@ -1,30 +1,21 @@
-const { Message, User } = require("discord.js");
+const { Message } = require("discord.js");
 const PijonChat = require("./PijonChat");
-const client = require("../../client");
+const CustomClient = require("../../CustomClient");
 
 const {
     openai: { chatTimeout },
 } = require("../../config.json");
 
-/**
- * @returns {PijonPersonnalChat}
- */
-User.prototype.getChat = function () {
-    if (!this.chat) {
-        this.chat = new PijonPersonnalChat(this.username);
-    }
-    return this.chat;
-};
-
 class PijonPersonnalChat extends PijonChat {
     /**
      * @constructor
+     * @param {CustomClient} client - L'utilisateur Discord qui est Pijon Bot.
      * @param {string} username - Le nom d'utilisateur avec qui le bot discute sur Discord.
      * @throws {Error} - Si le nom d'utilisateur est vide.
      * @returns {PijonPersonnalChat} - L'instance de PijonPersonnalChat.
      * */
-    constructor(username) {
-        super(`Tu es Pijon Bot. Tu es en discussion avec ${username} sur Discord.`);
+    constructor(client, username) {
+        super(client, `Tu es Pijon Bot. Tu es en discussion avec ${username} sur Discord.`);
         if (!username) {
             throw new Error("username cannot be empty");
         }
@@ -35,7 +26,7 @@ class PijonPersonnalChat extends PijonChat {
 
     reset() {
         super.reset(this.username);
-        // client.Logger.debug(`${this.username} personnal conversation reset`);
+        this.client.Logger.debug(`${this.username} personnal conversation reset`);
     }
 
     #initResetTimeout() {
@@ -51,9 +42,9 @@ class PijonPersonnalChat extends PijonChat {
      * @returns {Promise<{message: Message, replyContent: string}>}
      */
     send(message, streamed) {
-        client.Logger.chat(message.author.username, message.content);
+        this.client.Logger.chat(message.author.username, message.content);
         const res = streamed ? this.#sendStreamed(message) : this.#sendNonStreamed(message);
-        res.then(({ replyContent }) => client.Logger.chat("Pijon Bot", replyContent));
+        res.then(({ replyContent }) => this.client.Logger.chat("Pijon Bot", replyContent));
         return res;
     }
 

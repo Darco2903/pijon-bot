@@ -5,6 +5,7 @@ const client = require("../client");
 const {
     openai: { streamed },
 } = require("../config.json");
+const openai = require("./openai");
 
 client.CommandRegister.registerCommands(__dirname);
 
@@ -25,7 +26,13 @@ client.on(Events.MessageCreate, async (msg) => {
 
     msg.content = msg.mentions.has(client.user.id) ? msg.content.replace(`<@${client.user.id}>`, client.user.username) : msg.content;
 
-    const chat = msg.author.chat || (msg.author.chat = new PijonPersonnalChat(msg.author.username));
+    if (!openai.personnalChats.has(msg.author.id)) {
+        openai.personnalChats.set(msg.author.id, new PijonPersonnalChat(client, msg.author.username));
+    }
+
+    const chat = openai.personnalChats.get(msg.author.id);
+
+    // const chat = msg.author.chat || (msg.author.chat = new PijonPersonnalChat(msg.author.username));
 
     const { message, replyContent } = await chat.send(msg, streamed);
 

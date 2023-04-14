@@ -1,5 +1,7 @@
+const { Collection } = require("discord.js");
 const { OpenAIApi } = require("openai");
 const CustomClient = require("../CustomClient");
+const { PijonPersonnalChat } = require("./utils");
 
 class CustomOpenAI extends OpenAIApi {
     /**
@@ -9,6 +11,8 @@ class CustomOpenAI extends OpenAIApi {
     constructor(client, config) {
         super(config);
         this.client = client;
+        /** @type {Collection<PijonPersonnalChat()>} */
+        this.personnalChats = new Collection();
     }
 }
 

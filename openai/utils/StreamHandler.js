@@ -1,6 +1,5 @@
 const { Message } = require("discord.js");
 const { IncomingMessage } = require("http");
-const client = require("../../client");
 
 /**
  * Un gestionnaire de flux qui écoute les données et met à jour un message Discord en conséquence.
@@ -27,7 +26,6 @@ class StreamHandler {
             this.content = this.content.replace(this.prompt, "");
             // this.#processEdit();
         });
-        client.Logger.debug("StreamHandler initialized");
     }
 
     /**
@@ -48,9 +46,7 @@ class StreamHandler {
                     this.process = true;
                     this.#processEdit();
                 }
-            } catch (error) {
-                client.Logger.error("Conversion error", `${error} -> '${str}'`);
-            }
+            } catch (error) {}
         });
     }
 

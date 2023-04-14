@@ -1,8 +1,7 @@
 const { Message } = require("discord.js");
 const Conversation = require("./Conversation");
 const StreamHandler = require("./StreamHandler");
-const client = require("../../client");
-const openai = require("../openai");
+const CustomClient = require("../../CustomClient");
 
 const ERRMESSAGE = "Une erreur est survenue, veuillez réessayer.";
 
@@ -11,9 +10,11 @@ class PijonChat {
     /**
      * Crée une instance de PijonChat.
      * @constructor
+     * @param {CustomClient} client - Le client Discord à utiliser.
      * @param {Conversation|string} conversation - La conversation à utiliser pour initialiser la conversation.
      */
-    constructor(conversation) {
+    constructor(client, conversation) {
+        this.client = client;
         this.#initConv =
             conversation instanceof Conversation ? conversation : typeof conversation === "string" ? new Conversation(conversation) : new Conversation();
         this.conversation = this.#initConv.slice();
@@ -25,7 +26,7 @@ class PijonChat {
      */
     reset(message) {
         this.conversation = this.#initConv.slice();
-        client.Logger.debug(`Conversation reset: ${message}`);
+        this.client.Logger.debug(`Conversation reset: ${message}`);
     }
 
     /**
@@ -56,18 +57,18 @@ class PijonChat {
      */
     getReply(conversation) {
         return new Promise((resolve, reject) => {
-            openai
+            this.client.openai
                 .createChatCompletion(this.#createConfig(conversation, false))
                 .then((res) => {
                     if (res.data.choices) {
                         resolve(res.data.choices[0].message.content);
                     } else {
-                        client.Logger.warn("getReply: received empty content");
+                        this.client.Logger.warn("getReply: received empty content");
                         reject(ERRMESSAGE);
                     }
                 })
                 .catch((err) => {
-                    client.Logger.error("getReply:", err.toString());
+                    this.client.Logger.error("getReply:", err.toString());
                     reject(ERRMESSAGE);
                 });
         });
@@ -82,7 +83,7 @@ class PijonChat {
      */
     async getReplyStreamed(conversation, message) {
         return new Promise((resolve, reject) => {
-            openai
+            this.client.openai
                 .createChatCompletion(this.#createConfig(conversation, true), { responseType: "stream" })
                 .then(async (res) => {
                     const reply = await message.reply(":white_small_square:");
@@ -93,7 +94,7 @@ class PijonChat {
                 })
                 .catch(async (err) => {
                     const reply = await message.reply(":white_small_square:");
-                    client.Logger.error("getReplyStreamed", err);
+                    this.client.Logger.error("getReplyStreamed", err);
                     reject({ message: reply, replyContent: ERRMESSAGE });
                 });
         });
