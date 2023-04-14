@@ -42,7 +42,7 @@ class Playlist extends BaseMusicObject {
         this.type = type;
         this.userid = userid;
         this.privacy = privacy ?? Privacy.PUBLIC;
-        this.lastModified = lastModified;
+        this.lastModified = lastModified ?? "jamais";
     }
 
     /**
@@ -112,7 +112,13 @@ class Playlist extends BaseMusicObject {
     }
 
     embed() {
-        return super.embed().addFields({ name: "Type", value: this.type, inline: true }, { name: "Visibilité", value: this.privacy, inline: true }, { name: "Dernière modification", value: this.lastModified });
+        return super
+            .embed()
+            .addFields(
+                { name: "Type", value: this.type, inline: true },
+                { name: "Visibilité", value: this.privacy, inline: true },
+                { name: "Dernière modification", value: this.lastModified }
+            );
     }
 
     fullEmbed() {

@@ -88,7 +88,7 @@ const playList = new orm.EntitySchema({
         },
         lastModified: {
             type: "text",
-            nullable: true,
+            nullable: false,
         },
         ytId: {
             type: "text",
