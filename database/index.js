@@ -1,4 +1,4 @@
-const DataBase = require("./database");
+const DataBase = require("./DataBase");
 const entities = require("./entities");
 
 const { database: dbConfig } = require("../config.json");
