@@ -1,16 +1,16 @@
 const { Command } = require("../../utils");
-const { Interaction, SlashCommandBuilder } = require("discord.js");
-const { DisTube } = require("distube");
+const { CommandInteraction, SlashCommandBuilder } = require("discord.js");
 const { Song } = require("../utils");
+const CustomDistube = require("../CustomDistube");
 
 let data;
 let execute;
 
 data = new SlashCommandBuilder().setName("skip").setDescription("[Music] Passer au morceau suivant");
 
-/** @param {Interaction} interaction */
+/** @param {CommandInteraction} interaction */
 execute = async function (interaction) {
-    /** @type {DisTube} */
+    /** @type {CustomDistube} */
     const distube = interaction.client.distube;
     const queue = distube.getQueue(interaction);
 
@@ -37,6 +37,7 @@ execute = async function (interaction) {
     await interaction.editReply({
         embeds: [song.embed()],
     });
+
     return Promise.resolve();
 };
 

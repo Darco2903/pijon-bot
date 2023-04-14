@@ -1,7 +1,7 @@
 const { Command } = require("../../utils");
-const { Interaction, SlashCommandBuilder } = require("discord.js");
+const { CommandInteraction, SlashCommandBuilder } = require("discord.js");
 const filters = require("../utils/filters.json");
-const { DisTube } = require("distube");
+const CustomDistube = require("../CustomDistube");
 
 let data;
 let execute;
@@ -12,7 +12,7 @@ data = new SlashCommandBuilder()
     .addStringOption((option) =>
         option
             .setName("filter")
-            .setDescription("Choose filter to apply")
+            .setDescription("Choisir le filtre à appliquer")
             .setRequired(true)
             .addChoices(
                 ...Object.entries(filters).map(([key, value]) => {
@@ -20,14 +20,14 @@ data = new SlashCommandBuilder()
                 })
             )
     );
-/** @param {Interaction} interaction */
+/** @param {CommandInteraction} interaction */
 execute = async function (interaction) {
-    /** @type {DisTube} */
+    /** @type {CustomDistube} */
     const distube = interaction.client.distube;
     const queue = distube.getQueue(interaction);
 
     if (!queue) {
-        await interaction.reply("Faut mettre une musique avant de faire ça");
+        await interaction.reply("Aucune lecture en cours");
         return;
     }
 

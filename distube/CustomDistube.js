@@ -1,7 +1,7 @@
 const { ActivityType, PresenceUpdateStatus } = require("discord.js");
 const { DisTube, Options, SearchResultType, Song: DistubeSong } = require("distube");
 const { BackupQueueManager, Song } = require("./utils");
-const { ActivitiesOptions } = require("../utils");
+const Utils = require("../utils");
 const CustomClient = require("../CustomClient");
 
 const YT_SHORT_URL = "https://youtu.be/";
@@ -23,7 +23,7 @@ class CustomDistube extends DisTube {
      * @returns {void}
      */
     setSongPresence(name) {
-        this.client.Presence.set(new ActivitiesOptions({ name, type: ActivityType.Listening }), PresenceUpdateStatus.Online);
+        this.client.Presence.set(new Utils.ActivitiesOptions({ name, type: ActivityType.Listening }), PresenceUpdateStatus.Online);
     }
 
     /**

@@ -1,9 +1,10 @@
 const { Collection } = require("discord.js");
-const { Distube, Queue, QueueManager, Playlist } = require("distube");
+const { Queue, QueueManager, Playlist } = require("distube");
+const CustomDistube = require("../CustomDistube");
 
 class BackupQueueManager extends QueueManager {
     /**
-     * @param {Distube} distube
+     * @param {CustomDistube} distube
      */
     constructor(distube) {
         super(distube);
@@ -22,11 +23,12 @@ class BackupQueueManager extends QueueManager {
         this.distube.on("disconnect", (queue) => {
             if (queue.playing) {
                 this.restore(queue);
+                this.distube.client.Logger.debug("Queue restored");
             }
         });
         this.distube.on("deleteQueue", (queue) => {
-            // console.log("queueDelete");
             clearInterval(this.saveIntervals.get(this.#getGuildId(queue)));
+            this.distube.client.Logger.debug("Queue deleted");
         });
     }
 
@@ -45,8 +47,7 @@ class BackupQueueManager extends QueueManager {
             voiceChannel: queue.voice.channel,
         };
         this.collection.set(this.#getGuildId(queue), savedQueue);
-        // this.distube.client.Logger.debug("Queue saved");
-        // console.log(savedQueue.currentTime, savedQueue.jump);
+        this.distube.client.Logger.debug("Queue saved");
     }
 
     /**

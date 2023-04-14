@@ -1,7 +1,7 @@
 const { Command } = require("../../utils");
-const { Interaction, SlashCommandBuilder } = require("discord.js");
-const CustomDistube = require("../CustomDistube");
+const { CommandInteraction, SlashCommandBuilder } = require("discord.js");
 const { Song } = require("../utils");
+const CustomDistube = require("../CustomDistube");
 
 let data;
 let execute;
@@ -12,7 +12,7 @@ data = new SlashCommandBuilder()
     .setDescription("[Music] Lecture de musique")
     .addIntegerOption((option) => option.setName("index").setDescription("Index dans la liste de lecture").setRequired(true).setAutocomplete(true));
 
-/** @param {Interaction} interaction */
+/** @param {CommandInteraction} interaction */
 execute = async function (interaction) {
     /** @type {CustomDistube} */
     const distube = interaction.client.distube;

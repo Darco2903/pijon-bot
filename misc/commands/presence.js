@@ -16,11 +16,11 @@ data = new SlashCommandBuilder()
     .addSubcommandGroup((group) =>
         group
             .setName("set")
-            .setDescription("Définir la présence du bot")
+            .setDescription("[Misc] Définir la présence du bot")
             .addSubcommand((subcommand) =>
                 subcommand
                     .setName("custom")
-                    .setDescription("Définir une présence personnalisée")
+                    .setDescription("[Misc] Définir une présence personnalisée")
                     .addStringOption((option) =>
                         option
                             .setName("type")
@@ -51,7 +51,7 @@ data = new SlashCommandBuilder()
             .addSubcommand((subcommand) =>
                 subcommand
                     .setName("preset")
-                    .setDescription("Définir un preset de présence")
+                    .setDescription("[Misc] Définir un preset de présence")
                     .addStringOption((option) => option.setName("preset").setDescription("Preset de présence").setRequired(true).setAutocomplete(true))
             )
     );
@@ -81,6 +81,7 @@ execute = async function (interaction) {
     }
 
     await interaction.reply("Présence définie");
+
     return Promise.resolve();
 };
 

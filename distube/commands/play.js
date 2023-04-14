@@ -1,8 +1,8 @@
 const { Command } = require("../../utils");
-const { Interaction, SlashCommandBuilder, ChannelType, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, CommandInteraction, SlashCommandBuilder } = require("discord.js");
+const { Song, Playlist } = require("../utils");
 const CustomClient = require("../../CustomClient");
 const CustomDistube = require("../CustomDistube");
-const { Song, Playlist } = require("../utils");
 const PlaylistYoutube = require("../utils/PlaylistYoutube");
 
 let data;
@@ -15,21 +15,20 @@ data = new SlashCommandBuilder()
     .addSubcommand((subcommand) =>
         subcommand
             .setName("song")
-            .setDescription("Lecture d'une musique")
+            .setDescription("[Music] Lecture d'une musique")
             .addStringOption((option) => option.setName("song").setDescription("Titre ou lien Youtube").setRequired(true).setAutocomplete(true))
-            .addBooleanOption((option) => option.setName("shuffle").setDescription("Lecture aléatoire").setRequired(false))
             .addChannelOption((option) => option.setName("channel").setDescription("Salon vocal").addChannelTypes(ChannelType.GuildVoice).setRequired(false))
     )
     .addSubcommand((subcommand) =>
         subcommand
             .setName("playlist")
-            .setDescription("Lecture d'une playlist")
+            .setDescription("[Music] Lecture d'une playlist")
             .addStringOption((option) => option.setName("playlist").setDescription("Nom de la playlist").setRequired(true).setAutocomplete(true))
             .addBooleanOption((option) => option.setName("shuffle").setDescription("Lecture aléatoire").setRequired(false))
             .addChannelOption((option) => option.setName("channel").setDescription("Salon vocal").addChannelTypes(ChannelType.GuildVoice).setRequired(false))
     );
 
-/** @param {Interaction} interaction */
+/** @param {CommandInteraction} interaction */
 execute = async function (interaction) {
     /** @type {CustomClient} */
     const client = interaction.client;
@@ -112,7 +111,6 @@ execute = async function (interaction) {
                         content:
                             "Vérifiez que le lien est correct ainsi que la visibilité de la playlist: elle doit être ***publique*** ou ***non répertoriée***.\n" +
                             "**/playlist edit-link** pour modifier le lien et/ou cliquez sur le boutton pour vérifier qu'elle possède la configuration requise.",
-
                         components: [
                             new ActionRowBuilder().setComponents(
                                 new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel("Vérifier la configuration").setURL(playlist.getUrl()).setEmoji("🔗")
@@ -129,9 +127,9 @@ execute = async function (interaction) {
             });
 
             queue = distube.getQueue(interaction);
-            const song1 = new Song.Song(queue.songs[0]);
+            const playingSong = new Song.Song(queue.songs[0]);
             await interaction.followUp({
-                embeds: [song1.embed()],
+                embeds: [playingSong.embed()],
             });
             break;
     }

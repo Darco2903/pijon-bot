@@ -1,6 +1,5 @@
 const { Command } = require("../../utils");
-const { Interaction, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
-const CustomDistube = require("../CustomDistube");
+const { ActionRowBuilder, AutocompleteInteraction, ButtonBuilder, ButtonStyle, CommandInteraction, SlashCommandBuilder } = require("discord.js");
 const { Playlist, Song } = require("../utils");
 
 let data;
@@ -12,11 +11,11 @@ data = new SlashCommandBuilder()
     .addSubcommandGroup((group) =>
         group
             .setName("create")
-            .setDescription("Créer une playlist")
+            .setDescription("[Music] Créer une playlist")
             .addSubcommand((subcommand) =>
                 subcommand
                     .setName("custom")
-                    .setDescription("Créer une playlist custom")
+                    .setDescription("[Music] Créer une playlist custom")
                     .addStringOption((option) => option.setName("playlistname").setDescription("Nom de la playlist").setRequired(true).setAutocomplete(true))
                     .addStringOption((option) =>
                         option
@@ -33,7 +32,7 @@ data = new SlashCommandBuilder()
             .addSubcommand((subcommand) =>
                 subcommand
                     .setName("youtube")
-                    .setDescription("Ajouter une playlist YouTube")
+                    .setDescription("[Music] Ajouter une playlist YouTube")
                     .addStringOption((option) => option.setName("playlistname").setDescription("Nom de la playlist").setRequired(true).setAutocomplete(true))
                     .addStringOption((option) =>
                         option
@@ -54,38 +53,37 @@ data = new SlashCommandBuilder()
     .addSubcommand((subcommand) =>
         subcommand
             .setName("delete")
-            .setDescription("Supprimer une playlist")
+            .setDescription("[Music] Supprimer une playlist")
             .addIntegerOption((option) => option.setName("playlistname").setDescription("Nom de la playlist").setRequired(true).setAutocomplete(true))
     )
     .addSubcommand((subcommand) =>
         subcommand
             .setName("rename")
-            .setDescription("Renommer une playlist")
+            .setDescription("[Music] Renommer une playlist")
             .addIntegerOption((option) => option.setName("playlistname").setDescription("Nom de la playlist").setRequired(true).setAutocomplete(true))
             .addStringOption((option) => option.setName("newname").setDescription("Nouveau nom de la playlist").setRequired(true).setAutocomplete(true))
     )
     .addSubcommand((subcommand) =>
         subcommand
             .setName("info")
-            .setDescription("Afficher les informations d'une playlist")
+            .setDescription("[Music] Afficher les informations d'une playlist")
             .addIntegerOption((option) => option.setName("playlistname").setDescription("Nom de la playlist").setRequired(true).setAutocomplete(true))
     )
     .addSubcommand((subcommand) =>
         subcommand
             .setName("edit-link")
-            .setDescription("Modifier le lien d'une playlist YouTube")
+            .setDescription("[Music] Modifier le lien d'une playlist YouTube")
             .addIntegerOption((option) => option.setName("playlistyoutubename").setDescription("Nom de la playlist").setRequired(true).setAutocomplete(true))
             .addStringOption((option) => option.setName("url").setDescription("Lien de la playlist (doit être publique ou non répertoriée)").setRequired(true))
     )
-    // .addSubcommand((subcommand) => subcommand.setName("list").setDescription("Afficher les playlists"))
     .addSubcommandGroup((group) =>
         group
             .setName("song")
-            .setDescription("Gestionaire de musique")
+            .setDescription("[Music] Gestionaire de musique")
             .addSubcommand((subcommand) =>
                 subcommand
                     .setName("add")
-                    .setDescription("Ajouter une musique à une playlist")
+                    .setDescription("[Music] Ajouter une musique à une playlist")
                     .addIntegerOption((option) =>
                         option.setName("playlistcustomname").setDescription("Nom de la playlist").setRequired(true).setAutocomplete(true)
                     )
@@ -94,7 +92,7 @@ data = new SlashCommandBuilder()
             .addSubcommand((subcommand) =>
                 subcommand
                     .setName("remove")
-                    .setDescription("Supprimer une musique d'une playlist")
+                    .setDescription("[Music] Supprimer une musique d'une playlist")
                     .addIntegerOption((option) =>
                         option.setName("playlistcustomname").setDescription("Nom de la playlist").setRequired(true).setAutocomplete(true)
                     )
@@ -102,14 +100,12 @@ data = new SlashCommandBuilder()
             )
     );
 
-/** @param {Interaction} interaction */
+/** @param {CommandInteraction} interaction */
 execute = async function (interaction) {
     await interaction.deferReply();
 
     switch (true) {
         case interaction.options.getSubcommandGroup() === "create": {
-            /** @type {CustomDistube} */
-            const distube = interaction.client.distube;
             const name = interaction.options.getString("playlistname");
             if (name === "undefined") {
                 await interaction.editReply("La playlist existe déjà !");
@@ -317,7 +313,7 @@ execute = async function (interaction) {
     return Promise.resolve();
 };
 
-/** @param {Interaction} interaction */
+/** @param {AutocompleteInteraction} interaction */
 const autocomplete = async function (interaction) {
     const option = interaction.options.getFocused(true);
     let choices;

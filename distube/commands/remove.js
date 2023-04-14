@@ -1,5 +1,5 @@
 const { Command } = require("../../utils");
-const { Interaction, SlashCommandBuilder, ChannelType } = require("discord.js");
+const { AutocompleteInteraction, CommandInteraction, SlashCommandBuilder } = require("discord.js");
 const CustomDistube = require("../CustomDistube");
 
 let data;
@@ -13,7 +13,7 @@ data = new SlashCommandBuilder()
         option.setName("position").setDescription("Position de la musique dans la file de lecture").setRequired(true).setAutocomplete(true)
     );
 
-/** @param {Interaction} interaction */
+/** @param {CommandInteraction} interaction */
 execute = async function (interaction) {
     /** @type {CustomDistube} */
     const distube = interaction.client.distube;
@@ -45,7 +45,7 @@ execute = async function (interaction) {
             await interaction.editReply("Aucune musique trouvée");
             return Promise.resolve();
         }
-        
+
         removed = removed[0];
         await interaction.editReply(`**${removed?.name}** a été supprimé de la file de lecture`);
     }, 200);

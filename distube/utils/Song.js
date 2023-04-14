@@ -4,7 +4,7 @@ const BaseMusicObject = require("./BaseMusicObject");
 const db = require("../../database");
 
 /**
- * @typedef {"song" | "songRecent"} Table
+ * @typedef {"song"} Table
  */
 const {
     database: { tables },
@@ -27,18 +27,19 @@ class Song extends BaseMusicObject {
         if (data instanceof DistubeSong || data instanceof SearchResultVideo) {
             data = {
                 ytId: data.id,
-                streamURL: data.url,
+                streamURL: data.streamURL,
                 name: data.name,
                 author: data.uploader.name,
                 duration: data.duration,
             };
         }
-        const { id, ytId, streamURL, name, author, duration, nbPlayed, user, lastPlayed, creationDate } = data;
+        const { id, ytId, streamURL, name, author, duration, nbPlayed, user, userid, lastPlayed, creationDate } = data;
         super({ id, name, author, creationDate });
         this.ytId = ytId;
         this.streamURL = streamURL;
         this.duration = duration;
         this.user = user;
+        this.userid = userid;
         this.nbPlayed = nbPlayed || 0;
         this.lastPlayed = lastPlayed;
     }
@@ -94,18 +95,17 @@ class Song extends BaseMusicObject {
     }
 
     /**
-     * @param {string} url
+     * @param {string} userid
      */
-    async setUrl(url) {
-        try {
-            if (!this.id) {
-                throw new Error("Song not registered");
-            }
-            this.ytId = url;
-            await db.updatePartialDataAsync(this.id, { url }, tables.song);
-        } catch (error) {
-            return Promise.reject(error);
-        }
+    setUserid(userid) {
+        this.userid = userid;
+    }
+
+    /**
+     * @param {string} streamURL
+     */
+    setStreamURL(streamURL) {
+        this.streamURL = streamURL;
     }
 
     getUrl() {
@@ -135,22 +135,6 @@ class Song extends BaseMusicObject {
             .setImage(this.getImage())
             .setURL(this.getUrl())
             .addFields({ name: "Nom", value: this.name }, { name: "Auteur", value: this.author }, { name: "Durée", value: this.getFormattedDuration() });
-    }
-
-    /**
-     * @description Convert a Distube Song to a Song
-     * @param {DistubeSong|SearchResultVideo} songData
-     * @returns {Song}
-     */
-    toDistubeSongToSong(songData) {
-        const data = Object.assign(
-            {
-                ytId: getYtId(songData.url),
-                author: songData.uploader.name,
-            },
-            songData
-        );
-        return new Song(data);
     }
 
     /**
@@ -189,8 +173,7 @@ function getYtId(url) {
 /**
  * @description Get songs by their id
  * @param {Number|Number[]} id
- * @returns {Promise<Song|Song[], ?string>}
- * @throws {Promise<string>}
+ * @returns {Promise<Song|Song[]|null[], ?string>}
  */
 async function getByIds(ids) {
     try {
@@ -211,15 +194,13 @@ async function getByIds(ids) {
 /**
  * @description Get song by its ytId
  * @param {string|string[]} ytId
- * @param {Table} table
- * @returns {Promise<Song>}
- * @throws {Promise<string>}
+ * @returns {Promise<Song|null>}
  */
-async function getByYtId(ytId, table) {
+async function getByYtId(ytId) {
     try {
-        const data = await db.fetchDataAsync("ytId", ytId, table);
+        const data = await db.fetchDataAsync("ytId", ytId, tables.song);
         if (!data) {
-            throw new Error(`Song with ytId ${ytId} not found`);
+            return Promise.resolve(null);
         }
         const song = new Song(data);
         return Promise.resolve(song);
@@ -231,8 +212,7 @@ async function getByYtId(ytId, table) {
 /**
  * @description Get songs by their name
  * @param {string} [name]
- * @returns {Promise<Song[]>}
- * @throws {Promise<string>}
+ * @returns {Promise<Song[]|null[]>}
  */
 async function getByName(name) {
     try {

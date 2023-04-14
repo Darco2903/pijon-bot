@@ -18,7 +18,11 @@ class BaseMusicObject {
         this.id = id;
         this.name = name;
         this.author = author;
-        this.creationDate = creationDate || new Date().toLocaleString("fr-FR", { hour12: false });
+        this.creationDate = creationDate || this.getStringDate();
+    }
+
+    getStringDate() {
+        return new Date().toLocaleString("fr-FR", { hour12: false });
     }
 
     /**

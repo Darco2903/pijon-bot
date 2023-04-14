@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, ApplicationCommandOptionChoiceData, AutocompleteInteraction, ButtonInteraction, CommandInteraction } = require("discord.js");
+const { ApplicationCommandOptionChoiceData, AutocompleteInteraction, ButtonInteraction, CommandInteraction, SlashCommandBuilder } = require("discord.js");
 
 class Command {
     /**

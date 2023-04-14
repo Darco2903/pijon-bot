@@ -1,15 +1,15 @@
 const { Command } = require("../../utils");
-const { Interaction, SlashCommandBuilder } = require("discord.js");
-const { DisTube } = require("distube");
+const { CommandInteraction, SlashCommandBuilder } = require("discord.js");
+const CustomDistube = require("../CustomDistube");
 
 let data;
 let execute;
 
 data = new SlashCommandBuilder().setName("pause").setDescription("[Music] Mettre la lecture en pause");
 
-/** @param {Interaction} interaction */
+/** @param {CommandInteraction} interaction */
 execute = async function (interaction) {
-    /** @type {DisTube} distube */
+    /** @type {CustomDistube} distube */
     const distube = interaction.client.distube;
     const queue = distube.getQueue(interaction);
 

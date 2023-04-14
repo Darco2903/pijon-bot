@@ -3,53 +3,6 @@ const orm = require("typeorm");
 const { database: dbConfig } = require("../config.json");
 const { tables } = dbConfig;
 
-const recentlyPlayed = new orm.EntitySchema({
-    name: tables.songRecent,
-    columns: {
-        id: {
-            type: "int",
-            primary: true,
-            generated: true,
-        },
-        name: {
-            type: "text",
-            nullable: false,
-        },
-        author: {
-            type: "text",
-            nullable: false,
-        },
-        ytId: {
-            type: "text",
-            nullable: false,
-        },
-        streamURL: {
-            type: "text",
-            nullable: false,
-        },
-        duration: {
-            type: "int",
-            nullable: false,
-        },
-        user: {
-            type: "text",
-            nullable: true,
-        },
-        nbPlayed: {
-            type: "int",
-            nullable: false,
-        },
-        creationDate: {
-            type: "text",
-            nullable: false,
-        },
-        lastPlayed: {
-            type: "text",
-            nullable: false,
-        },
-    },
-});
-
 const song = new orm.EntitySchema({
     name: tables.song,
     columns: {
@@ -79,6 +32,10 @@ const song = new orm.EntitySchema({
             nullable: false,
         },
         user: {
+            type: "text",
+            nullable: false,
+        },
+        userid: {
             type: "text",
             nullable: false,
         },
@@ -144,6 +101,6 @@ const playList = new orm.EntitySchema({
     },
 });
 
-const entities = [song, recentlyPlayed, playList];
+const entities = [song, playList];
 
 module.exports = entities;
