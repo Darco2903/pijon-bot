@@ -360,8 +360,8 @@ const autocomplete = async function (interaction) {
         case option.name === "newname": {
             const playlists = await Playlist.getByUserId(interaction.user.id);
             choices = playlists
-                .filter((playlist) => playlist.display().toLowerCase().includes(option.value.toLowerCase()))
-                .map((playlist) => ({ name: playlist.display(), value: "undefined", nameOnly: playlist.name }));
+                .filter((playlist) => playlist.name.toLowerCase().includes(option.value.toLowerCase()))
+                .map((playlist) => ({ name: playlist.name, value: "undefined", nameOnly: playlist.name }));
             if (option.value && !choices.some((choice) => choice.nameOnly === option.value)) {
                 choices.unshift({ name: option.value, value: option.value });
             }
@@ -371,24 +371,24 @@ const autocomplete = async function (interaction) {
         case option.name === "playlistname": {
             const playlists = await Playlist.getByUserId(interaction.user.id);
             choices = playlists
-                .filter((playlist) => playlist.display().toLowerCase().includes(option.value.toLowerCase()))
-                .map((playlist) => ({ name: playlist.display(), value: playlist.id }));
+                .filter((playlist) => playlist.name.toLowerCase().includes(option.value.toLowerCase()))
+                .map((playlist) => ({ name: playlist.name, value: playlist.id }));
             break;
         }
 
         case interaction.options.getSubcommandGroup() === "song" && option.name === "playlistcustomname": {
             const playlists = await Playlist.getByUserId(interaction.user.id);
             choices = playlists
-                .filter((playlist) => playlist.type === Playlist.Type.CUSTOM && playlist.display().toLowerCase().includes(option.value.toLowerCase()))
-                .map((playlist) => ({ name: playlist.display(), value: playlist.id }));
+                .filter((playlist) => playlist.type === Playlist.Type.CUSTOM && playlist.name.toLowerCase().includes(option.value.toLowerCase()))
+                .map((playlist) => ({ name: playlist.name, value: playlist.id }));
             break;
         }
 
         case option.name === "playlistyoutubename": {
             const playlists = await Playlist.getByUserId(interaction.user.id);
             choices = playlists
-                .filter((playlist) => playlist.type === Playlist.Type.YOUTUBE && playlist.display().toLowerCase().includes(option.value.toLowerCase()))
-                .map((playlist) => ({ name: playlist.display(), value: playlist.id }));
+                .filter((playlist) => playlist.type === Playlist.Type.YOUTUBE && playlist.name.toLowerCase().includes(option.value.toLowerCase()))
+                .map((playlist) => ({ name: playlist.name, value: playlist.id }));
             break;
         }
 
