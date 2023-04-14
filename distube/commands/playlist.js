@@ -71,10 +71,27 @@ data = new SlashCommandBuilder()
     )
     .addSubcommand((subcommand) =>
         subcommand
-            .setName("edit-link")
+            .setName("link")
             .setDescription("[Music] Modifier le lien d'une playlist YouTube")
             .addIntegerOption((option) => option.setName("playlistyoutubename").setDescription("Nom de la playlist").setRequired(true).setAutocomplete(true))
             .addStringOption((option) => option.setName("url").setDescription("Lien de la playlist (doit être publique ou non répertoriée)").setRequired(true))
+    )
+    .addSubcommand((subcommand) =>
+        subcommand
+            .setName("privacy")
+            .setDescription("[Music] Modifier la visibilité d'une playlist")
+            .addIntegerOption((option) => option.setName("playlistname").setDescription("Nom de la playlist").setRequired(true).setAutocomplete(true))
+            .addStringOption((option) =>
+                option
+                    .setName("privacy")
+                    .setDescription("Visibilité")
+                    .setRequired(true)
+                    .addChoices(
+                        { name: "Publique - Tout le monde peut écouter et éditer", value: "public" },
+                        { name: "Protégée - Tout le monde peut écouter mais seul le propriétaire peut éditer", value: "protected" },
+                        { name: "Privée - Seulement le propriétaire peut écouter et éditer", value: "private" }
+                    )
+            )
     )
     .addSubcommandGroup((group) =>
         group
@@ -235,7 +252,7 @@ execute = async function (interaction) {
             break;
         }
 
-        case interaction.options.getSubcommand() === "edit-link": {
+        case interaction.options.getSubcommand() === "link": {
             const id = interaction.options.getInteger("playlistyoutubename");
             const url = interaction.options.getString("url");
             let ytId;
@@ -260,6 +277,26 @@ execute = async function (interaction) {
 
             await playlist.setYtId(ytId);
             await interaction.editReply(`Playlist **${playlist.name}** modifiée !`);
+            break;
+        }
+
+        case interaction.options.getSubcommand() === "privacy": {
+            const id = interaction.options.getInteger("playlistname");
+            const privacy = interaction.options.getString("privacy");
+
+            const playlist = await Playlist.getById(id);
+            if (!playlist) {
+                interaction.editReply("Aucune playlist trouvé");
+                break;
+            }
+
+            if (playlist.userid !== interaction.user.id) {
+                interaction.editReply("Vous n'êtes pas le propriétaire de cette playlist !");
+                break;
+            }
+
+            await playlist.setPrivacy(privacy);
+            await interaction.editReply(`Visibilité de la playlist **${playlist.name}** modifiée !`);
             break;
         }
 
