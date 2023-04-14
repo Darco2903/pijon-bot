@@ -204,9 +204,11 @@ execute = async function (interaction) {
             });
 
             collector.on("end", async (collected, reason) => {
-                await interaction.editReply({
-                    components: [new ActionRowBuilder().setComponents(buttons.map((button) => button.setDisabled(true)))],
-                });
+                if (reason === "time") {
+                    await interaction.editReply({
+                        components: [new ActionRowBuilder().setComponents(buttons.map((button) => button.setDisabled(true)))],
+                    });
+                }
             });
 
             break;
