@@ -10,7 +10,7 @@ data = new SlashCommandBuilder()
     .setName("remove")
     .setDescription("[Music] Supprimer une musique de la file de lecture")
     .addIntegerOption((option) =>
-        option.setName("position").setDescription("Position de la musique dans la file de lecture").setRequired(true).setAutocomplete(true)
+        option.setName("index").setDescription("Position de la musique dans la file de lecture").setRequired(true).setAutocomplete(true)
     );
 
 /** @param {CommandInteraction} interaction */
@@ -18,7 +18,7 @@ execute = async function (interaction) {
     /** @type {CustomDistube} */
     const distube = interaction.client.distube;
     const queue = distube.getQueue(interaction);
-    const position = interaction.options.getInteger("position");
+    const index = interaction.options.getInteger("index");
 
     await interaction.deferReply();
 
@@ -27,16 +27,16 @@ execute = async function (interaction) {
         return Promise.resolve();
     }
 
-    if (position === 0) {
+    if (index === 0) {
         await queue.skip();
     }
 
     setTimeout(async () => {
         let removed;
-        if (position > 0) {
-            removed = queue.songs.splice(position, 1);
-        } else if (position < 0) {
-            removed = queue.previousSongs.reverse().splice(position * -1 - 1, 1);
+        if (index > 0) {
+            removed = queue.songs.splice(index, 1);
+        } else if (index < 0) {
+            removed = queue.previousSongs.reverse().splice(index * -1 - 1, 1);
         } else {
             removed = queue.previousSongs.reverse().splice(0, 1);
         }
