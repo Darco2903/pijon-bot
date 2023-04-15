@@ -1,10 +1,11 @@
 {
     "name": "pijon-bot",
-    "version": "2.1.0",
+    "version": "1.1.0",
     "description": "",
     "main": "index.js",
     "scripts": {
         "start": "node . -all",
+        "test": "node . -all -TEST",
         "debug": "node . -all -DEBUG",
         "deploy": "node tools/deploy-commands.js",
         "clean-logs": "node tools/clean-logs.js",
