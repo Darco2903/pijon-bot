@@ -20,7 +20,7 @@ class PijonPersonnalChat extends PijonChat {
             throw new Error("username cannot be empty");
         }
         this.username = username;
-        this.resetTimeout = chatTimeout * 1000;
+        this.resetTimeout = chatTimeout * 60 * 1000;
         this.resetTimeoutId;
     }
 

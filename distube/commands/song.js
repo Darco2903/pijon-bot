@@ -14,13 +14,13 @@ data = new SlashCommandBuilder()
         subcommand
             .setName("register")
             .setDescription("[Music] Enregistrer une musique")
-            .addStringOption((option) => option.setName("song").setDescription("Titre ou lien Youtube").setRequired(true))
+            .addStringOption((option) => option.setName("nameorurl").setDescription("Titre ou lien YouTube").setRequired(true))
     )
     .addSubcommand((subcommand) =>
         subcommand
             .setName("delete")
             .setDescription("[Music] Supprimer une musique")
-            .addStringOption((option) => option.setName("song").setDescription("Titre ou lien Youtube").setRequired(true).setAutocomplete(true))
+            .addStringOption((option) => option.setName("songname").setDescription("Titre").setRequired(true).setAutocomplete(true))
     );
 
 /** @param {CommandInteraction} interaction */
@@ -37,7 +37,7 @@ execute = async function (interaction) {
 
     switch (interaction.options.getSubcommand()) {
         case "register":
-            const songString = interaction.options.getString("song");
+            const songString = interaction.options.getString("nameorurl");
             const distubeSong = await distube.customSearch(songString);
             song = new Song.Song(distubeSong);
 
@@ -52,7 +52,7 @@ execute = async function (interaction) {
             break;
 
         case "delete":
-            const id = interaction.options.getString("song");
+            const id = interaction.options.getString("songname");
             const songs = await Song.getByIds(id);
             song = songs[0];
 

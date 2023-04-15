@@ -16,7 +16,7 @@ data = new SlashCommandBuilder()
         subcommand
             .setName("song")
             .setDescription("[Music] Lecture d'une musique")
-            .addStringOption((option) => option.setName("song").setDescription("Titre ou lien Youtube").setRequired(true).setAutocomplete(true))
+            .addStringOption((option) => option.setName("nameorurl").setDescription("Titre ou lien YouTube").setRequired(true).setAutocomplete(true))
             .addChannelOption((option) => option.setName("channel").setDescription("Salon vocal").addChannelTypes(ChannelType.GuildVoice).setRequired(false))
     )
     .addSubcommand((subcommand) =>
