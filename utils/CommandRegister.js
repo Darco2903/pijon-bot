@@ -1,18 +1,18 @@
 const fs = require("fs");
 const path = require("path");
 const Command = require("./Command");
-const { Client, Collection, REST } = require("discord.js");
-const { token } = require("../config.json");
+const { Collection, REST } = require("discord.js");
+const CustomClient = require("../CustomClient");
 
 class CommandRegister {
     /**
-     * @param {Client} client
+     * @param {CustomClient} client
      */
     constructor(client) {
         this.client = client;
-        this.client.commands = new Collection();
+        this.commands = new Collection();
         this.rest = new REST({ version: "10" }).setToken(client.token);
-        this.client.Log.debug("CommandRegister initialized");
+        this.client.Logger.debug("CommandRegister initialized");
     }
 
     /**
@@ -23,22 +23,22 @@ class CommandRegister {
         try {
             command = require(relativePath);
         } catch (error) {
-            this.client.Log.error(error.toString());
+            this.client.Logger.error(error.toString());
         }
         switch (true) {
             case !command:
-                this.client.Log.debug("no command");
+                this.client.Logger.debug("no command");
             // FallThrough
             case !(command instanceof Command):
-                this.client.Log.debug("command not instance of Commande");
+                this.client.Logger.debug("command not instance of Commande");
             // FallThrough
             case !command.valid:
-                this.client.Log.warn(`Command at ${relativePath} not valid.`);
+                this.client.Logger.warn(`Command at ${relativePath} not valid.`);
                 break;
 
             default:
-                this.client.commands.set(command.data.name, command);
-                this.client.Log.debug(`Command ${command.data.name} registered`);
+                this.commands.set(command.data.name, command);
+                this.client.Logger.debug(`Command ${command.data.name} registered`);
                 return command;
         }
     }
@@ -53,7 +53,7 @@ class CommandRegister {
             files.forEach((file) => {
                 const baseName = path.basename(file);
                 if (baseName.indexOf("-") === 0) {
-                    this.client.Log.debug(`Skipping ${baseName} because it starts with \"-\"`);
+                    // this.client.Logger.debug(`Skipping ${baseName} because it starts with \"-\"`);
                     return;
                 }
                 const command = this.#register(file);
@@ -62,7 +62,7 @@ class CommandRegister {
                 }
             });
         } catch (error) {
-            this.client.Log.error(error.toString());
+            // this.client.Logger.error(error.toString());
         }
     }
 }

@@ -1,6 +1,7 @@
 const { REST, Routes } = require("discord.js");
 const { color } = require("console-log-colors");
-const { clientId, token } = require("../config.json");
+const { client: clientConfig } = require("../config.json");
+const { clientId, token } = clientConfig;
 const getCommandFiles = require("./getCommandFiles");
 
 const rest = new REST({ version: "10" }).setToken(token);
@@ -12,7 +13,7 @@ commandFiles.forEach((file) => {
         const command = require(`../${file}`);
         commands.push(command.data.toJSON());
     } catch (error) {
-        console.error(color.red(`Error processing ${file}`));
+        console.error(color.red(`Error processing ${file}: ${error.toString()}`));
     }
 });
 
@@ -22,6 +23,6 @@ commandFiles.forEach((file) => {
         const data = await rest.put(Routes.applicationCommands(clientId), { body: commands });
         console.log(color.green.bold(`Successfully reloaded ${color.magenta(data.length)} application (/) commands.`));
     } catch (error) {
-        console.error(color.red(error));
+        console.error(color.red(error.toString()));
     }
 })();

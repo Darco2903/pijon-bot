@@ -48,4 +48,4 @@ execute = async function (interaction) {
     });
 };
 
-module.exports = new Command(data, execute);
+module.exports = new Command({ data, execute });

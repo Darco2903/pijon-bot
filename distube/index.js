@@ -1,33 +1,37 @@
-const { DisTube } = require("distube");
-const { ActivityType, PresenceUpdateStatus } = require("discord.js");
-const { ActivitiesOptions } = require("../utils");
+const { Song: DistubeSong } = require("distube");
 const client = require("../client");
-
-client.Log.info("Starting Distube dependence");
-
-const distube = new DisTube(client, {
-    leaveOnStop: true,
-    leaveOnEmpty: true,
-    leaveOnFinish: false,
-    savePreviousSongs: true,
-    emitNewSongOnly: false,
-    emitAddSongWhenCreatingQueue: false,
-    emitAddListWhenCreatingQueue: false,
-    nsfw: true,
-    searchSongs: 10,
-    searchCooldown: 10,
-});
-
-client.distube = distube;
+const distube = require("./distube");
+const { Song } = require("./utils");
 
 client.CommandRegister.registerCommands(__dirname);
 
-function setSongPresence(name) {
-    client.Presence.set(new ActivitiesOptions({ name, type: ActivityType.Listening }), PresenceUpdateStatus.Online);
+/**
+ * @param {DistubeSong} distubeSong
+ * @returns {Promise<void>}
+ */
+async function onPlaySong(distubeSong) {
+    let song = await Song.getByYtId(distubeSong.id);
+    if (song) {
+        song.saveModif({
+            streamURL: distubeSong.streamURL,
+            nbPlayed: song.nbPlayed + 1,
+            lastPlayed: song.getStringDate(),
+        });
+    } else if (!song) {
+        song = new Song.Song(distubeSong);
+    }
+    distube.setSongPresence(song.display());
+    return Promise.resolve();
 }
 
-client.on("presence:setSongPresence", (songName) => setSongPresence(songName));
-distube.on("playSong", (queue, song) => setSongPresence(song.name));
-distube.on("deleteQueue", (queue) => client.emit("presence:setDefault"));
+distube.on("playSong", async (queue, distubeSong) => {
+    try {
+        await onPlaySong(distubeSong);
+    } catch (error) {
+        client.Logger.error(error);
+    }
+});
 
-client.Log.info("Distube started successfully");
+distube.on("deleteQueue", (queue) => {
+    client.Presence.setRandom();
+});

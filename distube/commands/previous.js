@@ -1,33 +1,43 @@
 const { Command } = require("../../utils");
-const { SlashCommandBuilder } = require("discord.js");
+const { CommandInteraction, SlashCommandBuilder } = require("discord.js");
+const CustomDistube = require("../CustomDistube");
+const { Song } = require("../utils");
 
 let data;
 let execute;
 
 data = new SlashCommandBuilder().setName("previous").setDescription("[Music] Revenir au morceau précédent");
 
+/** @param {CommandInteraction} interaction */
 execute = async function (interaction) {
+    /** @type {CustomDistube} */
     const distube = interaction.client.distube;
-    const queue = await distube.getQueue(interaction);
+    const queue = distube.getQueue(interaction);
+
+    await interaction.deferReply();
 
     if (!queue) {
-        await interaction.reply("Faut mettre une musique avant de faire ça");
+        await interaction.editReply("Aucune lecture en cours");
         return;
     }
 
     if (!queue.previousSongs[0]) {
-        await interaction.reply("Pas de musique précédente");
+        await interaction.editReply("Pas de musique précédente");
         return;
     }
 
     await queue.previous();
 
-    let n = queue.previousSongs.length - 1;
-    let prevSong = queue.previousSongs[n];
+    if (queue.paused) {
+        queue.resume();
+    }
 
-    await interaction.reply(`:arrow_forward: Lecture de **${prevSong.name}**`);
+    const n = queue.previousSongs.length - 1;
+    const song = new Song.Song(queue.previousSongs[n]);
 
-    if (queue.paused) await distube.resume(interaction);
+    await interaction.editReply({
+        embeds: [song.embed()],
+    });
 };
 
-module.exports = new Command(data, execute);
+module.exports = new Command({ data, execute });

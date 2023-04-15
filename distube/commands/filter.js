@@ -1,6 +1,7 @@
 const { Command } = require("../../utils");
-const { SlashCommandBuilder } = require("discord.js");
+const { CommandInteraction, SlashCommandBuilder } = require("discord.js");
 const filters = require("../utils/filters.json");
+const CustomDistube = require("../CustomDistube");
 
 let data;
 let execute;
@@ -11,7 +12,7 @@ data = new SlashCommandBuilder()
     .addStringOption((option) =>
         option
             .setName("filter")
-            .setDescription("Choose filter to apply")
+            .setDescription("Choisir le filtre à appliquer")
             .setRequired(true)
             .addChoices(
                 ...Object.entries(filters).map(([key, value]) => {
@@ -19,23 +20,26 @@ data = new SlashCommandBuilder()
                 })
             )
     );
-
+/** @param {CommandInteraction} interaction */
 execute = async function (interaction) {
+    /** @type {CustomDistube} */
     const distube = interaction.client.distube;
-    const queue = await distube.getQueue(interaction);
+    const queue = distube.getQueue(interaction);
 
     if (!queue) {
-        await interaction.reply("Faut mettre une musique avant de faire ça");
+        await interaction.reply("Aucune lecture en cours");
         return;
     }
 
     const filter = interaction.options.get("filter");
+
     if (filter.value === "clear") {
         queue.filters.clear();
     } else {
         queue.filters.add(filter.value);
     }
-    await interaction.reply(`Filtre: ${filter.value}`);
+
+    await interaction.reply(`Filtre appliqué **${filter.value}**`);
 };
 
-module.exports = new Command(data, execute);
+module.exports = new Command({ data, execute });

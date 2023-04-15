@@ -1,14 +1,17 @@
 const { Command } = require("../../utils");
-const { SlashCommandBuilder } = require("discord.js");
+const { CommandInteraction, SlashCommandBuilder } = require("discord.js");
+const CustomClient = require("../../CustomClient");
 
 let data;
 let execute;
 
 data = new SlashCommandBuilder().setName("stop").setDescription("[Music] Arrêter la lecture");
 
+/** @param {CommandInteraction} interaction */
 execute = async function (interaction) {
+    /** @type {CustomClient} distube */
     const distube = interaction.client.distube;
-    const queue = await distube.getQueue(interaction);
+    const queue = distube.getQueue(interaction);
 
     if (!queue) {
         await interaction.reply("Faut mettre une musique avant de faire ça");
@@ -16,8 +19,9 @@ execute = async function (interaction) {
     }
 
     await distube.stop(interaction);
-
     await interaction.reply(":stop_button:");
+
+    return Promise.resolve();
 };
 
-module.exports = new Command(data, execute);
+module.exports = new Command({ data, execute });

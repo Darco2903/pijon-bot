@@ -1,7 +1,11 @@
 const { argv } = require("process");
-const { Client, Events, GatewayIntentBits, Partials } = require("discord.js");
-const { token } = require("./config.json");
-const utils = require("./utils");
+const { Events, GatewayIntentBits, Partials } = require("discord.js");
+const CustomClient = require("./CustomClient");
+const { Command } = require("./utils");
+
+const {
+    client: { token },
+} = require("./config.json");
 
 const intents = [
     GatewayIntentBits.Guilds,
@@ -9,55 +13,56 @@ const intents = [
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildVoiceStates,
     GatewayIntentBits.DirectMessages,
+    GatewayIntentBits.GuildModeration,
+    GatewayIntentBits.GuildScheduledEvents,
 ];
-
 const partials = [Partials.Channel];
+const startOptions = argv.slice(2);
 
-const client = new Client({ intents, partials });
+const client = new CustomClient({ intents, partials }, startOptions);
 client.login(token);
 
-const clientStartOptions = argv.slice(2);
-client.test = clientStartOptions.includes("-TEST");
-client.debug = clientStartOptions.includes("-DEBUG");
-client.Log = new utils.Log(client);
-client.CommandRegister = new utils.CommandRegister(client);
-// client.Console = new utils.ConsoleHandler();
-client.Presence = new utils.Presence(client);
-
-client.utils = utils;
-client.Log.debug("Client initialization");
-
 client.on(Events.InteractionCreate, async (interaction) => {
-    if (!interaction.isChatInputCommand()) return;
-    client.Log.command(interaction.user.username, interaction.commandName, interaction.options.data);
-    const command = interaction.client.commands.get(interaction.commandName);
+    let command;
 
-    if (!command) {
-        const reply = { content: `Aucune commande ${interaction.commandName} trouvé.`, ephemeral: true };
-        client.Log.warn(`No command matching ${interaction.commandName} was found.`);
-        await interaction.reply(reply);
-        return;
-    }
+    switch (true) {
+        case interaction.isChatInputCommand():
+            client.Logger.command(interaction.user.username, interaction.commandName, interaction.options.data);
+            /** @type {Command} */
+            command = interaction.client.commands.get(interaction.commandName);
 
-    try {
-        await command.execute(interaction);
-    } catch (error) {
-        const reply = { content: "Une erreur est survenue lors de l'execution de cette commande.", ephemeral: true };
-        client.Log.commandError(interaction.commandName, interaction.options.data, error);
-        try {
-            await interaction.reply(reply);
-        } catch (error) {
+            if (!command) {
+                const reply = { content: `Aucune commande ${interaction.commandName} trouvé.`, ephemeral: true };
+                client.Logger.warn(`No command matching ${interaction.commandName} was found.`);
+                await interaction.reply(reply);
+                return;
+            }
+
             try {
-                await interaction.editReply(reply);
-            } catch (error) {}
-        }
-    }
-});
+                await command.execute(interaction);
+            } catch (error) {
+                const reply = { content: "Une erreur est survenue lors de l'execution de cette commande.", ephemeral: true };
+                client.Logger.commandError(interaction.commandName, interaction.options.data, error);
+                try {
+                    await interaction.reply(reply);
+                } catch (error) {
+                    try {
+                        await interaction.editReply(reply);
+                    } catch (error) {}
+                }
+            }
+            break;
 
-client.on(Events.ClientReady, () => {
-    client.Log.info(`Logged in as ${client.user.tag}`);
-    client.Log.debug("Launched in debug mode");
-    client.Presence.setRandom();
+        case interaction.isAutocomplete():
+            command = interaction.client.commands.get(interaction.commandName);
+            try {
+                const completion = await command.autocomplete(interaction);
+                await interaction.respond(completion);
+            } catch (error) {
+                client.Logger.error("autocomplete", error);
+            }
+            break;
+    }
 });
 
 module.exports = client;

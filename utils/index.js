@@ -2,9 +2,8 @@ const ActivitiesOptions = require("./ActivitiesOptions");
 const Command = require("./Command");
 const CommandRegister = require("./CommandRegister");
 // const ConsoleHandler = require("./ConsoleHandler");
-const Log = require("./Log");
+const Logger = require("./Logger");
 const Presence = require("./Presence");
-const presencePreset = require("./presencePreset");
 const PresenceOptions = require("./PresenceOptions");
 
 module.exports = {
@@ -12,8 +11,7 @@ module.exports = {
     Command,
     CommandRegister,
     // ConsoleHandler,
-    Log,
+    Logger,
     Presence,
-    presencePreset,
     PresenceOptions,
 };

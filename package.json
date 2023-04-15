@@ -8,7 +8,6 @@
         "test": "node . -all -TEST",
         "debug": "node . -all -DEBUG",
         "deploy": "node tools/deploy-commands.js",
-        "deploy-dev": "node tools/deploy-commands-dev.js",
         "clean-logs": "node tools/clean-logs.js",
         "patch-distube": "npm uninstall ffmpeg-static npm ci --no-optional npm update",
         "patch-discordjs-voice": "node tools/patcher-discordjs-voice.js",
@@ -27,12 +26,15 @@
     "homepage": "https://github.com/Darco2903/Pijon-Bot#readme",
     "dependencies": {
         "@discordjs/opus": "^0.9.0",
-        "@discordjs/voice": "^0.14.0",
-        "@distube/ytdl-core": "^4.11.5",
+        "@discordjs/voice": "^0.15.0",
+        "@distube/ytdl-core": "^4.11.8",
         "console-log-colors": "^0.4.0",
-        "discord.js": "^14.6.0",
+        "discord.js": "^14.8.0",
         "distube": "^4.0.4",
+        "ffmpeg-static": "^4.4.1",
+        "mysql": "^2.18.1",
         "openai": "^3.2.1",
-        "tweetnacl": "^1.0.3"
+        "tweetnacl": "^1.0.3",
+        "typeorm": "^0.3.12"
     }
 }

@@ -1,14 +1,17 @@
 const { Command } = require("../../utils");
-const { SlashCommandBuilder } = require("discord.js");
+const { CommandInteraction, SlashCommandBuilder } = require("discord.js");
+const CustomDistube = require("../CustomDistube");
 
 let data;
 let execute;
 
 data = new SlashCommandBuilder().setName("resume").setDescription("[Music] Reprendre la lecture");
 
+/** @param {CommandInteraction} interaction */
 execute = async function (interaction) {
+    /** @type {CustomDistube} distube */
     const distube = interaction.client.distube;
-    const queue = await distube.getQueue(interaction);
+    const queue = distube.getQueue(interaction);
 
     if (!queue) {
         await interaction.reply("Faut mettre une musique avant de faire ça");
@@ -20,12 +23,14 @@ execute = async function (interaction) {
         return;
     }
 
-    await distube.resume(interaction);
+    distube.resume(interaction);
 
     await interaction.reply(":arrow_forward:");
 
     const song = queue.songs[0];
-    interaction.client.emit("presence:setSongPresence", song.name);
+    distube.setSongPresence(song.name);
+
+    return Promise.resolve();
 };
 
-module.exports = new Command(data, execute);
+module.exports = new Command({ data, execute });

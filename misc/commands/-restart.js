@@ -15,4 +15,4 @@ const execute = function () {
     process.exit();
 };
 
-module.exports = new Command(data, execute);
+module.exports = new Command({ data, execute });
