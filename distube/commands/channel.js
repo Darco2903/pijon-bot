@@ -49,7 +49,7 @@ execute = async function (interaction) {
             }
 
             const queue = distube.getQueue(interaction.guildId);
-            if (queue.playing) {
+            if (queue?.playing) {
                 await queue.stop();
             }
 
