@@ -1,4 +1,4 @@
-const DataBase = require("./DataBase");
+const DataBase = require("darco2903-db");
 const entities = require("./entities");
 
 const { database: dbConfig } = require("../config.json");

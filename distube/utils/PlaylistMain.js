@@ -36,8 +36,7 @@ function createTyped(data) {
  */
 async function getById(id) {
     try {
-        let data = await db.fetchByIdsAsync(id, tables.playlist);
-        data = data[0];
+        let data = await db.fetchById(id, tables.playlist);
         if (!data) {
             // throw new Error("Playlist not found");
             return Promise.resolve(null);
@@ -55,8 +54,8 @@ async function getById(id) {
  */
 async function getByUserId(userid) {
     try {
-        const data = await db.fetchAllByFieldAsync("userid", userid, tables.playlist);
-        const playlists = data.map((playlist) => createTyped(playlist));
+        const datas = await db.fetchAllByValue("userid", userid, tables.playlist);
+        const playlists = datas.map((playlist) => createTyped(playlist));
         return Promise.resolve(playlists);
     } catch (error) {
         return Promise.reject(error);
@@ -69,8 +68,8 @@ async function getByUserId(userid) {
  */
 async function getAllListenable(userid) {
     try {
-        const data = await db.fetchAllDataAsync(tables.playlist);
-        const playlists = data
+        const datas = await db.fetchAllRepo(tables.playlist);
+        const playlists = datas
             .filter((data) => data.privacy === Privacy.PUBLIC || data.privacy === Privacy.PROTECTED || data.userid === userid)
             .map((playlist) => createTyped(playlist));
         return Promise.resolve(playlists);
@@ -99,7 +98,7 @@ function getYtId(url) {
  */
 async function isSongInAnyPlaylist(songId) {
     songId = songId.toString();
-    const playlists = await db.fetchAllByFieldAsync("type", Type.CUSTOM, tables.playlist);
+    const playlists = await db.fetchAllByValue("type", Type.CUSTOM, tables.playlist);
     for (const playlist of playlists) {
         if (playlist.songs.includes(songId)) {
             return Promise.resolve(true);

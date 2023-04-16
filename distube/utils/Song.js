@@ -49,7 +49,7 @@ class Song extends BaseMusicObject {
      */
     async saveNew() {
         try {
-            if (this.id || (await db.fetchDataAsync("ytId", this.ytId, tables.song))) {
+            if (this.id || (await db.fetchAllByValue("ytId", this.ytId, tables.song))) {
                 throw new Error("Song already registered");
             }
             const data = await super.saveNew(tables.song);
@@ -80,7 +80,7 @@ class Song extends BaseMusicObject {
             if (!this.id) {
                 throw new Error("Song not registered");
             }
-            await db.deleteByIdsAsync(this.id, tables.song);
+            await db.deleteByIds(this.id, tables.song);
             return Promise.resolve();
         } catch (error) {
             return Promise.reject(error);
@@ -180,7 +180,7 @@ async function getByIds(ids) {
         if (!Array.isArray(ids)) {
             ids = [ids];
         }
-        const datas = await db.fetchByIdsAsync(ids, tables.song);
+        const datas = await db.fetchByIds(ids, tables.song);
         const songs = datas.map((data) => new Song(data));
         if (songs.length !== ids.length) {
             return Promise.resolve(songs, "Some songs were not found");
@@ -198,7 +198,7 @@ async function getByIds(ids) {
  */
 async function getByYtId(ytId) {
     try {
-        const data = await db.fetchDataAsync("ytId", ytId, tables.song);
+        const data = await db.fetchAllByValue("ytId", ytId, tables.song);
         if (!data) {
             return Promise.resolve(null);
         }
@@ -216,7 +216,7 @@ async function getByYtId(ytId) {
  */
 async function getByName(name) {
     try {
-        let datas = await db.fetchAllDataAsync(tables.song);
+        let datas = await db.fetchAllRepo(tables.song);
         if (name) {
             datas = datas.filter((data) => data.name.toLowerCase().includes(name.toLowerCase()));
         }

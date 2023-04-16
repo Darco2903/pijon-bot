@@ -1,6 +1,6 @@
 {
     "name": "pijon-bot",
-    "version": "2.1.1",
+    "version": "2.1.2",
     "description": "Lé Pijons Discord Server Bot",
     "main": "index.js",
     "scripts": {
@@ -28,6 +28,7 @@
         "@discordjs/voice": "^0.15.0",
         "@distube/ytdl-core": "^4.11.8",
         "console-log-colors": "^0.4.0",
+        "darco2903-db": "^1.0.5",
         "discord.js": "^14.8.0",
         "distube": "^4.0.4",
         "ffmpeg-static": "^4.4.1",

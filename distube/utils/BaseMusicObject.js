@@ -43,9 +43,9 @@ class BaseMusicObject {
             if (this.id) {
                 throw new Error("Already exists");
             }
-            const data = await db.upsertDataAsync(this, table);
-            this.asign(data);
-            return Promise.resolve(data);
+            const id = await db.insertData(this, table);
+            this.id = id;
+            return Promise.resolve(id);
         } catch (error) {
             return Promise.reject(error);
         }
@@ -58,7 +58,7 @@ class BaseMusicObject {
      */
     async saveModif(data, table) {
         try {
-            const updated = await db.updatePartialDataAsync(this.id, data, table);
+            const updated = await db.updateDataByIds(this.id, data, table);
             this.asign(updated);
             return Promise.resolve(updated);
         } catch (error) {
@@ -74,7 +74,7 @@ class BaseMusicObject {
             if (!this.id) {
                 throw new Error("Not registered");
             }
-            await db.deleteByIdsAsync(this.id, table);
+            await db.deleteByIds(this.id, table);
             this.asign(null);
             return Promise.resolve();
         } catch (error) {
