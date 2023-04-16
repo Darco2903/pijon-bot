@@ -47,7 +47,7 @@ execute = async function (interaction) {
 
     switch (interaction.options.getSubcommand()) {
         case "song":
-            const songString = interaction.options.getString("song");
+            const songString = interaction.options.getString("nameorurl");
             const distubeSong = await distube.customSearch(songString);
 
             await distube.play(channel, distubeSong);
