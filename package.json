@@ -34,7 +34,7 @@
         "ffmpeg-static": "^4.4.1",
         "mysql": "^2.18.1",
         "openai": "^3.2.1",
-        "tweetnacl": "^1.0.3",
+        "tweetnacl": "^1.0.3"
     },
     "devDependencies": {
         "darco2903-os-command-kit": "^1.1.0"
