@@ -28,14 +28,13 @@
         "@discordjs/voice": "^0.15.0",
         "@distube/ytdl-core": "^4.11.8",
         "console-log-colors": "^0.4.0",
-        "darco2903-db": "^1.1.0",
+        "darco2903-db": "^1.5.0",
         "discord.js": "^14.8.0",
         "distube": "^4.0.4",
         "ffmpeg-static": "^4.4.1",
         "mysql": "^2.18.1",
         "openai": "^3.2.1",
         "tweetnacl": "^1.0.3",
-        "typeorm": "^0.3.12"
     },
     "devDependencies": {
         "darco2903-os-command-kit": "^1.1.0"

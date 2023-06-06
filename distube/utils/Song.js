@@ -49,7 +49,7 @@ class Song extends BaseMusicObject {
      */
     async saveNew() {
         try {
-            if (this.id || (await db.fetchAllByValue("ytId", this.ytId, tables.song))) {
+            if (this.id || (await db.fetchByValue("ytId", this.ytId, tables.song))) {
                 throw new Error("Song already registered");
             }
             const data = await super.saveNew(tables.song);
@@ -180,7 +180,7 @@ async function getByIds(ids) {
         if (!Array.isArray(ids)) {
             ids = [ids];
         }
-        const datas = await db.fetchByIds(ids, tables.song);
+        const datas = (await db.fetchByIds(ids, tables.song)) ?? [];
         const songs = datas.map((data) => new Song(data));
         if (songs.length !== ids.length) {
             return Promise.resolve(songs, "Some songs were not found");
@@ -198,11 +198,11 @@ async function getByIds(ids) {
  */
 async function getByYtId(ytId) {
     try {
-        const data = await db.fetchAllByValue("ytId", ytId, tables.song);
+        const data = await db.fetchByValue("ytId", ytId, tables.song);
         if (!data) {
             return Promise.resolve(null);
         }
-        const song = new Song(data);
+        const song = new Song(data[0]);
         return Promise.resolve(song);
     } catch (error) {
         return Promise.reject(`Song : ${error}`);

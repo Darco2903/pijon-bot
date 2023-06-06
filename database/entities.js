@@ -1,9 +1,9 @@
-const orm = require("typeorm");
+const { Table } = require("darco2903-db");
 
 const { database: dbConfig } = require("../config.json");
 const { tables } = dbConfig;
 
-const song = new orm.EntitySchema({
+const song = new Table({
     name: tables.song,
     columns: {
         id: {
@@ -54,7 +54,7 @@ const song = new orm.EntitySchema({
     },
 });
 
-const playList = new orm.EntitySchema({
+const playList = new Table({
     name: tables.playlist,
     columns: {
         id: {
@@ -101,6 +101,4 @@ const playList = new orm.EntitySchema({
     },
 });
 
-const entities = [song, playList];
-
-module.exports = entities;
+module.exports = [song, playList];
