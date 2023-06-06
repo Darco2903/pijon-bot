@@ -85,7 +85,7 @@ execute = async function (interaction) {
                     const songs = await playlist.getSongs();
                     if (songs.length === 0) {
                         await interaction.editReply("La playlist est vide");
-                        break;
+                        return Promise.resolve();
                     }
 
                     const urls = songs.map((song) => song.getUrl());
