@@ -1,6 +1,6 @@
 {
     "name": "pijon-bot",
-    "version": "2.1.2",
+    "version": "2.1.3",
     "description": "Lé Pijons Discord Server Bot",
     "main": "index.js",
     "scripts": {
