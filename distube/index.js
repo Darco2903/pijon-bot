@@ -10,17 +10,18 @@ client.CommandRegister.registerCommands(__dirname);
  * @returns {Promise<void>}
  */
 async function onPlaySong(distubeSong) {
-    let song = await Song.getByYtId(distubeSong.id);
-    if (song) {
+    const song = new Song.Song(distubeSong);
+    distube.setSongPresence(song.display());
+
+    const dbSong = await Song.getByYtId(distubeSong.id);
+    if (dbSong) {
         song.saveModif({
             streamURL: distubeSong.streamURL,
-            nbPlayed: song.nbPlayed + 1,
-            lastPlayed: song.getStringDate(),
+            nbPlayed: dbSong.nbPlayed + 1,
+            lastPlayed: dbSong.getStringDate(),
         });
-    } else if (!song) {
-        song = new Song.Song(distubeSong);
     }
-    distube.setSongPresence(song.display());
+
     return Promise.resolve();
 }
 
