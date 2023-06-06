@@ -5,7 +5,7 @@ const { CommandInteractionOption } = require("discord.js");
 const CustomClient = require("../CustomClient");
 
 const LOG_DIRECTORY = path.join(process.cwd(), "logs");
-const MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 1 week
+const MAX_FILES = 20;
 
 class Logger {
     /**
@@ -40,8 +40,8 @@ class Logger {
         for (const file of files) {
             const filePath = path.join(LOG_DIRECTORY, file);
             const stats = fs.statSync(filePath);
-            const age = Date.now() - stats.mtimeMs;
-            if (stats.isFile() && age > MAX_AGE) {
+            if (stats.isFile() && files.length > MAX_FILES) {
+                files.shift();
                 fs.unlinkSync(filePath);
                 this.debug(`Log file "${file}" removed`);
                 filesRemoved++;
@@ -65,8 +65,10 @@ class Logger {
 
     #formatter(message, mode) {
         const currentDate = new Date().toLocaleTimeString("fr-FR", { hour12: false });
-        if (!mode) return `[${currentDate}] ${message}`;
-        return `[${currentDate}] [${mode}] ${message}`;
+        let formated = `[${currentDate}] `;
+        if (mode) formated += `[${mode}] `;
+        formated += message;
+        return formated;
     }
 
     /**
@@ -132,14 +134,10 @@ class Logger {
 
     /**
      * @param {string} message
-     * @param {Error} error
+     * @param {Error} errorMessage
      */
-    error(message, error) {
-        try {
-            message = this.#formatter(`${message}: ${error.toString()}`, "ERROR");
-        } catch (error) {
-            message = this.#formatter(`${message}: ${error}`, "ERROR");
-        }
+    error(message, errorMessage) {
+        message = this.#formatter(`${message}\n${errorMessage?.stack}`, "ERROR");
         this.#writeToFile(message);
         console.error(color.red(message));
     }
