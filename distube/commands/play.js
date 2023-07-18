@@ -48,11 +48,12 @@ execute = async function (interaction) {
     switch (interaction.options.getSubcommand()) {
         case "song":
             const songString = interaction.options.getString("nameorurl");
-            const distubeSong = await distube.customSearch(songString);
 
-            await distube.play(channel, distubeSong);
+            await distube.play(channel, songString);
+            queue = distube.getQueue(interaction);
+            const distubeSong = queue?.songs[queue.songs.length - 1];
 
-            let content = queue?.songs.length > 0 ? "Ajout de à la liste de lecture" : "Zé parti la zik bande de noobs";
+            const content = queue?.songs.length > 1 ? "Ajout de à la liste de lecture" : "Zé parti la zik bande de noobs";
             const song = new Song.Song(distubeSong);
 
             await interaction.editReply({
