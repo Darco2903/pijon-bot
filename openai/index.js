@@ -3,9 +3,11 @@ const { PijonPersonnalChat } = require("./utils");
 const client = require("../client");
 
 const {
-    openai: { streamed, chatChannel },
+    openai: { chatChannel, chatCooldown, streamed },
 } = require("../config.json");
 const openai = require("./openai");
+
+const users = new Map();
 
 client.CommandRegister.registerCommands(__dirname);
 
@@ -15,6 +17,7 @@ client.on(Events.MessageCreate, async (msg) => {
         // skip
     } else if (
         msg.author.bot ||
+        users.has(msg.author.id) ||
         msg.content.startsWith("/") ||
         msg.content.startsWith("!") ||
         (msg.channel.name != chatChannel && !msg.content.startsWith(`<@${client.user.id}>`) && msg.channel.type != ChannelType.DM) ||
@@ -22,6 +25,7 @@ client.on(Events.MessageCreate, async (msg) => {
     )
         return;
 
+    users.set(msg.author.id, true);
     msg.channel.sendTyping();
 
     msg.content = msg.mentions.has(client.user.id) ? msg.content.replace(`<@${client.user.id}>`, client.user.username) : msg.content;
@@ -54,4 +58,8 @@ client.on(Events.MessageCreate, async (msg) => {
             }
             break;
     }
+
+    setTimeout(() => {
+        users.delete(msg.author.id);
+    }, chatCooldown * 1000);
 });
