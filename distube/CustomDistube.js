@@ -52,25 +52,18 @@ class CustomDistube extends DisTube {
      * @returns {Promise<DistubeSong>} url of the youtube video
      */
     async customSearch(search) {
-        try {
-            if (this.isLink(search)) {
-                const ytId = Song.getYtId(search);
-                search = YT_SHORT_URL + ytId;
-            }
-
-            const searchList = await this.search(search, { limit: 1, type: SearchResultType.VIDEO, safeSearch: false });
-            const result = searchList[0];
-
-            if (!result) {
-                throw new Error("No result found");
-            }
-
-            const song = new DistubeSong(result);
-
-            return Promise.resolve(song);
-        } catch (error) {
-            Promise.reject(error);
+        if (this.isLink(search)) {
+            const ytId = Song.getYtId(search);
+            search = YT_SHORT_URL + ytId;
         }
+
+        const searchList = await this.search(search, { limit: 1, type: SearchResultType.VIDEO, safeSearch: false });
+        const result = searchList[0];
+
+        if (!result) throw new Error("No result found");
+        
+        const song = new DistubeSong(result);
+        return Promise.resolve(song);
     }
 
     async checkPlaylist(url) {
