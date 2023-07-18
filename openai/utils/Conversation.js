@@ -1,3 +1,7 @@
+const {
+    openai: { conversationLength },
+} = require("../../config.json");
+
 /**
  * * Une classe représentant une conversation entre un utilisateur et un bot.
  */
@@ -30,8 +34,8 @@ class Conversation extends Array {
      * @param {string} content - Le contenu du message.
      */
     addMessage(author, content) {
-        if (this.length > 10) {
-            const removed = this.splice(1, 1)[0];
+        if (this.length > conversationLength) {
+            this.splice(1, 1)[0];
         }
         this.push(this.#newMessage(author, content));
     }
