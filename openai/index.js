@@ -3,7 +3,7 @@ const { PijonPersonnalChat } = require("./utils");
 const client = require("../client");
 
 const {
-    openai: { streamed },
+    openai: { streamed, chatChannel },
 } = require("../config.json");
 const openai = require("./openai");
 
@@ -17,7 +17,7 @@ client.on(Events.MessageCreate, async (msg) => {
         msg.author.bot ||
         msg.content.startsWith("/") ||
         msg.content.startsWith("!") ||
-        (msg.channel.name != "pijon-bot" && !msg.content.startsWith(`<@${client.user.id}>`) && msg.channel.type != ChannelType.DM) ||
+        (msg.channel.name != chatChannel && !msg.content.startsWith(`<@${client.user.id}>`) && msg.channel.type != ChannelType.DM) ||
         (repliedMessage && repliedMessage.author.id != client.user.id)
     )
         return;
@@ -45,7 +45,7 @@ client.on(Events.MessageCreate, async (msg) => {
             }
             break;
 
-        case msg.channel.name === "pijon-bot":
+        case msg.channel.name === chatChannel:
         case msg.mentions.has(client.user.id):
             if (streamed) {
                 await message.edit(replyContent);
