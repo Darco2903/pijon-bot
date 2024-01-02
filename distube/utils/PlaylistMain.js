@@ -54,7 +54,7 @@ async function getById(id) {
  */
 async function getByUserId(userid) {
     try {
-        const datas = (await db.fetchByValue("userid", userid, tables.playlist)) ?? [];
+        const datas = (await db.fetchByValues("userid", userid, tables.playlist)) ?? [];
         const playlists = datas.map((playlist) => createTyped(playlist));
         return Promise.resolve(playlists);
     } catch (error) {
@@ -98,7 +98,7 @@ function getYtId(url) {
  */
 async function isSongInAnyPlaylist(songId) {
     songId = songId.toString();
-    const playlists = (await db.fetchByValue("type", Type.CUSTOM, tables.playlist)) ?? [];
+    const playlists = (await db.fetchByValues("type", Type.CUSTOM, tables.playlist)) ?? [];
     for (const playlist of playlists) {
         if (playlist.songs.includes(songId)) {
             return Promise.resolve(true);

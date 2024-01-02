@@ -10,7 +10,6 @@ const options = new Options({
     savePreviousSongs: true,
     searchSongs: 1,
     youtubeCookie: undefined,
-    youtubeIdentityToken: undefined,
     customFilters: undefined,
     // ytdlOptions: {},
     searchCooldown: 10,

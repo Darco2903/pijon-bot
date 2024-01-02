@@ -1,6 +1,6 @@
 const { ActivityType, PresenceUpdateStatus } = require("discord.js");
 const { DisTube, Options, SearchResultType, Song: DistubeSong } = require("distube");
-const { BackupQueueManager, Song } = require("./utils");
+const { Song } = require("./utils");
 const Utils = require("../utils");
 const CustomClient = require("../CustomClient");
 
@@ -15,7 +15,6 @@ class CustomDistube extends DisTube {
     constructor(client, options) {
         super(client, options);
         this.client = client;
-        this.BackupQueueManager = new BackupQueueManager(this);
     }
 
     /**
@@ -61,7 +60,7 @@ class CustomDistube extends DisTube {
         const result = searchList[0];
 
         if (!result) throw new Error("No result found");
-        
+
         const song = new DistubeSong(result);
         return Promise.resolve(song);
     }
