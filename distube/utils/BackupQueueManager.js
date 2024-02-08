@@ -20,12 +20,6 @@ class BackupQueueManager extends QueueManager {
         });
         this.distube.on("addSong", (queue) => this.save(queue));
         this.distube.on("finishSong", (queue) => this.save(queue));
-        this.distube.on("disconnect", (queue) => {
-            if (queue.playing) {
-                this.restore(queue);
-                this.distube.client.Logger.debug("Queue restored");
-            }
-        });
         this.distube.on("deleteQueue", (queue) => {
             clearInterval(this.saveIntervals.get(this.#getGuildId(queue)));
             this.distube.client.Logger.debug("Queue deleted");
