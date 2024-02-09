@@ -5,8 +5,8 @@ const client = require("../client");
 const options = new Options({
     emitNewSongOnly: false,
     leaveOnEmpty: true,
-    leaveOnFinish: true,
-    leaveOnStop: true,
+    leaveOnFinish: false,
+    leaveOnStop: false,
     savePreviousSongs: true,
     searchSongs: 1,
     youtubeCookie: undefined,

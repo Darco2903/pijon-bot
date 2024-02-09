@@ -2,6 +2,7 @@ const { Command } = require("../../utils");
 const { ActionRowBuilder, AutocompleteInteraction, ButtonBuilder, ButtonStyle, CommandInteraction, SlashCommandBuilder } = require("discord.js");
 const { Song, Playlist } = require("../utils");
 const CustomDistube = require("../CustomDistube");
+const searchYoutube = require("../utils/youtubeSearchHTML");
 
 let data;
 let execute;
@@ -14,7 +15,7 @@ data = new SlashCommandBuilder()
         subcommand
             .setName("register")
             .setDescription("[Music] Enregistrer une musique")
-            .addStringOption((option) => option.setName("nameorurl").setDescription("Titre ou lien YouTube").setRequired(true))
+            .addStringOption((option) => option.setName("nameorurl").setDescription("Titre ou lien YouTube").setRequired(true).setAutocomplete(true))
     )
     .addSubcommand((subcommand) =>
         subcommand
@@ -134,6 +135,18 @@ autocomplete = async function (interaction) {
     let choices = [];
 
     switch (interaction.options.getSubcommand()) {
+        case "register":
+            if (!option.value) break;
+            songName = option.value;
+            songs = await searchYoutube(option.value, 5);
+            choices = songs.map((video) => {
+                return {
+                    name: `[${video.duration}] ${video.channel} - ${video.title}`.substring(0, 100),
+                    value: `https://youtu.be/${video.videoId}`,
+                };
+            });
+            break;
+
         case "delete":
             songName = option.value || "";
             songs = await Song.getByName(songName);

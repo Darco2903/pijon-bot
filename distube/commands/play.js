@@ -4,6 +4,7 @@ const { Song, Playlist } = require("../utils");
 const CustomClient = require("../../CustomClient");
 const CustomDistube = require("../CustomDistube");
 const PlaylistYoutube = require("../utils/PlaylistYoutube");
+const searchYoutube = require("../utils/youtubeSearchHTML");
 
 let data;
 let execute;
@@ -48,22 +49,21 @@ execute = async function (interaction) {
     switch (interaction.options.getSubcommand()) {
         case "song":
             const songString = interaction.options.getString("nameorurl");
-
-            await distube.play(channel, songString);
-            queue = distube.getQueue(interaction);
-            const distubeSong = queue?.songs[queue.songs.length - 1];
-
-            const content = queue?.songs.length > 1 ? "Ajout de à la liste de lecture" : "Zé parti la zik bande de noobs";
-            const song = new Song.Song(distubeSong);
-
-            await interaction.editReply({
-                content,
-                embeds: [song.embed()],
-            });
-            break;
+            if (!songString.includes("/playlist?")) {
+                await distube.play(channel, songString);
+                queue = distube.getQueue(interaction);
+                const distubeSong = queue?.songs[queue.songs.length - 1];
+                const content = queue?.songs.length > 1 ? "Ajout de à la liste de lecture" : "Zé parti la zik bande de noobs";
+                const song = new Song.Song(distubeSong);
+                await interaction.editReply({
+                    content,
+                    embeds: [song.embed()],
+                });
+                break;
+            }
 
         case "playlist":
-            const name = interaction.options.getString("playlist");
+            const name = interaction.options.getString("playlist") || songString;
             let playlist;
             if (distube.isYoutubePlaylistLink(name)) {
                 playlist = new PlaylistYoutube({
@@ -142,23 +142,29 @@ autocomplete = async function (interaction) {
     /** @type {CustomDistube} */
     const distube = interaction.client.distube;
     const name = interaction.options.getFocused();
+    let songs;
     let choices = [];
-
     switch (interaction.options.getSubcommand()) {
         case "song":
-            if (distube.isLink(name)) {
-                return;
-            }
-            const songs = await Song.getByName(name);
-            choices = songs.map((song) => {
+            if (distube.isLink(name)) break;
+            songs = (await Song.getByName(name)).map((song) => {
+                const pad = song.duration >= 3600 ? 0 : song.duration >= 60 ? 3 : 6;
+                const duration = new Date(song.duration * 1000).toISOString().substr(11 + pad, 8 - pad);
                 return {
-                    name: song.display(),
+                    name: `-[${duration}] ${song.display()}`.substring(0, 100),
                     value: song.getUrl(),
                 };
             });
+            let search = [];
             if (name) {
-                choices.unshift({ name, value: name });
+                search = (await searchYoutube(name, 5)).map((video) => {
+                    return {
+                        name: `[${video.duration}] ${video.channel} - ${video.title}`.substring(0, 100),
+                        value: `https://youtu.be/${video.videoId}`,
+                    };
+                });
             }
+            choices = songs.concat(search);
             break;
 
         case "playlist":

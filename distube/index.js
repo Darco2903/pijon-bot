@@ -12,7 +12,6 @@ client.CommandRegister.registerCommands(__dirname);
 async function onPlaySong(distubeSong) {
     const song = new Song.Song(distubeSong);
     distube.setSongPresence(song.display());
-
     const dbSong = await Song.getByYtId(distubeSong.id);
     if (dbSong) {
         song.saveModif({
