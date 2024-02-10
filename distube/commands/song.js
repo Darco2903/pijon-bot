@@ -138,7 +138,7 @@ autocomplete = async function (interaction) {
         case "register":
             if (!option.value) break;
             songName = option.value;
-            songs = await searchYoutube(option.value, 5);
+            songs = await searchYoutube(option.value, 10);
             choices = songs.map((video) => {
                 return {
                     name: `[${video.duration}] ${video.channel} - ${video.title}`.substring(0, 100),

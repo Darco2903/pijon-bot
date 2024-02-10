@@ -21,17 +21,18 @@ const HTMLParser = require("node-html-parser");
  * @returns {Promise<Video[]>} - The search results
  */
 async function searchYoutube(query, maxResults = 5) {
-    const q = query.replace(/ /g, "+");
+    const q = query.replaceAll(/ /g, "+");
     const res = await fetch(`https://www.youtube.com/results?search_query=${q}`);
     const body = await res.text();
     const html = HTMLParser.parse(body);
-    const a = html.querySelectorAll("script[nonce]").find((el) => el.innerHTML.includes("videoId")).innerHTML;
-    eval(a);
+    const script = html.querySelectorAll("script[nonce]").find((el) => el.innerHTML.includes("videoId")).innerHTML;
+    eval(script); // var ytInitialData = {...}
 
     /** @type {any[]} */
     const videos = ytInitialData.contents.twoColumnSearchResultsRenderer.primaryContents.sectionListRenderer.contents[0].itemSectionRenderer.contents;
     return videos
-        .filter((el, i) => el.videoRenderer && i < maxResults)
+        .filter((el) => el.videoRenderer)
+        .slice(0, maxResults)
         .map((el) => {
             return {
                 videoId: el.videoRenderer.videoId,
