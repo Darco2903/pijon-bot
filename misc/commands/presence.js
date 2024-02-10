@@ -3,7 +3,7 @@ const { ActivityType, AutocompleteInteraction, CommandInteraction, PresenceUpdat
 const CustomClient = require("../../CustomClient");
 
 const {
-    presence: { preset: presencePresets },
+    presence: { authorisedUsers, preset: presencePresets },
 } = require("../../config.json");
 
 let data;
@@ -60,8 +60,8 @@ data = new SlashCommandBuilder()
 execute = async function (interaction) {
     /** @type {CustomClient} */
     const client = interaction.client;
-
-    if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+    // Check if the user is authorised (in the config file)
+    if (!Object.values(authorisedUsers).includes(interaction.member.id)) {
         interaction.reply("T'as pas le droit eft");
         return;
     }
