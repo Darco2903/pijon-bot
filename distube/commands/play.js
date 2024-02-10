@@ -142,28 +142,37 @@ autocomplete = async function (interaction) {
     /** @type {CustomDistube} */
     const distube = interaction.client.distube;
     const name = interaction.options.getFocused();
-    let songs;
     let choices = [];
     switch (interaction.options.getSubcommand()) {
         case "song":
             if (distube.isLink(name)) break;
-            songs = (await Song.getByName(name)).map((song) => {
-                const pad = song.duration >= 3600 ? 0 : song.duration >= 60 ? 3 : 6;
-                const duration = new Date(song.duration * 1000).toISOString().substr(11 + pad, 8 - pad);
-                return {
-                    name: `-[${duration}] ${song.display()}`.substring(0, 100),
-                    value: song.getUrl(),
-                };
-            });
+            let songsP;
+            let songs = [];
+            let searchP;
             let search = [];
-            if (name) {
-                search = (await searchYoutube(name, 5)).map((video) => {
+            songsP = Song.getByName(name).then((s) => {
+                songs = s.map((song) => {
+                    const pad = song.duration >= 3600 ? 0 : song.duration >= 60 ? 3 : 6;
+                    const duration = new Date(song.duration * 1000).toISOString().substr(11 + pad, 8 - pad);
                     return {
-                        name: `[${video.duration}] ${video.channel} - ${video.title}`.substring(0, 100),
-                        value: `https://youtu.be/${video.videoId}`,
+                        name: `-[${duration}] ${song.display()}`.substring(0, 100),
+                        value: song.getUrl(),
                     };
                 });
+            });
+
+            if (name) {
+                searchP = searchYoutube(name, 10).then((s) => {
+                    search = s.map((video) => {
+                        return {
+                            name: `[${video.duration}] ${video.channel} - ${video.title}`.substring(0, 100),
+                            value: `https://youtu.be/${video.videoId}`,
+                        };
+                    });
+                });
             }
+
+            await Promise.all([songsP, searchP]);
             choices = songs.concat(search);
             break;
 

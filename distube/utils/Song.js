@@ -2,6 +2,7 @@ const { EmbedBuilder } = require("discord.js");
 const { Song: DistubeSong, SearchResultVideo } = require("distube");
 const BaseMusicObject = require("./BaseMusicObject");
 const db = require("../../database");
+const typeOrm = require("typeorm");
 
 /**
  * @typedef {"song"} Table
@@ -214,12 +215,14 @@ async function getByYtId(ytId) {
  * @param {string} [name]
  * @returns {Promise<Song[]|null[]>}
  */
-async function getByName(name) {
+async function getByName(name = "") {
     try {
-        let datas = await db.fetchAllRepo(tables.song);
-        if (name) {
-            datas = datas.filter((data) => data.name.toLowerCase().includes(name.toLowerCase()));
-        }
+        const datas = await db.customFetch(
+            {
+                where: [{ name: typeOrm.Like(`%${name}%`) }, { author: typeOrm.Like(`%${name}%`) }],
+            },
+            tables.song
+        );
         const songs = datas.map((data) => new Song(data));
         return Promise.resolve(songs);
     } catch (error) {

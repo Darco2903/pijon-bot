@@ -67,15 +67,14 @@ async function getByUserId(userid) {
  * @returns {Promise<PlaylistCustom[]|PlaylistYoutube[]>}
  */
 async function getAllListenable(userid) {
-    try {
-        const datas = await db.fetchAllRepo(tables.playlist);
-        const playlists = datas
-            .filter((data) => data.privacy === Privacy.PUBLIC || data.privacy === Privacy.PROTECTED || data.userid === userid)
-            .map((playlist) => createTyped(playlist));
-        return Promise.resolve(playlists);
-    } catch (error) {
-        return Promise.reject(error);
-    }
+    return (
+        await db.customFetch(
+            {
+                where: [{ privacy: Privacy.PUBLIC }, { privacy: Privacy.PROTECTED }, { userid }],
+            },
+            tables.playlist
+        )
+    ).map((playlist) => createTyped(playlist));
 }
 
 /**
