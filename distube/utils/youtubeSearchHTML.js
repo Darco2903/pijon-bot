@@ -21,7 +21,7 @@ const HTMLParser = require("node-html-parser");
  * @returns {Promise<Video[]>} - The search results
  */
 async function searchYoutube(query, maxResults = 5) {
-    const q = query.replaceAll(/ /g, "+");
+    const q = query.split(" ").join("+");
     const res = await fetch(`https://www.youtube.com/results?search_query=${q}`);
     const body = await res.text();
     const html = HTMLParser.parse(body);
