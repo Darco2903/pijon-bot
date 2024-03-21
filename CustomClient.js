@@ -12,9 +12,10 @@ class CustomClient extends Client {
         this.Logger = new Utils.Logger(this);
         this.CommandRegister = new Utils.CommandRegister(this);
         this.commands = this.CommandRegister.commands;
-        // this.ConsoleHandler = new Utils.ConsoleHandler(this);
         this.Presence = new Utils.Presence(this);
-        this.dependencies = startOptions.includes("-all") ? clientConfig.dependances : startOptions.filter((option) => !option.startsWith("-"));
+        this.dependencies = startOptions.includes("-all")
+            ? clientConfig.dependances
+            : startOptions.filter((option) => option.startsWith("-")).map((option) => option.slice(1));
         this.db = require("./database");
         this.initDB();
     }

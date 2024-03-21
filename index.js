@@ -5,9 +5,6 @@ const { client: clientConfig } = require("./config.json");
 const { dependances } = clientConfig;
 
 function startDependance(name) {
-    if (name.includes("-")) {
-        return;
-    }
     if (!dependances.includes(name)) {
         client.Logger.warn(`Unknow dependance ${name}`);
         return;
