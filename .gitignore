@@ -1,5 +1,7 @@
-node_modules
-test*
-config.json
-logs
-UniserverZ
+/.vscode/
+/node_modules/
+*_.*
+*_
+
+/config/
+/logs/

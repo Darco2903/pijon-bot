@@ -1,8 +1,7 @@
 const { DataBase } = require("darco2903-db");
-const tables = require("./entities");
 
-const { database: dbConfig } = require("../config.json");
-const { type, host, port, user, password, database, synchronize } = dbConfig;
+
+const { type, host, port, user, password, database } = require("../config/database.json");
 
 const db = new DataBase({
     type,
@@ -11,8 +10,11 @@ const db = new DataBase({
     user,
     password,
     database,
-    tables,
-    synchronize,
+    tables: [
+        // tables
+    ],
 });
 
-module.exports = db;
+module.exports = {
+    db,
+};

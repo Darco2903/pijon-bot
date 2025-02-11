@@ -1,43 +1,42 @@
 {
     "name": "pijon-bot",
-    "version": "2.1.3",
     "description": "Lé Pijons Discord Server Bot",
-    "main": "index.js",
-    "scripts": {
-        "start": "node . -all",
-        "debug": "node . -all -DEBUG",
-        "deploy": "node tools/deploy-commands.js",
-        "clean-logs": "node tools/clean-logs.js",
-        "patch-distube": "npm uninstall ffmpeg-static npm ci --no-optional npm update",
-        "patch-discordjs-voice": "node tools/patcher-discordjs-voice.js",
-        "reinstall": "rm ./node_modules && npm install"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/Darco2903/Pijon-Bot.git"
-    },
+    "version": "3.0.0",
+    "private": true,
     "keywords": [],
     "author": "",
     "license": "ISC",
-    "bugs": {
-        "url": "https://github.com/Darco2903/Pijon-Bot/issues"
+    "main": "index.js",
+    "scripts": {
+        "start": "node .",
+        "dev": "node . --dev",
+        "deploy": "node ./tools/deploy.js",
+        "deploy:distube": "node ./tools/deploy.js -d distube",
+        "deploy-all": "node ./tools/deploy.js all",
+        "clean-log": "npx rm ./logs/*.log"
     },
-    "homepage": "https://github.com/Darco2903/Pijon-Bot#readme",
     "dependencies": {
-        "@discordjs/opus": "^0.9.0",
-        "@discordjs/voice": "^0.15.0",
-        "@distube/ytdl-core": "^4.11.17",
-        "console-log-colors": "^0.4.0",
-        "darco2903-db": "^1.9.1",
-        "discord.js": "^14.8.0",
-        "distube": "^4.0.4",
-        "ffmpeg-static": "^4.4.1",
-        "mysql": "^2.18.1",
-        "node-html-parser": "^6.1.12",
-        "openai": "^3.2.1",
-        "tweetnacl": "^1.0.3"
+        "@discordjs/opus": "^0.10.0",
+        "@discordjs/voice": "^0.18.0",
+        "@distube/bandlab": "^1.0.0",
+        "@distube/deezer": "^2.0.1",
+        "@distube/direct-link": "^1.0.1",
+        "@distube/file": "^1.0.1",
+        "@distube/soundcloud": "^2.0.4",
+        "@distube/spotify": "^2.0.2",
+        "@distube/youtube": "^1.0.4",
+        "@distube/yt-dlp": "^2.0.1",
+        "@distube/ytdl-core": "^4.16.3",
+        "darco2903-db": "file:../../npm/darco2903-db/dist/darco2903-db-2.0.1.tgz",
+        "discord.js": "^14.18.0",
+        "distube": "^5.0.4",
+        "distube-apple-music": "^0.1.0",
+        "logger": "file:../../npm/logger/dist/logger-1.1.1.tgz",
+        "mysql2": "^3.12.0",
+        "openai": "^4.83.0",
+        "sodium-native": "^4.3.1"
     },
     "devDependencies": {
-        "darco2903-os-command-kit": "^1.1.0"
+        "darco2903-os-command-kit": "file:../../npm/os-command-kit/dist/darco2903-os-command-kit-0.1.1.tgz"
     }
 }
