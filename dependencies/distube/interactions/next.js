@@ -55,8 +55,8 @@ module.exports = {
         const queue = distube.getQueue(interaction);
 
         const completion =
-            queue?.songs.slice(1).map((song, i) => ({
-                name: `${i + 1}. ${formatSong(song)}`.ellipsize(100),
+            queue?.songs.slice(1, 26).map((song, i) => ({
+                name: `${i + 1}. ${formatSong(song.name, song.uploader.name, song.formattedDuration)}`.ellipsize(100),
                 value: i + 1,
             })) || [];
 

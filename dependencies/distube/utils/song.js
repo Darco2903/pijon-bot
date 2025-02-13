@@ -13,12 +13,14 @@ function formatDuration(textDuration) {
 }
 
 /**
- * @param {import("distube").Song} song
+ * @param {string} title
+ * @param {string} channel
+ * @param {string} duration
  * @returns {string}
  */
-function formatSong(song) {
-    const timeText = formatDuration(song.formattedDuration);
-    return `[${timeText}] ${song.uploader.name} - ${song.name}`;
+function formatSong(title, channel, duration) {
+    const timeText = formatDuration(duration);
+    return `[${timeText}] ${channel} - ${title}`;
 }
 
 /** @param {import("distube").Song} song */

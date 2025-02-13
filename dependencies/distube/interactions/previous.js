@@ -55,9 +55,9 @@ module.exports = {
         const queue = distube.getQueue(interaction);
 
         const completion =
-            queue?.previousSongs.map((song, i) => ({
-                name: `${queue.previousSongs.length - i}. ${formatSong(song)}`.ellipsize(100),
-                value: queue.previousSongs.length - i,
+            queue?.previousSongs.slice(-25).map((song, i, arr) => ({
+                name: `${arr.length - i}. ${formatSong(song.name, song.uploader.name, song.formattedDuration)}`.ellipsize(100),
+                value: arr.length - i,
             })) || [];
 
         await interaction.respond(completion.reverse());
