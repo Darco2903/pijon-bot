@@ -6,7 +6,7 @@ const { dependencies } = require("../utils/startArgs");
 const registeredCommands = new Map();
 const registerdAutocompletes = new Map();
 
-function launchDependencies() {
+async function launchDependencies() {
     for (const dependence of dependencies) {
         try {
             logDebug(`Launching dependence: ${dependence}`);
@@ -26,9 +26,31 @@ function launchDependencies() {
                 }
             });
 
+            await dep.preStart?.();
+
+            client.once("ready", async () => await dep.start?.());
+
             logInfo(colors.green(`${dependence} started`));
         } catch (error) {
             logError(`Failed to launch dependence: ${dependence}`);
+            logDebug(error.stack);
+        }
+    }
+}
+
+async function stopDependencies() {
+    for (const dependence of dependencies) {
+        try {
+            logDebug(`Stopping dependence: ${dependence}`);
+
+            /** @type {import("./types").Dependence} */
+            const dep = require(`./${dependence}/index`);
+
+            await dep.stop?.();
+
+            logInfo(colors.green(`${dependence} stopped`));
+        } catch (error) {
+            logError(`Failed to stop dependence: ${dependence}`);
             logDebug(error.message);
         }
     }
@@ -82,4 +104,5 @@ client.on("interactionCreate", async (interaction) => {
 
 module.exports = {
     launchDependencies,
+    stopDependencies,
 };
