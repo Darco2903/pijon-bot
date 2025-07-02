@@ -2,9 +2,8 @@ const fs = require("fs");
 
 const { distube } = require("./distube");
 const { exists } = require("../../utils/utils");
-const { client } = require("../../client");
 
-const QUEUE_SAVE_FILE = "queues.json";
+const { QUEUE_FILE_PATH } = require("../../config/distube.json");
 
 /**
  * @typedef {Object} QueueData
@@ -22,17 +21,17 @@ function saveQueue(queue) {
     const data = {
         guildId: queue.id,
         voiceChannelId: queue.voiceChannel.id,
-        currentTime: queue.currentTime,
+        currentTime: parseFloat(queue.currentTime.toFixed(2)),
         songs: queue.songs.map((song) => song.url),
     };
     return data;
 }
 
 async function saveQueues() {
-    console.log("saving queues");
+    // console.log("saving queues");
 
     const save = distube.queues.collection.map(saveQueue);
-    await fs.promises.writeFile(QUEUE_SAVE_FILE, JSON.stringify(save));
+    await fs.promises.writeFile(QUEUE_FILE_PATH, JSON.stringify(save));
 }
 
 /**
@@ -68,13 +67,18 @@ async function restoreQueue(queueData) {
 async function restoreQueues() {
     // console.log("restoring queues");
 
-    if (await exists(QUEUE_SAVE_FILE)) {
-        const save = await fs.promises.readFile(QUEUE_SAVE_FILE);
-        /** @type {QueueData[]} */
-        const queues = JSON.parse(save);
+    if (await exists(QUEUE_FILE_PATH)) {
+        const save = await fs.promises.readFile(QUEUE_FILE_PATH);
 
-        const p = queues.map(restoreQueue);
-        await Promise.all(p);
+        try {
+            /** @type {QueueData[]} */
+            const queues = JSON.parse(save);
+
+            const p = queues.map(restoreQueue);
+            await Promise.all(p);
+        } catch (error) {
+            // console.error(error);
+        }
     }
 }
 

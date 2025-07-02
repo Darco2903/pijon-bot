@@ -29,28 +29,28 @@ async function shutdown() {
     logInfo(colors.magenta("Stopping dependencies..."));
     await stopDependencies();
 
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    // await new Promise((resolve) => setTimeout(resolve, 2000));
 
     logInfo(colors.magenta("Shutting down..."));
     const p1 = client.destroy();
     const p2 = db.disconnect();
     await Promise.all([p1, p2]);
-    process.exit(0);
+    // process.exit(0);
 }
 
 process.on("SIGINT", shutdown);
-process.on("SIGTERM", shutdown);
-process.on("uncaughtException", (err) => {
+// process.on("SIGTERM", shutdown);
+process.on("uncaughtException", async (err) => {
     logError(err);
     logDebug(err.stack);
-    shutdown();
+    await shutdown();
 });
+
+// setTimeout(() => {
+//     throw new Error("Test");
+// }, 5000);
 
 client.on("debug", (message) => {
-    console.log(message);
-});
-
-distube.on("debug", (message) => {
     console.log(message);
 });
 

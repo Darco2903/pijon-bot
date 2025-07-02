@@ -1,21 +1,13 @@
-const { SlashCommandBuilder, ChannelType } = require("discord.js");
-const { orm } = require("darco2903-db");
 const { logDebug } = require("logger");
+const { orm } = require("darco2903-db");
+const { search } = require("youtube-module");
+const { SlashCommandBuilder, ChannelType } = require("discord.js");
 
 const { db } = require("../../../database/index");
 const { distube } = require("../distube");
-const { getSongEmbed } = require("../utils/song");
+const { formatDuration, getSongEmbed, formatSong } = require("../utils/song");
 
-const MAX_HISTORY_SIZE = 10;
-
-function formatDuration(textDuration) {
-    const [sec, min, hour] = textDuration.split(":").reverse();
-    let timeText = "";
-    if (hour) timeText += `${hour}h`;
-    if (min) timeText += `${min}m`;
-    timeText += `${sec}s`;
-    return timeText;
-}
+const MAX_HISTORY_SIZE = 20;
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -35,6 +27,8 @@ module.exports = {
             await interaction.reply("Va dans un vocal ou j'te bute.");
             return;
         }
+
+        console.log("play", query);
 
         const isPlaying = !!distube.getQueue(interaction);
         await interaction.deferReply();
@@ -71,33 +65,38 @@ module.exports = {
     async autocomplete(interaction) {
         const query = interaction.options.getString("query")?.trim();
         let completion = [];
+        let name = "";
+
         if (!query) {
             const history = await db.find("play_history", { take: MAX_HISTORY_SIZE, order: { last_played: "DESC" } });
             completion = history.map((song) => {
                 const timeText = formatDuration(song.duration);
-                let name = `[${timeText}] ${song.author} - ${song.name}`;
-                if (name.length > 100) name = name.slice(0, 97) + "...";
+                name = `[${timeText}] ${song.author} - ${song.name}`;
+
+                // console.log("url", song.url);
                 return {
-                    name,
+                    name: name.ellipsize(100),
                     value: song.url,
                 };
             });
         } else {
-            // const result = await distube.search(query, { limit: 8 });
-            // completion = result.map((song) => {
-            //     let name = "";
-            //     if (song.type === "video") {
-            //         const timeText = song.isLive ? song.formattedDuration : formatDuration(song.formattedDuration);
-            //         name = `[${timeText}] ${song.uploader.name} - ${song.name}`;
-            //     } else {
-            //         name = `[Playlist] ${song.uploader.name} - ${song.name}`;
-            //     }
-            //     if (name.length > 100) name = name.slice(0, 97) + "...";
-            //     return {
-            //         name,
-            //         value: song.url,
-            //     };
-            // });
+            const result = await search(query, { type: ["playlist", "video"] });
+            completion = result.map((song) => {
+                if (song.videoRenderer) {
+                    song = song.videoRenderer;
+                    // console.log(song.title, song.channel.name, song.durationText);
+                    name = formatSong(song.title, song.channel.name, song.durationText ?? "");
+                } else {
+                    song = song.playlistRenderer;
+                    name = `[Playlist] ${song.title}`;
+                }
+                // console.log("url", song.url);
+
+                return {
+                    name: name.ellipsize(100),
+                    value: song.url,
+                };
+            });
         }
         await interaction.respond(completion);
     },

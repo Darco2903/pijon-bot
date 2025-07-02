@@ -5,6 +5,7 @@ const { dependencies } = require("../utils/startArgs");
 
 const registeredCommands = new Map();
 const registerdAutocompletes = new Map();
+const exp = {};
 
 async function launchDependencies() {
     for (const dependence of dependencies) {
@@ -30,12 +31,15 @@ async function launchDependencies() {
 
             client.once("ready", async () => await dep.start?.());
 
+            exp[dependence] = dep;
+
             logInfo(colors.green(`${dependence} started`));
         } catch (error) {
             logError(`Failed to launch dependence: ${dependence}`);
             logDebug(error.stack);
         }
     }
+    // return exp;
 }
 
 async function stopDependencies() {

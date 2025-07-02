@@ -1,4 +1,4 @@
-const { DisTube, Options, StreamType } = require("distube");
+const { DisTube } = require("distube");
 const { logDebug } = require("logger");
 
 const { YouTubePlugin } = require("@distube/youtube");
@@ -6,7 +6,7 @@ const { SpotifyPlugin } = require("@distube/spotify");
 const { DeezerPlugin } = require("@distube/deezer");
 const { AppleMusicPlugin } = require("distube-apple-music");
 const { SoundCloudPlugin } = require("@distube/soundcloud");
-const { BandlabPlugin } = require("@distube/bandlab");
+// const { BandlabPlugin } = require("@distube/bandlab");
 const { FilePlugin } = require("@distube/file");
 const { DirectLinkPlugin } = require("@distube/direct-link");
 const { YtDlpPlugin } = require("@distube/yt-dlp");
@@ -26,24 +26,25 @@ const options = {
     // emitAddListWhenCreatingQueue: false,
     // emitAddSongWhenCreatingQueue: false,
     emitNewSongOnly: true,
-    // ffmpeg: {
-    //     args: {
-    //         global: FFmpegArg,
-    //         input: FFmpegArg,
-    //         output: FFmpegArg,
-    //     },
-    //     path: string,
-    // },
+    ffmpeg: {
+        // args: {
+        //     global: FFmpegArg,
+        //     input: FFmpegArg,
+        //     output: FFmpegArg,
+        // },
+        // path: "C:/Users/Will/AppData/Local/Microsoft/WinGet/Packages/Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe/ffmpeg-7.1-full_build/bin/ffmpeg.exe",
+        // path: ffmpegPath,
+    },
     joinNewVoiceChannel: false,
     // nsfw: true,
     plugins: [
         // plugins
-        new YouTubePlugin(),
+        new YouTubePlugin({}),
         new SpotifyPlugin(),
         new DeezerPlugin(),
         new AppleMusicPlugin(),
         new SoundCloudPlugin(),
-        new BandlabPlugin(),
+        // new BandlabPlugin(),
         new FilePlugin(),
         new DirectLinkPlugin(),
         new YtDlpPlugin(),

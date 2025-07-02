@@ -26,17 +26,20 @@
         "@distube/spotify": "^2.0.2",
         "@distube/youtube": "^1.0.4",
         "@distube/yt-dlp": "^2.0.1",
-        "@distube/ytdl-core": "^4.16.3",
-        "darco2903-db": "file:../../npm/darco2903-db/dist/darco2903-db-2.0.1.tgz",
-        "discord.js": "^14.18.0",
-        "distube": "^5.0.4",
+        "@distube/ytdl-core": "^4.16.11",
+        "darco2903-db": "file:../../npm_packs/old/darco2903-db-2.0.1.tgz",
+        "discord.js": "^14.19.3",
+        "distube": "^5.0.7",
         "distube-apple-music": "^0.1.0",
-        "logger": "file:../../npm/logger/dist/logger-1.1.1.tgz",
-        "mysql2": "^3.12.0",
-        "openai": "^4.83.0",
-        "sodium-native": "^4.3.1"
+        "logger": "file:../../npm_packs/logger-1.1.1.tgz",
+        "mysql2": "^3.14.1",
+        "openai": "^5.3.0",
+        "opusscript": "^0.1.1",
+        "sodium-native": "^5.0.6",
+        "youtube-module": "file:../../npm/youtube-module",
+        "ytdl-core": "^4.11.5"
     },
     "devDependencies": {
-        "darco2903-os-command-kit": "file:../../npm/os-command-kit/dist/darco2903-os-command-kit-0.1.1.tgz"
+        "darco2903-os-command-kit": "file:../../npm_packs/darco2903-os-command-kit-0.1.1.tgz"
     }
 }
