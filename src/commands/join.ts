@@ -1,6 +1,19 @@
 import { ChannelType, SlashCommandBuilder } from "discord.js";
-import { createAudioResource, joinVoiceChannel, VoiceConnectionStatus } from "@discordjs/voice";
+import {
+    createAudioPlayer,
+    createAudioResource,
+    entersState,
+    joinVoiceChannel,
+    NoSubscriberBehavior,
+    VoiceConnectionStatus,
+} from "@discordjs/voice";
 import { BotCommand } from "../types/BotCommand.js";
+import { textToSpeech } from "../fish_audio/index.js";
+import { logger } from "../logger.js";
+import { Readable } from "stream";
+import { ReadableStream } from "stream/web";
+import { readableStreamToReadable } from "../utils.js";
+import { ResultAsync } from "neverthrow";
 
 const command: BotCommand = {
     data: new SlashCommandBuilder()
@@ -32,17 +45,45 @@ const command: BotCommand = {
             return;
         }
 
+        await interaction.deferReply();
+
         const connection = joinVoiceChannel({
             channelId: channel.id,
             guildId: interaction.guild.id,
             adapterCreator: interaction.guild.voiceAdapterCreator,
         });
 
-        connection.on(VoiceConnectionStatus.Ready, async () => {
-            // console.log("The connection has entered the Ready state - ready to play audio!");
-            await interaction.reply(`Joined the voice channel: ${channel.name}`);
-            // createAudioResource()
-        });
+        await ResultAsync.fromPromise(
+            //
+            entersState(connection, VoiceConnectionStatus.Ready, 5_000),
+            (error) => (error instanceof Error ? error.message : String(error)),
+        )
+            .andTee(async () => {
+                // console.log("The connection has entered the Ready state - ready to play audio!");
+                await interaction.editReply(`Joined the voice channel: ${channel.name}`);
+
+                await textToSpeech("Hello, I have joined the voice channel!")
+                    .andTee(async (stream) => {
+                        await interaction.followUp("Successfully converted text to speech.");
+                        const resource = createAudioResource(readableStreamToReadable(stream));
+                        const player = createAudioPlayer({
+                            behaviors: {
+                                noSubscriber: NoSubscriberBehavior.Pause,
+                            },
+                        });
+                        connection.subscribe(player);
+                        player.play(resource);
+                    })
+                    .orTee(async (error) => {
+                        logger.error(`Failed to convert text to speech: ${error}`);
+                        await interaction.followUp("Failed to convert text to speech.");
+                    });
+            })
+            .orTee(async (error) => {
+                logger.error(`Failed to join voice channel: ${error}`);
+                await interaction.editReply("Failed to join the voice channel.");
+                connection.destroy();
+            });
     },
 };
 

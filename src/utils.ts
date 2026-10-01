@@ -4,6 +4,8 @@ import { fileURLToPath } from "url";
 import type { ZodError, ZodType } from "zod";
 import { err, ok, Result, ResultAsync } from "neverthrow";
 import type { Time } from "@darco2903/secondthought";
+import { Readable } from "stream";
+import { ReadableStream as WebReadableStream } from "stream/web";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -64,4 +66,8 @@ export function safeParse<T>(schema: ZodType<T>, data: any): Result<T, ZodError>
     } else {
         return err(parseResult.error);
     }
+}
+
+export function readableStreamToReadable<T>(stream: ReadableStream<T>): Readable {
+    return Readable.fromWeb(stream as WebReadableStream<T>);
 }

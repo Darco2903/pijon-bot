@@ -10,7 +10,13 @@ export default class ClientWrapper<T extends boolean> extends Client<T> {
 
     constructor() {
         super({
-            intents: [GatewayIntentBits.Guilds],
+            intents: [
+                //
+                GatewayIntentBits.Guilds,
+                GatewayIntentBits.GuildMessages,
+                GatewayIntentBits.GuildVoiceStates,
+                GatewayIntentBits.MessageContent,
+            ],
         });
 
         this.busy = false;
