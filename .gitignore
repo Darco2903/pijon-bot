@@ -2,7 +2,7 @@
 /node_modules/
 *_.*
 *_
-
-/config/
-/logs/
-queues.json
+.env
+config.json
+src/generated/
+dist/
