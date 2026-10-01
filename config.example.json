@@ -1,0 +1,10 @@
+{
+    "discord": {
+        "channels": [
+            {
+                "name": "Channel Name",
+                "id": "Channel ID"
+            }
+        ]
+    }
+}

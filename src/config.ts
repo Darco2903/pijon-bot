@@ -1,7 +1,11 @@
+import fs from "node:fs";
 import z from "zod";
 import dotenv from "dotenv";
+import { logger } from "./logger.js";
 
 dotenv.config();
+
+let fileConfig: any = {};
 
 const configSchema = z.object({
     database: z.object({
@@ -14,6 +18,12 @@ const configSchema = z.object({
     discord: z.object({
         clientId: z.string(),
         token: z.string(),
+        channels: z.array(
+            z.object({
+                name: z.string(),
+                id: z.string(),
+            }),
+        ),
     }),
     fish_audio: z.object({
         apiKey: z.string(),
@@ -22,6 +32,13 @@ const configSchema = z.object({
         apiKey: z.string(),
     }),
 });
+
+try {
+    fileConfig = JSON.parse(fs.readFileSync("config.json", "utf-8"));
+} catch (err) {
+    logger.error(`Failed to read config.json: ${err}`);
+    process.exit(1);
+}
 
 const parsedConfig = configSchema.safeParse({
     database: {
@@ -34,6 +51,7 @@ const parsedConfig = configSchema.safeParse({
     discord: {
         clientId: process.env.DISCORD_CLIENT_ID,
         token: process.env.DISCORD_TOKEN,
+        channels: fileConfig?.discord?.channels,
     },
     fish_audio: {
         apiKey: process.env.FISH_AUDIO_API_KEY,
@@ -44,7 +62,9 @@ const parsedConfig = configSchema.safeParse({
 });
 
 if (!parsedConfig.success) {
-    console.error("Invalid configuration:", parsedConfig.error.message);
+    logger.error(`Invalid configuration: ${parsedConfig.error.message}`);
     process.exit(1);
 }
 export const config = parsedConfig.data;
+
+logger.info("Configuration loaded successfully.");
