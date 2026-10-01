@@ -16,7 +16,7 @@
         "start": "node .",
         "dev": "tsx src/index.ts --dev",
         "clean": "rimraf dist src/generated",
-        "deploy": "echo 'No deployment script defined yet.'"
+        "deploy": "node dist/tools/deploy-commands.js"
     },
     "imports": {
         "#prisma7/client": [

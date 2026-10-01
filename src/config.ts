@@ -18,6 +18,12 @@ const configSchema = z.object({
     discord: z.object({
         clientId: z.string(),
         token: z.string(),
+        guilds: z.array(
+            z.object({
+                name: z.string(),
+                id: z.string(),
+            }),
+        ),
         channels: z.array(
             z.object({
                 name: z.string(),
@@ -51,6 +57,7 @@ const parsedConfig = configSchema.safeParse({
     discord: {
         clientId: process.env.DISCORD_CLIENT_ID,
         token: process.env.DISCORD_TOKEN,
+        guilds: fileConfig?.discord?.guilds,
         channels: fileConfig?.discord?.channels,
     },
     fish_audio: {
