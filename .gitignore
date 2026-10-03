@@ -6,3 +6,5 @@
 config.json
 src/generated/
 dist/
+.DS_Store
+*cookies.txt

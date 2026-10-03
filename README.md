@@ -1,53 +1,33 @@
 # Pijon-Bot
 
-Discord bot from the **Lé Pijons** Discord server written in JavaScript running on Node.js.
+Discord bot from the **Lé Pijons** Discord server written in TypeScript.
 
-Full details on [**v2.1.0**](https://github.com/Darco2903/pijon-bot/releases/tag/v2.1.0) can be found here
+<!-- Full details on [**v2.1.0**](https://github.com/Darco2903/pijon-bot/releases/tag/v2.1.0) can be found here -->
+
+<!-- v3 in progress -->
+
+Currently, the bot v3 is in development. The bot is being rewritten from scratch in TypeScript to use the latest Discord.js v14.
 
 ## Requirements
 
--   [**Node.js**](https://nodejs.org/en/) (v18.00.0 or newer)
--   DataBase
-    > DataBase is required only if you want to use the database or distube dependencies.
-    > For example: a quick lightweight portable solution is [**Uniform Server Zero**](http://www.uniformserver.com/) (Windows only)
+- [**Node.js**](https://nodejs.org/en/) (v24 or newer)
 
 ## Installation
 
-**1.** Clone the repository or download the zip file
+1. Clone the repository
 
-**2.** Install node modules
+    ```bash
+    git clone https://github.com/Darco2903/pijon-bot.git
+    ```
 
-```bash
-npm install
-```
+2. Install dependencies
 
-**3.** Create a `config.json` from [**template**](configTemplate.json) file in the root directory of the project
+    ```bash
+    pnpm install
+    ```
 
-**4.** Patch distube and DiscordJS voice (only if you want to use the distube dependency)
+3. Create a `.env` file in the root directory and add your Discord bot token and other required environment variables. You can use the [**.env.example**](.env.example) file as a template.
 
-```bash
-npm run patch-distube
-npm run patch-discordjs-voice
-```
-
-**5.** Deploy bot's commands
-
-```bash
-npm run deploy
-```
-
-**6.** Run the bot
-
-```bash
-npm start
-```
-
-## Scripts
-
--   `npm start` - Run the bot
--   `npm run debug` - Run the bot in debug mode
--   `npm run deploy` - Deploy bot's commands to Discord
--   `npm run clean-logs` - Clean logs
--   `npm run patch-distube` - Patch distube
--   `npm run patch-discordjs-voice` - Patch DiscordJS voice
--   `npm run reinstall` - Reinstall node modules
+    ```bash
+    cp .env.example .env
+    ```
