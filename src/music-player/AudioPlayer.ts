@@ -63,6 +63,17 @@ export class AudioPlayer {
         AudioPlayer._all.set(guildId, this);
         this.player = new DiscordAudioPlayer(options);
         this.playlist = new TrackQueue();
+
+        this.player.on(AudioPlayerStatus.Idle, () => {
+            logger.debug(`AudioPlayer for guild ${this.guildId} is idle.`);
+            if (this.playlist.hasNext) {
+                this.next().map(() => {
+                    logger.debug(`Playing next track for guild ${this.guildId}.`);
+                });
+            } else {
+                logger.debug(`No next track for guild ${this.guildId}.`);
+            }
+        });
     }
 
     public addSong(searchRes: SearchResult): ResultAsync<Track, string> {
