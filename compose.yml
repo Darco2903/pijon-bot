@@ -1,0 +1,43 @@
+services:
+  mysql-db:
+    image: mysql:8
+    command: --mysql-native-password=ON
+    container_name: pijon-db
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: abc123
+      MYSQL_DATABASE: pijon_bot
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pabc123" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  pijon-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: pijon-bot:latest
+    container_name: pijon-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./.env:/app/.env:ro
+      - ./config.json:/app/config.json:ro
+      - ./cookies.txt:/app/cookies.txt:rw
+      - ./cache:/app/cache:rw
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+
+volumes:
+  mysql-data:
+
+    # networks:
+    #   default:
+    #     name: pijon-bot-network

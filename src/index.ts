@@ -1,6 +1,7 @@
 import ClientWrapper from "./wrapper.js";
 import { logger } from "./logger.js";
 import { prisma } from "./prisma.js";
+import { main } from "./main.js";
 
 let wrapper: ClientWrapper<true>;
 
@@ -22,7 +23,8 @@ await prisma
             .then(async (wr) => {
                 wrapper = wr;
                 logger.info(`Logged in as ${wrapper.user.tag}`);
-                // await main(wrapper);
+                await main(wrapper);
+                logger.info("Client started successfully");
             })
             .catch((error) => {
                 logger.error("Error starting the client:", error);

@@ -8,6 +8,13 @@ dotenv.config();
 let fileConfig: any = {};
 
 const configSchema = z.object({
+    cache: z.object({
+        path: z.string(),
+        maxSize: z.number(),
+        // maxAge: z.number().optional(),
+        // ttlMs: z.number().optional(),
+        // maxTrackDurationMs: z.number().optional(),
+    }),
     database: z.object({
         host: z.string(),
         user: z.string(),
@@ -37,6 +44,11 @@ const configSchema = z.object({
     openai: z.object({
         apiKey: z.string(),
     }),
+    ytdlp: z.object({
+        cookie_file: z.string().refine((path) => fs.existsSync(path), {
+            message: "YTDLP_COOKIE_FILE does not exist",
+        }),
+    }),
 });
 
 try {
@@ -47,6 +59,11 @@ try {
 }
 
 const parsedConfig = configSchema.safeParse({
+    cache: {
+        path: fileConfig?.cache?.path,
+        maxSize: fileConfig?.cache?.maxSize,
+        // maxAge: fileConfig?.cache?.maxAge,
+    },
     database: {
         host: process.env.DATABASE_HOST,
         user: process.env.DATABASE_USER,
@@ -65,6 +82,9 @@ const parsedConfig = configSchema.safeParse({
     },
     openai: {
         apiKey: process.env.OPENAI_API_KEY,
+    },
+    ytdlp: {
+        cookie_file: fileConfig?.ytdlp?.cookie_file,
     },
 });
 

@@ -14,6 +14,9 @@ COPY tsconfig.json prisma/schema.prisma ./
 RUN pnpm build
 
 FROM node:24-alpine AS runtime
+# yt-dlp (zipapp, needs python3) and ffmpeg for some formats; node is reused as its JS runtime
+RUN apk add --no-cache python3 ffmpeg
+ADD --chmod=755 https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp /usr/local/bin/yt-dlp
 # node_modules
 COPY --from=prod-deps /app/node_modules /app/node_modules
 # dist

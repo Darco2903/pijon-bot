@@ -1,8 +1,11 @@
-import { Client, Collection, Events, GatewayIntentBits, Interaction, MessageFlags } from "discord.js";
+import { Client, Collection, Events, GatewayIntentBits } from "discord.js";
 import { logger } from "./logger.js";
 import type { BotCommand } from "./types/BotCommand.js";
 import { commands } from "./commands/index.js";
 import { config } from "./config.js";
+import { handleInteraction } from "./interactionHandler.js";
+import { AudioPlayer } from "./music-player/AudioPlayer.js";
+import { getVoiceConnections } from "@discordjs/voice";
 
 export default class ClientWrapper<T extends boolean> extends Client<T> {
     protected busy: boolean;
@@ -37,52 +40,18 @@ export default class ClientWrapper<T extends boolean> extends Client<T> {
     //     }
     // }
 
-    protected async handleInteraction(interaction: Interaction): Promise<void> {
-        if (!interaction.isChatInputCommand() && !interaction.isAutocomplete()) {
-            return;
-        }
-
-        const command = this.commands.get(interaction.commandName);
-        if (command === undefined) {
-            console.error(`No command matching ${interaction.commandName} was found.`);
-            return;
-        }
-
-        if (interaction.isChatInputCommand()) {
-            try {
-                logger.info(`Executing command ${interaction.commandName} by user ${interaction.user.tag}`);
-                await command.execute(interaction);
-            } catch (error) {
-                console.error(error);
-
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.followUp({
-                        content: "There was an error while executing this command!",
-                        flags: MessageFlags.Ephemeral,
-                    });
-                } else {
-                    await interaction.reply({
-                        content: "There was an error while executing this command!",
-                        flags: MessageFlags.Ephemeral,
-                    });
-                }
-            }
-        } else if (interaction.isAutocomplete() && command.autoComplete !== undefined) {
-            await command.autoComplete(interaction);
-        }
-    }
-
-    async start(): Promise<ClientWrapper<true>> {
+    public async start(): Promise<ClientWrapper<true>> {
         this.login(config.discord.token);
-        return new Promise<ClientWrapper<true>>((resolve) => {
+        const client = await new Promise<ClientWrapper<true>>((resolve) => {
             this.once(Events.ClientReady, () => resolve(this as ClientWrapper<true>));
-
-            // register the interaction handler
-            this.on(Events.InteractionCreate, (interaction) => this.handleInteraction(interaction));
         });
+
+        // register the interaction handler
+        this.on(Events.InteractionCreate, (interaction) => handleInteraction(client, interaction));
+        return client;
     }
 
-    async stop(this: ClientWrapper<true>): Promise<void> {
+    public async stop(this: ClientWrapper<true>): Promise<void> {
         // if (this.isBusy()) {
         //     logInfo("Client is busy, waiting...".yellow);
         //     await this.waitForBusy();
@@ -90,6 +59,8 @@ export default class ClientWrapper<T extends boolean> extends Client<T> {
 
         logger.info("Stopping the client...");
         this.user?.setStatus("invisible");
+        AudioPlayer.all.forEach((player) => player.destroy());
+        getVoiceConnections().forEach((connection) => connection.destroy());
         await this.destroy();
     }
 }

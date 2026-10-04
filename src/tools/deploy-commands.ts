@@ -13,6 +13,10 @@ const rest = new REST().setToken(config.discord.token);
         console.log(`Started refreshing ${commands.length} application (/) commands.`);
 
         for (const guild of config.discord.guilds) {
+            // rest.put(Routes.applicationGuildCommands(config.discord.clientId, guild.id), { body: [] })
+            //     .then(() => console.log("Successfully deleted all guild commands."))
+            //     .catch(console.error);
+
             // The put method is used to fully refresh all commands in the guild with the current set
             const data = (await rest.put(Routes.applicationGuildCommands(config.discord.clientId, guild.id), {
                 body: commands,

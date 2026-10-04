@@ -1,10 +1,24 @@
 {
+    "cache": {
+        "path": "CACHE_PATH",
+        "maxSize": MAX_SIZE_IN_BYTES,
+        "maxAge": MAX_AGE_IN_MILLISECONDS
+    },
     "discord": {
+        "guilds": [
+            {
+                "name": "CHANNEL_NAME",
+                "id": "GUILD_ID"
+            }
+        ],
         "channels": [
             {
-                "name": "Channel Name",
-                "id": "Channel ID"
+                "name": "CHANNEL_NAME",
+                "id": "CHANNEL_ID"
             }
         ]
+    },
+    "ytdlp": {
+        "cookie_file": "COOKIE_FILE_PATH"
     }
 }
