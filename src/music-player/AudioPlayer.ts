@@ -1,6 +1,6 @@
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import { TrackQueue } from "@darco2903/track-queue";
-import { ytDlp, type SearchResult } from "../yt-dlp/index.js";
+import { ytDlp } from "../yt-dlp/index.js";
 import {
     AudioPlayerStatus,
     type CreateAudioPlayerOptions,
@@ -10,10 +10,14 @@ import {
     StreamType,
     VoiceConnection,
 } from "@discordjs/voice";
+import { TypedEmitter } from "@darco2903/typed-emitter";
 import { audioCache } from "./index.js";
-import type { Track } from "./types/index.js";
+import type { ITrack } from "./types/index.js";
 import { logger } from "../logger.js";
 import { prisma } from "../prisma.js";
+import { PlayerEvents } from "./types/PlayerEvents.js";
+import { VoiceChannel } from "discord.js";
+import { joinVoice } from "../voice.js";
 
 export class AudioPlayer {
     protected static _all: Map<string, AudioPlayer> = new Map();
@@ -28,9 +32,10 @@ export class AudioPlayer {
 
     public readonly guildId: string;
     protected player: DiscordAudioPlayer;
-    protected playlist: TrackQueue<Track>;
+    protected playlist: TrackQueue<ITrack>;
+    // protected eventEmitter: TypedEmitter<PlayerEvents>;
 
-    public get currentSong(): Track | null {
+    public get currentSong(): ITrack | null {
         return this.playlist.current;
     }
 
@@ -63,20 +68,33 @@ export class AudioPlayer {
         AudioPlayer._all.set(guildId, this);
         this.player = new DiscordAudioPlayer(options);
         this.playlist = new TrackQueue();
+        // this.eventEmitter = new TypedEmitter();
 
+        // Handle the idle event to automatically play the next track in the queue
         this.player.on(AudioPlayerStatus.Idle, async () => {
             logger.debug(`AudioPlayer for guild ${this.guildId} is idle.`);
+
             if (this.playlist.hasNext) {
                 await this.next().map(() => {
                     logger.debug(`Playing next track for guild ${this.guildId}.`);
                 });
+                // this.eventEmitter.emit("statusChange", AudioPlayerStatus.Playing);
+                if (this.playlist.current) {
+                    // this.eventEmitter.emit("trackStart", this.playlist.current);
+                } else {
+                    logger.warn(
+                        `No current track found for guild ${this.guildId} after calling next().`,
+                    );
+                }
             } else {
+                // this.eventEmitter.emit("statusChange", AudioPlayerStatus.Idle);
+                // this.eventEmitter.emit("queueEmpty");
                 logger.debug(`No next track for guild ${this.guildId}.`);
             }
         });
     }
 
-    public addSong(track: Track): ResultAsync<Track, string> {
+    public addSong(track: ITrack): ResultAsync<ITrack, string> {
         this.playlist.add(track);
         // console.log(
         //     `Playlist length`,
@@ -111,6 +129,7 @@ export class AudioPlayer {
     protected _play(id: string): ResultAsync<void, string> {
         const conn = this.connection;
         if (!conn) {
+            logger.error(`No voice connection found for guild ${this.guildId}.`);
             return errAsync("No voice connection found for this guild.");
         }
 
@@ -126,14 +145,24 @@ export class AudioPlayer {
         );
     }
 
-    public play(url: string): ResultAsync<Track, string> {
-        return ytDlp.getInfo(url).andThen((info) => {
-            const p = this.playing ? okAsync(undefined) : this._play(info.id);
-            return ResultAsync.combine([
-                //
-                this.addSong(info),
-                p,
-            ]).map(([track]) => track);
+    public play(id: string, channel: VoiceChannel): ResultAsync<ITrack, string> {
+        return ytDlp.getInfo(id).andThen((info) => {
+            this.addSong(info); // don't wait for this to finish, we don't care if it fails
+            if (this.playing) {
+                return okAsync(info);
+            } else {
+                return joinVoice(channel.id, channel.guild)
+                    .andTee(() => {
+                        logger.debug(`Using voice connection for guild ${channel.guildId}`);
+                    })
+                    .andThen(() => this._play(id))
+                    .andTee(() => {
+                        logger.debug(
+                            `Started playing track ${info.title} for guild ${channel.guildId}`,
+                        );
+                    })
+                    .map(() => info);
+            }
         });
     }
 
@@ -150,7 +179,7 @@ export class AudioPlayer {
         return this.player.unpause();
     }
 
-    public next(): ResultAsync<Track, string> {
+    public next(): ResultAsync<ITrack, string> {
         const nextTrack = this.playlist.next();
         if (!nextTrack) {
             logger.debug("No next track found.");
@@ -162,7 +191,7 @@ export class AudioPlayer {
         return this._play(nextTrack.id).map(() => nextTrack);
     }
 
-    public previous(): ResultAsync<Track, string> {
+    public previous(): ResultAsync<ITrack, string> {
         const previousTrack = this.playlist.previous();
         if (!previousTrack) {
             logger.debug("No previous track found.");

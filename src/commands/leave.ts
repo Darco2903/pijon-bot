@@ -1,15 +1,6 @@
 import { SlashCommandBuilder } from "discord.js";
-import {
-    AudioPlayerStatus,
-    createAudioPlayer,
-    createAudioResource,
-    getVoiceConnection,
-    NoSubscriberBehavior,
-} from "@discordjs/voice";
-import { BotCommand } from "../types/BotCommand.js";
-import { logger } from "../logger.js";
-import { textToSpeech } from "../fish_audio/index.js";
-import { readableStreamToReadable } from "../utils.js";
+import { getVoiceConnection } from "@discordjs/voice";
+import type { BotCommand } from "../types/BotCommand.js";
 
 const command: BotCommand = {
     data: new SlashCommandBuilder().setName("leave").setDescription("Leaves the voice channel"),
@@ -19,38 +10,14 @@ const command: BotCommand = {
             return;
         }
 
-        const connection = getVoiceConnection(interaction.guild.id);
-        if (!connection) {
+        const conn = getVoiceConnection(interaction.guild.id);
+        if (!conn) {
             await interaction.reply("I am not connected to a voice channel.");
             return;
         }
 
-        await interaction.deferReply();
-
-        await textToSpeech("I'm leaving the voice channel guys. Bye!")
-            .andTee(async (stream) => {
-                await interaction.followUp("Successfully converted text to speech.");
-                const resource = createAudioResource(readableStreamToReadable(stream));
-                const player = createAudioPlayer({
-                    behaviors: {
-                        noSubscriber: NoSubscriberBehavior.Pause,
-                    },
-                });
-                connection.subscribe(player);
-                player.play(resource);
-
-                await new Promise<void>((resolve, reject) => {
-                    player.on(AudioPlayerStatus.Idle, () => {
-                        connection.destroy();
-                        interaction.editReply(`Left the voice channel.`);
-                        resolve();
-                    });
-                });
-            })
-            .orTee(async (error) => {
-                logger.error(`Failed to convert text to speech: ${error}`);
-                await interaction.followUp("Failed to convert text to speech.");
-            });
+        conn.destroy();
+        await interaction.reply("Left the voice channel.");
     },
 };
 

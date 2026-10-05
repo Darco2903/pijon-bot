@@ -1,6 +1,7 @@
 import { SlashCommandBuilder } from "discord.js";
 import type { BotCommand } from "../types/BotCommand.js";
 import { AudioPlayer } from "../music-player/AudioPlayer.js";
+import { Track } from "../music-player/types/Track.js";
 
 const command: BotCommand = {
     data: new SlashCommandBuilder()
@@ -30,13 +31,19 @@ const command: BotCommand = {
             return;
         }
 
-        const res = await player.next();
-        if (res.isOk()) {
-            await interaction.reply("Playing the next song.");
-        } else {
-            await interaction.reply("Failed to play the next song.");
-            player.destroy();
-        }
+        await player.next().match(
+            async (track) => {
+                const t = new Track(track);
+                await interaction.reply({
+                    content: "Playing the next song",
+                    embeds: [t.embed()],
+                });
+            },
+            async (error) => {
+                await interaction.reply("Failed to play the next song.");
+                player.destroy();
+            },
+        );
     },
 };
 export default command;

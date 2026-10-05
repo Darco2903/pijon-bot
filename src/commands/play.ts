@@ -1,11 +1,11 @@
 import { ApplicationCommandOptionChoiceData, ChannelType, SlashCommandBuilder } from "discord.js";
-import { getVoiceConnection, NoSubscriberBehavior } from "@discordjs/voice";
+import { NoSubscriberBehavior } from "@discordjs/voice";
 import { BotCommand } from "../types/BotCommand.js";
-import { logger } from "../logger.js";
-import { validateID, validateURL, ytDlp } from "../yt-dlp/index.js";
+import { getVideoID, validateID, validateURL, ytDlp } from "../yt-dlp/index.js";
 import { AudioPlayer } from "../music-player/AudioPlayer.js";
 import { prisma } from "../prisma.js";
-import { joinVoice } from "../voice.js";
+import { Track } from "../music-player/types/Track.js";
+import { logger } from "../logger.js";
 
 const command: BotCommand = {
     data: new SlashCommandBuilder()
@@ -34,40 +34,23 @@ const command: BotCommand = {
 
         let query = interaction.options.getString("query", true);
 
-        const channel =
+        const ch =
             interaction.options.getChannel("channel")
             ?? interaction.guild?.members.cache.get(interaction.user.id)?.voice.channel;
 
-        if (!channel) {
+        if (!ch) {
             await interaction.reply("Please specify a voice channel to join.");
             return;
         }
 
-        if (channel.type !== ChannelType.GuildVoice) {
+        const channel = interaction.client.channels.resolve(ch.id);
+
+        if (!channel || channel.type !== ChannelType.GuildVoice) {
             await interaction.reply("Please specify a valid voice channel.");
             return;
         }
 
         await interaction.deferReply();
-
-        let conn = getVoiceConnection(guild.id);
-        if (!conn) {
-            const r = await joinVoice(channel.id, guild);
-
-            if (r.isErr()) {
-                logger.error(`Failed to join voice channel: ${r.error}`);
-                await interaction.editReply("Failed to join the voice channel.");
-                return;
-            }
-
-            conn = r.value;
-
-            logger.debug(`Joined the voice channel: ${channel.name}`);
-            await interaction.editReply(`Joined the voice channel: ${channel.name}`);
-        } else {
-            logger.debug(`Already connected to the voice channel: ${channel.name}`);
-            await interaction.editReply(`Already connected to the voice channel: ${channel.name}`);
-        }
 
         let audioPlayer = AudioPlayer.get(guild.id);
         if (!audioPlayer) {
@@ -84,32 +67,45 @@ const command: BotCommand = {
 
         logger.debug(`query: ${query}`);
 
-        let url: string;
+        let id: string;
         if (!validateID(query) && !validateURL(query)) {
             const res = await ytDlp.search(query, 1);
             if (res.isErr()) {
-                await interaction.followUp(`Failed to search for query "${query}": ${res.error}`);
+                logger.error(`Failed to search for query "${query}": ${res.error}`);
+                await interaction.followUp("An error occurred while searching for your song");
                 return;
             }
 
             const searchResults = res.value;
             if (searchResults.length === 0) {
-                await interaction.followUp(`No results found for query "${query}".`);
+                logger.debug(`No search results found for query "${query}"`);
+                await interaction.followUp(`No results found for *${query}*`);
                 return;
             }
             // logger.debug(`Search results: ${searchResults.map((r) => r.title).join(", ")}`);
             const firstResult = searchResults[0];
-            url = `https://youtu.be/${firstResult.id}`;
+            id = firstResult.id;
             logger.debug(`First search result: ${firstResult.title}`);
         } else if (validateURL(query)) {
-            url = query;
+            id = getVideoID(query);
         } else {
-            url = `https://youtu.be/${query}`;
+            id = query;
         }
 
-        await audioPlayer.play(url);
-
-        await interaction.followUp("Successfully fetched audio stream.");
+        await audioPlayer.play(id, channel).match(
+            async (track) => {
+                logger.debug(`Playing track ${track.title} (${track.id}) in guild ${guild.id}`);
+                const t = new Track(track);
+                // await interaction.followUp("Playing your song!");
+                await interaction.followUp({
+                    embeds: [t.embed()],
+                });
+            },
+            async (error) => {
+                logger.error(`Failed to play track: ${error}`);
+                await interaction.followUp("An error occurred while trying to play your song");
+            },
+        );
     },
     async autoComplete(interaction) {
         const query = interaction.options.getString("query", true);
@@ -153,7 +149,9 @@ const command: BotCommand = {
                 .unwrapOr([]);
         }
 
-        await interaction.respond(results);
+        await interaction.respond(results).catch((error) => {
+            logger.error(`Failed to respond to autocomplete interaction: ${error}`);
+        });
     },
 };
 
