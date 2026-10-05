@@ -1,14 +1,7 @@
 import { ApplicationCommandOptionChoiceData, ChannelType, SlashCommandBuilder } from "discord.js";
-import {
-    entersState,
-    getVoiceConnection,
-    joinVoiceChannel,
-    NoSubscriberBehavior,
-    VoiceConnectionStatus,
-} from "@discordjs/voice";
+import { getVoiceConnection, NoSubscriberBehavior } from "@discordjs/voice";
 import { BotCommand } from "../types/BotCommand.js";
 import { logger } from "../logger.js";
-import { ResultAsync } from "neverthrow";
 import { validateID, validateURL, ytDlp } from "../yt-dlp/index.js";
 import { AudioPlayer } from "../music-player/AudioPlayer.js";
 import { prisma } from "../prisma.js";
@@ -89,31 +82,32 @@ const command: BotCommand = {
             logger.debug(`Using existing AudioPlayer for guild ${guild.id}`);
         }
 
-        if (validateID(query)) {
-            query = `https://youtu.be/${query}`;
-        } else if (validateURL(query)) {
-            query = query;
-        }
-
         logger.debug(`query: ${query}`);
 
-        const res = await ytDlp.search(query, 1);
-        if (res.isErr()) {
-            await interaction.followUp(`Failed to search for query "${query}": ${res.error}`);
-            return;
+        let url: string;
+        if (!validateID(query) && !validateURL(query)) {
+            const res = await ytDlp.search(query, 1);
+            if (res.isErr()) {
+                await interaction.followUp(`Failed to search for query "${query}": ${res.error}`);
+                return;
+            }
+
+            const searchResults = res.value;
+            if (searchResults.length === 0) {
+                await interaction.followUp(`No results found for query "${query}".`);
+                return;
+            }
+            // logger.debug(`Search results: ${searchResults.map((r) => r.title).join(", ")}`);
+            const firstResult = searchResults[0];
+            url = `https://youtu.be/${firstResult.id}`;
+            logger.debug(`First search result: ${firstResult.title}`);
+        } else if (validateURL(query)) {
+            url = query;
+        } else {
+            url = `https://youtu.be/${query}`;
         }
 
-        const searchResults = res.value;
-        if (searchResults.length === 0) {
-            await interaction.followUp(`No results found for query "${query}".`);
-            return;
-        }
-        // logger.debug(`Search results: ${searchResults.map((r) => r.title).join(", ")}`);
-
-        const firstResult = searchResults[0];
-        logger.debug(`First search result: ${firstResult.title}`);
-
-        await audioPlayer.play(firstResult);
+        await audioPlayer.play(url);
 
         await interaction.followUp("Successfully fetched audio stream.");
     },

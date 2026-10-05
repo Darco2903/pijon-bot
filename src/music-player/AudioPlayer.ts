@@ -76,40 +76,36 @@ export class AudioPlayer {
         });
     }
 
-    public addSong(searchRes: SearchResult): ResultAsync<Track, string> {
-        return ResultAsync.combine([
-            ytDlp.getInfo(searchRes.id),
-            ResultAsync.fromSafePromise(
-                prisma.recently_played
-                    .upsert({
-                        where: {
-                            video_id: searchRes.id,
-                        },
-                        create: {
-                            video_id: searchRes.id,
-                            title: searchRes.title,
-                            played_at: new Date(),
-                        },
-                        update: {
-                            played_at: new Date(),
-                        },
-                    })
-                    .catch((error) => {
-                        logger.error(`Failed to upsert recently played video: ${error}`);
-                    }),
-            ),
-        ])
-            .map(([track]) => track)
-            .andTee((track) => {
-                this.playlist.add(track);
-                // console.log(
-                //     `Playlist length`,
-                //     this.playlist.length,
-                //     `current`,
-                //     this.playlist.currentPosition,
-                //     this.playlist.current?.title,
-                // );
-            });
+    public addSong(track: Track): ResultAsync<Track, string> {
+        this.playlist.add(track);
+        // console.log(
+        //     `Playlist length`,
+        //     this.playlist.length,
+        //     `current`,
+        //     this.playlist.currentPosition,
+        //     this.playlist.current?.title,
+        // );
+        return prisma
+            .safe(
+                prisma.recently_played.upsert({
+                    where: {
+                        video_id: track.id,
+                    },
+                    create: {
+                        video_id: track.id,
+                        title: track.title,
+                        played_at: new Date(),
+                    },
+                    update: {
+                        played_at: new Date(),
+                    },
+                }),
+            )
+            .orElse((error) => {
+                logger.error(`Failed to upsert recently played track: ${error}`);
+                return okAsync(undefined);
+            })
+            .map(() => track);
     }
 
     protected _play(id: string): ResultAsync<void, string> {
@@ -130,13 +126,15 @@ export class AudioPlayer {
         );
     }
 
-    public play(search: SearchResult): ResultAsync<Track, string> {
-        const p = this.playing ? okAsync(undefined) : this._play(search.id);
-        return ResultAsync.combine([
-            //
-            this.addSong(search),
-            p,
-        ]).map(([track]) => track);
+    public play(url: string): ResultAsync<Track, string> {
+        return ytDlp.getInfo(url).andThen((info) => {
+            const p = this.playing ? okAsync(undefined) : this._play(info.id);
+            return ResultAsync.combine([
+                //
+                this.addSong(info),
+                p,
+            ]).map(([track]) => track);
+        });
     }
 
     public stop(): boolean {
