@@ -64,10 +64,10 @@ export class AudioPlayer {
         this.player = new DiscordAudioPlayer(options);
         this.playlist = new TrackQueue();
 
-        this.player.on(AudioPlayerStatus.Idle, () => {
+        this.player.on(AudioPlayerStatus.Idle, async () => {
             logger.debug(`AudioPlayer for guild ${this.guildId} is idle.`);
             if (this.playlist.hasNext) {
-                this.next().map(() => {
+                await this.next().map(() => {
                     logger.debug(`Playing next track for guild ${this.guildId}.`);
                 });
             } else {

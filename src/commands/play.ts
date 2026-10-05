@@ -9,7 +9,7 @@ import {
 import { BotCommand } from "../types/BotCommand.js";
 import { logger } from "../logger.js";
 import { ResultAsync } from "neverthrow";
-import { ytDlp } from "../yt-dlp/index.js";
+import { validateID, validateURL, ytDlp } from "../yt-dlp/index.js";
 import { AudioPlayer } from "../music-player/AudioPlayer.js";
 import { prisma } from "../prisma.js";
 import { joinVoice } from "../voice.js";
@@ -39,7 +39,7 @@ const command: BotCommand = {
             return;
         }
 
-        const query = interaction.options.getString("query", true);
+        let query = interaction.options.getString("query", true);
 
         const channel =
             interaction.options.getChannel("channel")
@@ -89,6 +89,12 @@ const command: BotCommand = {
             logger.debug(`Using existing AudioPlayer for guild ${guild.id}`);
         }
 
+        if (validateID(query)) {
+            query = `https://youtu.be/${query}`;
+        } else if (validateURL(query)) {
+            query = query;
+        }
+
         logger.debug(`query: ${query}`);
 
         const res = await ytDlp.search(query, 1);
@@ -102,10 +108,11 @@ const command: BotCommand = {
             await interaction.followUp(`No results found for query "${query}".`);
             return;
         }
-        logger.debug(`Search results: ${searchResults.map((r) => r.title).join(", ")}`);
+        // logger.debug(`Search results: ${searchResults.map((r) => r.title).join(", ")}`);
 
         const firstResult = searchResults[0];
         logger.debug(`First search result: ${firstResult.title}`);
+
         await audioPlayer.play(firstResult);
 
         await interaction.followUp("Successfully fetched audio stream.");
@@ -137,6 +144,9 @@ const command: BotCommand = {
         } else {
             results = await ytDlp
                 .search(query, 15)
+                // .andTee((results) => {
+                //     console.log("Search:", results);
+                // })
                 .map((results) =>
                     results.map((result) => ({
                         name: result.title,
