@@ -10,7 +10,8 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --frozen-l
 FROM base AS build
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 COPY src/ /app/src/
-COPY tsconfig.json prisma/schema.prisma ./
+COPY tsconfig.json ./
+COPY prisma/schema.prisma ./prisma/
 RUN pnpm build
 
 FROM node:24-alpine AS runtime

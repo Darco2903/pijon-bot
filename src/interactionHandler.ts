@@ -2,7 +2,10 @@ import { MessageFlags, type Interaction } from "discord.js";
 import { logger } from "./logger.js";
 import ClientWrapper from "./wrapper.js";
 
-export async function handleInteraction(client: ClientWrapper<true>, interaction: Interaction): Promise<void> {
+export async function handleInteraction(
+    client: ClientWrapper<true>,
+    interaction: Interaction,
+): Promise<void> {
     // console.log("Handling interaction:", interaction.type, interaction.commandName);
 
     if (!interaction.isChatInputCommand() && !interaction.isAutocomplete()) {
@@ -19,8 +22,12 @@ export async function handleInteraction(client: ClientWrapper<true>, interaction
 
     if (interaction.isChatInputCommand()) {
         try {
-            logger.info(`Executing command ${interaction.commandName} by user ${interaction.user.tag}`);
-            await command.execute(interaction);
+            logger.info(
+                `Executing command ${interaction.commandName} by user ${interaction.user.tag}`,
+            );
+            await command.execute(interaction).catch((error) => {
+                logger.error(`Error executing command ${interaction.commandName}: ${error}`);
+            });
         } catch (error) {
             logger.error(error);
 

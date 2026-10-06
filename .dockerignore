@@ -1,0 +1,29 @@
+# Secrets and runtime data (mounted by compose, never baked into the image)
+.env
+.env.*
+config.json
+*cookies.txt
+cache/
+data/
+
+# Built or installed inside the image
+node_modules/
+dist/
+src/generated/
+
+# Repo and editor files
+.git/
+.gitignore
+.gitattributes
+.vscode/
+.DS_Store
+**/.DS_Store
+
+# Not needed for the build
+Dockerfile
+.dockerignore
+compose.yml
+*.md
+test.*
+*.mp3
+*.mp4
