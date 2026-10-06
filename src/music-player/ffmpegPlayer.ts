@@ -1,6 +1,6 @@
 import { spawn } from "child_process";
 import { pipeline, type Readable } from "stream";
-import { Millisecond } from "@darco2903/secondthought";
+import { Second } from "@darco2903/secondthought";
 
 /**
  * Decodes any input to raw PCM (s16le, 48kHz, stereo) for StreamType.Raw.
@@ -9,10 +9,7 @@ import { Millisecond } from "@darco2903/secondthought";
  * @param input - Readable stream or file path to decode
  * @param start - Time offset in seconds to start the stream from
  */
-export function createPcmStream(
-    input: Readable | string,
-    start: Millisecond = new Millisecond(0),
-): Readable {
+export function createPcmStream(input: Readable | string, start: Second = new Second(0)): Readable {
     const isFile = typeof input === "string";
     const ss = start.time > 0 ? ["-ss", start.time.toFixed(3)] : [];
     // console.log(`createPcmStream: start=${start.toStringWithUnit()}, ss=${ss.join(" ")}`);

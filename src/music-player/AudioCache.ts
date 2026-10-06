@@ -2,7 +2,7 @@ import fs from "fs/promises";
 import { createReadStream } from "fs";
 import type { Readable } from "stream";
 import { ResultAsync } from "neverthrow";
-import { Millisecond } from "@darco2903/secondthought";
+import { Second } from "@darco2903/secondthought";
 import { pathExists } from "../utils.js";
 import { teeToFile } from "./teeToFile.js";
 import { CacheEntry, TrackStream } from "./types/index.js";
@@ -95,7 +95,7 @@ export class AudioCache {
         this.inflight.set(key, promise);
     }
 
-    async createStream(videoId: string, start?: Millisecond): Promise<TrackStream> {
+    async createStream(videoId: string, start?: Second): Promise<TrackStream> {
         let stream: Readable;
         let destroy: () => void;
 

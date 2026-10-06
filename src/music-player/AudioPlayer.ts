@@ -11,7 +11,7 @@ import {
     StreamType,
     VoiceConnection,
 } from "@discordjs/voice";
-import { Millisecond, Time } from "@darco2903/secondthought";
+import { Millisecond, Second } from "@darco2903/secondthought";
 import { audioCache } from "./index.js";
 import type { ITrack } from "./types/index.js";
 import { prisma } from "../prisma.js";
@@ -102,6 +102,10 @@ export class AudioPlayer {
                 logger.debug(`No next track for guild ${this.guildId}.`);
             }
         });
+
+        // setInterval(() => {
+        //     logger.debug(`Current position: ${this.positionMs.toStringWithUnit()}`);
+        // }, 1000);
     }
 
     public static saveAll(): ResultAsync<void, string> {
@@ -152,7 +156,7 @@ export class AudioPlayer {
 
     protected sub: boolean = false;
 
-    protected _play(id: string, time?: Time): ResultAsync<void, string> {
+    protected _play(id: string, time?: Second): ResultAsync<void, string> {
         const conn = this.connection;
         if (!conn) {
             logger.error(`No voice connection found for guild ${this.guildId}.`);
@@ -160,7 +164,7 @@ export class AudioPlayer {
         }
 
         this.offsetMs = time?.toMillisecond().time ?? 0;
-        return ResultAsync.fromSafePromise(audioCache.createStream(id, time?.toMillisecond()))
+        return ResultAsync.fromSafePromise(audioCache.createStream(id, time))
             .map(({ destroy, stream }) => {
                 this.resource = createAudioResource(stream, {
                     inputType: StreamType.Raw,
@@ -169,12 +173,21 @@ export class AudioPlayer {
                     logger.debug(`Subscribing to voice connection for guild ${this.guildId}.`);
                     conn.subscribe(this.player);
                     this.sub = true;
+                } else {
+                    logger.debug(
+                        `Already subscribed to voice connection for guild ${this.guildId}.`,
+                    );
+                    conn.subscribe(this.player);
                 }
-                // conn.subscribe(this.player);
+                this.player.once(AudioPlayerStatus.Playing, () => {
+                    logger.debug(`AudioPlayer for guild ${this.guildId} is now playing.`);
+                });
                 this.player.play(this.resource);
             })
             .orTee((error) => {
                 logger.error(`Failed to play track ${id} for guild ${this.guildId}: ${error}`);
+                this.resource = null;
+                this.offsetMs = 0;
             });
     }
 
@@ -236,7 +249,7 @@ export class AudioPlayer {
         return this._play(previousTrack.id).map(() => previousTrack);
     }
 
-    public seek(time: Time): ResultAsync<void, string> {
+    public seek(time: Second): ResultAsync<void, string> {
         if (!this.currentSong) {
             logger.warn("No current song to seek.");
             return errAsync("No current song to seek.");
