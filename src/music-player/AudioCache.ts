@@ -2,13 +2,13 @@ import fs from "fs/promises";
 import { createReadStream } from "fs";
 import type { Readable } from "stream";
 import { ResultAsync } from "neverthrow";
-import { logger } from "../logger.js";
+import { Millisecond } from "@darco2903/secondthought";
 import { pathExists } from "../utils.js";
 import { teeToFile } from "./teeToFile.js";
-import { ytDlp } from "../yt-dlp/index.js";
 import { CacheEntry, TrackStream } from "./types/index.js";
 import { createPcmStream } from "./ffmpegPlayer.js";
-import { Millisecond } from "@darco2903/secondthought";
+import { YtDlp } from "../yt-dlp/yt-dlp.js";
+import { logger } from "../logger.js";
 
 export interface AudioCacheOptions {
     dir: string;
@@ -18,11 +18,13 @@ export interface AudioCacheOptions {
 }
 
 export class AudioCache {
+    protected readonly ytDlp: YtDlp;
     public readonly options: AudioCacheOptions;
     protected index: Map<string, CacheEntry> = new Map();
     protected inflight: Map<string, ResultAsync<void, string>> = new Map();
 
-    constructor(options: AudioCacheOptions) {
+    constructor(ytdlp: YtDlp, options: AudioCacheOptions) {
+        this.ytDlp = ytdlp;
         this.options = options;
     }
 
@@ -85,6 +87,14 @@ export class AudioCache {
         return this.index.has(key);
     }
 
+    public getInflight(key: string): ResultAsync<void, string> | null {
+        return this.inflight.get(key) || null;
+    }
+
+    public setInflight(key: string, promise: ResultAsync<void, string>): void {
+        this.inflight.set(key, promise);
+    }
+
     async createStream(videoId: string, start?: Millisecond): Promise<TrackStream> {
         let stream: Readable;
         let destroy: () => void;
@@ -106,7 +116,7 @@ export class AudioCache {
             logger.debug(`AudioCache: cache miss for ${videoId}, downloading...`);
 
             const p = this.cachePath(videoId);
-            const upstream = ytDlp.stream(videoId);
+            const upstream = this.ytDlp.stream(videoId);
             const { playerStream, done } = teeToFile(upstream.stream, p);
 
             done.then(() => {

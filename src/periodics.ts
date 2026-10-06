@@ -1,11 +1,11 @@
 import cron from "node-cron";
-import { updateYtDlp } from "./yt-dlp/update.js";
 import { logger } from "./logger.js";
 import { YT_DLP_UPDATE_CRON } from "./consts.js";
+import { ytDlp } from "./yt-dlp/index.js";
 
 async function runYtDlpUpdate(): Promise<void> {
     logger.info("Running periodic yt-dlp update...");
-    await updateYtDlp();
+    await ytDlp.update();
 }
 
 export function registerPeriodicTasks(): void {

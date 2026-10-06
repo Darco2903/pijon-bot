@@ -1,7 +1,6 @@
 import fs from "fs/promises";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import { TrackQueue } from "@darco2903/track-queue";
-import { ytDlp } from "../yt-dlp/index.js";
 import {
     AudioPlayerStatus,
     AudioResource,
@@ -12,15 +11,14 @@ import {
     StreamType,
     VoiceConnection,
 } from "@discordjs/voice";
-import { TypedEmitter } from "@darco2903/typed-emitter";
+import { Millisecond, Time } from "@darco2903/secondthought";
 import { audioCache } from "./index.js";
 import type { ITrack } from "./types/index.js";
-import { logger } from "../logger.js";
 import { prisma } from "../prisma.js";
-import { PlayerEvents } from "./types/PlayerEvents.js";
 import { VoiceChannel } from "discord.js";
 import { joinVoice } from "../voice.js";
-import { Millisecond, Time } from "@darco2903/secondthought";
+import { ytDlp } from "../yt-dlp/index.js";
+import { logger } from "../logger.js";
 import { config } from "../config.js";
 
 export class AudioPlayer {

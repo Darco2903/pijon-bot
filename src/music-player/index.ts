@@ -1,11 +1,11 @@
-import { ResultAsync } from "neverthrow";
 import { getVoiceConnections } from "@discordjs/voice";
 import { AudioPlayer } from "./AudioPlayer.js";
 import { AudioCache } from "./AudioCache.js";
 import { logger } from "../logger.js";
 import { config } from "../config.js";
+import { ytDlp } from "../yt-dlp/index.js";
 
-export const audioCache = new AudioCache({
+export const audioCache = new AudioCache(ytDlp, {
     dir: config.musicplayer.cache.path,
     maxSizeBytes: config.musicplayer.cache.maxSize,
     ttlMs: config.musicplayer.cache.maxAge,

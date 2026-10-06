@@ -2,15 +2,19 @@ import fs from "fs/promises";
 import { randomUUID } from "crypto";
 import { describe, it, expect, vi } from "vitest";
 import { AudioCache } from "../../src/music-player/AudioCache.js";
+import { YtDlp } from "../../src/yt-dlp/yt-dlp.js";
+
+const ytDlp = new YtDlp();
 
 describe("AudioCache", () => {
     it("should initialize the cache directory", async () => {
         const dir = `/tmp/audio-cache-test/${randomUUID()}`;
         console.log("dir:", dir);
 
-        const cache = new AudioCache({
+        const cache = new AudioCache(ytDlp, {
             dir: dir,
             maxSizeBytes: 1024 * 1024 * 100, // 100 MB
+            ttlMs: 1000 * 60 * 60, // 1 hour
         });
 
         const res = await cache.init();
@@ -19,9 +23,10 @@ describe("AudioCache", () => {
 
     it("should clean up .part files and rebuild index", async () => {
         const dir = `/tmp/audio-cache-test/${randomUUID()}`;
-        const cache = new AudioCache({
+        const cache = new AudioCache(ytDlp, {
             dir: dir,
             maxSizeBytes: 1024 * 1024 * 100, // 100 MB
+            ttlMs: 1000 * 60 * 60, // 1 hour
         });
 
         // Create a .part file and a valid cache file

@@ -1,11 +1,12 @@
 import { ApplicationCommandOptionChoiceData, ChannelType, SlashCommandBuilder } from "discord.js";
 import { NoSubscriberBehavior } from "@discordjs/voice";
 import { BotCommand } from "../types/BotCommand.js";
-import { getVideoID, validateID, validateURL, ytDlp } from "../yt-dlp/index.js";
+import { getVideoID, validateID, validateURL } from "../yt-dlp/yt-dlp.js";
 import { AudioPlayer } from "../music-player/AudioPlayer.js";
 import { prisma } from "../prisma.js";
 import { Track } from "../music-player/types/Track.js";
 import { logger } from "../logger.js";
+import { ytDlp } from "../yt-dlp/index.js";
 
 const command: BotCommand = {
     data: new SlashCommandBuilder()
