@@ -10,6 +10,7 @@
     "type": "module",
     "packageManager": "pnpm@12.8.1",
     "scripts": {
+        "check": "tsc --noEmit",
         "build": "run-s build:db build:ts",
         "build:ts": "tsc",
         "build:db": "pnpm exec prisma generate",
