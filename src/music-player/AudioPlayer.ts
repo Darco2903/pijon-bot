@@ -1,8 +1,10 @@
+import fs from "fs/promises";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import { TrackQueue } from "@darco2903/track-queue";
 import { ytDlp } from "../yt-dlp/index.js";
 import {
     AudioPlayerStatus,
+    AudioResource,
     type CreateAudioPlayerOptions,
     createAudioResource,
     AudioPlayer as DiscordAudioPlayer,
@@ -18,6 +20,8 @@ import { prisma } from "../prisma.js";
 import { PlayerEvents } from "./types/PlayerEvents.js";
 import { VoiceChannel } from "discord.js";
 import { joinVoice } from "../voice.js";
+import { Millisecond, Time } from "@darco2903/secondthought";
+import { config } from "../config.js";
 
 export class AudioPlayer {
     protected static _all: Map<string, AudioPlayer> = new Map();
@@ -31,6 +35,8 @@ export class AudioPlayer {
     }
 
     public readonly guildId: string;
+    protected resource: AudioResource | null;
+    protected offsetMs: number;
     protected player: DiscordAudioPlayer;
     protected playlist: TrackQueue<ITrack>;
     // protected eventEmitter: TypedEmitter<PlayerEvents>;
@@ -59,12 +65,18 @@ export class AudioPlayer {
         return this.player.state.status === AudioPlayerStatus.Playing;
     }
 
+    public get positionMs(): Millisecond {
+        return new Millisecond(this.offsetMs + (this.resource?.playbackDuration ?? 0));
+    }
+
     constructor(guildId: string, options?: CreateAudioPlayerOptions) {
         if (AudioPlayer._all.has(guildId)) {
             throw new Error(`AudioPlayer already exists for guild ${guildId}`);
         }
 
         this.guildId = guildId;
+        this.offsetMs = 0;
+        this.resource = null;
         AudioPlayer._all.set(guildId, this);
         this.player = new DiscordAudioPlayer(options);
         this.playlist = new TrackQueue();
@@ -92,6 +104,20 @@ export class AudioPlayer {
                 logger.debug(`No next track for guild ${this.guildId}.`);
             }
         });
+    }
+
+    public static saveAll(): ResultAsync<void, string> {
+        const data = this.all.map((player) => {
+            return {
+                guildId: player.guildId,
+                playlist: player.playlist.toArray(),
+                time: player.positionMs.time,
+            };
+        });
+        return ResultAsync.fromPromise(
+            fs.writeFile(config.musicplayer.queue_save.path, JSON.stringify(data)),
+            (err) => `Failed to save audio player state: ${err}`,
+        );
     }
 
     public addSong(track: ITrack): ResultAsync<ITrack, string> {
@@ -126,23 +152,32 @@ export class AudioPlayer {
             .map(() => track);
     }
 
-    protected _play(id: string): ResultAsync<void, string> {
+    protected sub: boolean = false;
+
+    protected _play(id: string, time?: Time): ResultAsync<void, string> {
         const conn = this.connection;
         if (!conn) {
             logger.error(`No voice connection found for guild ${this.guildId}.`);
             return errAsync("No voice connection found for this guild.");
         }
 
-        return ResultAsync.fromSafePromise(audioCache.createStream(id)).map(
-            ({ destroy, stream }) => {
-                const resource = createAudioResource(stream, {
+        this.offsetMs = time?.toMillisecond().time ?? 0;
+        return ResultAsync.fromSafePromise(audioCache.createStream(id, time?.toMillisecond()))
+            .map(({ destroy, stream }) => {
+                this.resource = createAudioResource(stream, {
                     inputType: StreamType.Raw,
                 });
-
-                conn.subscribe(this.player);
-                this.player.play(resource);
-            },
-        );
+                if (this.sub === false) {
+                    logger.debug(`Subscribing to voice connection for guild ${this.guildId}.`);
+                    conn.subscribe(this.player);
+                    this.sub = true;
+                }
+                // conn.subscribe(this.player);
+                this.player.play(this.resource);
+            })
+            .orTee((error) => {
+                logger.error(`Failed to play track ${id} for guild ${this.guildId}: ${error}`);
+            });
     }
 
     public play(id: string, channel: VoiceChannel): ResultAsync<ITrack, string> {
@@ -203,21 +238,23 @@ export class AudioPlayer {
         return this._play(previousTrack.id).map(() => previousTrack);
     }
 
-    public seek(time: number): ResultAsync<void, string> {
+    public seek(time: Time): ResultAsync<void, string> {
         if (!this.currentSong) {
             logger.warn("No current song to seek.");
             return errAsync("No current song to seek.");
         }
 
-        return ResultAsync.fromSafePromise(audioCache.createStream(this.currentSong.id, time)).map(
-            ({ destroy, stream }) => {
-                const resource = createAudioResource(stream, {
-                    inputType: StreamType.Raw,
-                });
-
-                this.player.play(resource);
-            },
-        );
+        const sec = time.toSecond();
+        if (sec.time > (this.currentSong.duration ?? 0)) {
+            logger.warn(
+                `Seek time ${sec.toStringWithUnit()} exceeds track duration ${
+                    this.currentSong.duration ?? 0
+                }s.`,
+            );
+            return errAsync("Seek time exceeds track duration.");
+        }
+        logger.debug(`Seeking to ${sec.toStringWithUnit()} in track ${this.currentSong.title}`);
+        return this._play(this.currentSong.id, time);
     }
 
     public destroy(): void {

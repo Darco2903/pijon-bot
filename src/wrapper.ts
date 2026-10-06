@@ -6,6 +6,7 @@ import { config } from "./config.js";
 import { handleInteraction } from "./interactionHandler.js";
 import { AudioPlayer } from "./music-player/AudioPlayer.js";
 import { getVoiceConnections } from "@discordjs/voice";
+import { stopMusicPlayer } from "./music-player/index.js";
 
 export default class ClientWrapper<T extends boolean> extends Client<T> {
     protected busy: boolean;
@@ -59,8 +60,7 @@ export default class ClientWrapper<T extends boolean> extends Client<T> {
 
         logger.info("Stopping the client...");
         this.user?.setStatus("invisible");
-        AudioPlayer.all.forEach((player) => player.destroy());
-        getVoiceConnections().forEach((connection) => connection.destroy());
+        await stopMusicPlayer();
         await this.destroy();
     }
 }

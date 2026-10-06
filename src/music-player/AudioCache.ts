@@ -8,11 +8,12 @@ import { teeToFile } from "./teeToFile.js";
 import { ytDlp } from "../yt-dlp/index.js";
 import { CacheEntry, TrackStream } from "./types/index.js";
 import { createPcmStream } from "./ffmpegPlayer.js";
+import { Millisecond } from "@darco2903/secondthought";
 
 export interface AudioCacheOptions {
     dir: string;
     maxSizeBytes: number; // LRU eviction above this
-    // ttlMs?: number; // optional max age since last access
+    ttlMs: number; // max age since last access
     // maxTrackDurationMs?: number; // don't cache very long tracks
 }
 
@@ -84,7 +85,7 @@ export class AudioCache {
         return this.index.has(key);
     }
 
-    async createStream(videoId: string, start?: number): Promise<TrackStream> {
+    async createStream(videoId: string, start?: Millisecond): Promise<TrackStream> {
         let stream: Readable;
         let destroy: () => void;
 

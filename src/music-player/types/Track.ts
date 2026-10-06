@@ -5,6 +5,7 @@ export interface ITrack {
     id: string;
     title: string;
     webpage_url: string;
+    /** Duration of the track in seconds */
     duration?: number | null | undefined;
     channel?: string | null | undefined;
     uploader?: string | null | undefined;

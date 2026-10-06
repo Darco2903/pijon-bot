@@ -1,6 +1,7 @@
 import { SlashCommandBuilder } from "discord.js";
 import type { BotCommand } from "../types/BotCommand.js";
 import { AudioPlayer } from "../music-player/AudioPlayer.js";
+import { Second } from "@darco2903/secondthought";
 
 const command: BotCommand = {
     data: new SlashCommandBuilder()
@@ -31,9 +32,18 @@ const command: BotCommand = {
             return;
         }
 
-        await player.seek(time);
+        const sec = new Second(time);
 
-        await interaction.editReply(`Seeked to ${time} seconds in the current song.`);
+        await player.seek(sec).match(
+            async () => {
+                await interaction.editReply(
+                    `Seeked to ${sec.toStringWithUnit()} in the current song.`,
+                );
+            },
+            async (error) => {
+                await interaction.editReply(`Failed to seek: ${error}`);
+            },
+        );
     },
 };
 
