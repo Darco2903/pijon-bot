@@ -1,17 +1,19 @@
+import z from "zod";
 import { EmbedBuilder } from "discord.js";
 import { formatTime } from "../../utils.js";
 
-export interface ITrack {
-    id: string;
-    title: string;
-    webpage_url: string;
-    /** Duration of the track in seconds */
-    duration?: number | null | undefined;
-    channel?: string | null | undefined;
-    uploader?: string | null | undefined;
-    thumbnail?: string | null | undefined;
-    is_live?: boolean | null | undefined;
-}
+export const ITrackSchema = z.object({
+    id: z.string(),
+    title: z.string(),
+    webpage_url: z.string(),
+    duration: z.number().optional().nullable(),
+    channel: z.string().optional().nullable(),
+    uploader: z.string().optional().nullable(),
+    thumbnail: z.string().optional().nullable(),
+    is_live: z.boolean().optional().nullable(),
+});
+
+export type ITrack = z.infer<typeof ITrackSchema>;
 
 export class Track implements ITrack {
     public readonly id: string;

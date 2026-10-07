@@ -11,15 +11,17 @@ import {
     StreamType,
     VoiceConnection,
 } from "@discordjs/voice";
-import { Millisecond, Second } from "@darco2903/secondthought";
+import { Hour, Millisecond, Second } from "@darco2903/secondthought";
 import { audioCache } from "./index.js";
 import type { ITrack } from "./types/index.js";
 import { prisma } from "../prisma.js";
-import { Guild, VoiceChannel } from "discord.js";
+import { Client, Guild, VoiceChannel } from "discord.js";
 import { joinVoice } from "../voice.js";
 import { ytDlp } from "../yt-dlp/index.js";
 import { logger } from "../logger.js";
 import { config } from "../config.js";
+import { QueueData, QueueDataSchema, QueueItem } from "./types/Queue.js";
+import { safeJSONParse, safeParse } from "../utils.js";
 
 export class AudioPlayer {
     protected static _all: Map<string, AudioPlayer> = new Map();
@@ -43,6 +45,12 @@ export class AudioPlayer {
     /** Set by destroy(). Callers may still hold a reference, e.g. /play across its awaits. */
     protected destroyed: boolean = false;
     // protected eventEmitter: TypedEmitter<PlayerEvents>;
+
+    /**
+     * False until loadAll() has run, so a shutdown during startup doesn't overwrite
+     * the saved queues before they were restored.
+     */
+    protected static restoreDone: boolean = false;
 
     public get currentSong(): ITrack | null {
         return this.playlist.current;
@@ -141,17 +149,195 @@ export class AudioPlayer {
     }
 
     public static saveAll(): ResultAsync<void, string> {
-        const data = this.all.map((player) => {
-            return {
+        if (!config.musicplayer.queue_save.enabled) {
+            return okAsync(undefined);
+        }
+        if (!AudioPlayer.restoreDone) {
+            logger.warn("Saved queues were not restored yet, keeping the existing save file.");
+            return okAsync(undefined);
+        }
+
+        const items: QueueItem[] = [];
+
+        for (const player of this.all) {
+            // Idle means nothing to resume: either nothing started, or the queue is finished
+            // (current still points to the last track).
+            if (!player.playing && !player.paused) continue;
+
+            const position = player.playlist.currentPosition;
+            const channel = player.voiceChannel;
+            if (position === null || channel === null) continue;
+
+            items.push({
                 guildId: player.guildId,
+                channelId: channel.id,
                 playlist: player.playlist.toArray(),
+                position,
                 time: player.positionMs.time,
-            };
-        });
+                paused: player.paused,
+            });
+        }
+
+        const data: QueueData = {
+            items: items,
+            savedAt: Date.now(),
+        };
+
         return ResultAsync.fromPromise(
             fs.writeFile(config.musicplayer.queue_save.path, JSON.stringify(data)),
             (err) => `Failed to save audio player state: ${err}`,
-        );
+        ).andTee(() => {
+            logger.info(`Saved ${items.length} queue(s).`);
+        });
+    }
+
+    /** Reads the save file. A missing file is not an error, there is just nothing to restore. */
+    protected static readSave(): ResultAsync<QueueData | null, string> {
+        return ResultAsync.fromPromise(
+            fs.readFile(config.musicplayer.queue_save.path, "utf-8"),
+            (err) => err as NodeJS.ErrnoException,
+        )
+            .map((text): string | null => text)
+            .orElse((err) =>
+                err.code === "ENOENT" ?
+                    okAsync(null)
+                :   errAsync(`Failed to read saved queues: ${err.message}`),
+            )
+            .andThen((text) => {
+                if (text === null) return okAsync(null);
+                return safeJSONParse(text)
+                    .mapErr(() => "Saved queues are not valid JSON")
+                    .andThen((json) => safeParse(QueueDataSchema, json))
+                    .mapErr((err) => `Invalid saved queues: ${err}`);
+            });
+    }
+
+    /**
+     * Restores the saved queues: rejoins each saved channel and continues the current track
+     * where it stopped. Empty channels are left by the "alone in voice" timer.
+     * Must run after the client is ready (guild and channel caches).
+     */
+    public static loadAll(client: Client): ResultAsync<void, string> {
+        if (!config.musicplayer.queue_save.enabled) {
+            AudioPlayer.restoreDone = true;
+            return okAsync(undefined);
+        }
+
+        return AudioPlayer.readSave()
+            .andThen((data) => {
+                if (data === null) {
+                    logger.debug("No saved queues to restore.");
+                    return okAsync(undefined);
+                }
+
+                const age = new Millisecond(data.savedAt).diff(Millisecond.now());
+                if (age.greaterThan(new Hour(1))) {
+                    const strDate = new Date(data.savedAt).toISOString();
+                    logger.info(`Saved queues are older than 1 hour (${strDate}), not restoring.`);
+                    return okAsync(undefined);
+                }
+
+                logger.info(`Restoring ${data.items.length} queue(s)...`);
+                return ResultAsync.combineWithAllErrors(
+                    data.items.map((item) => AudioPlayer.restoreOne(client, item)),
+                )
+                    .map(() => undefined)
+                    .mapErr((errors) => errors.join("; "));
+            })
+            .andTee(() => {
+                AudioPlayer.restoreDone = true;
+            })
+            .orTee(() => {
+                // Even if restoring failed, later saves must be able to replace the file.
+                AudioPlayer.restoreDone = true;
+            });
+    }
+
+    protected static restoreOne(client: Client, item: QueueItem): ResultAsync<void, string> {
+        const guild = client.guilds.cache.get(item.guildId);
+        if (!guild) {
+            return errAsync(`Guild ${item.guildId} not found`);
+        }
+
+        const channel = guild.channels.cache.get(item.channelId);
+        if (!(channel instanceof VoiceChannel)) {
+            return errAsync(`Voice channel ${item.channelId} not found in guild ${guild.id}`);
+        }
+
+        if (AudioPlayer.get(guild.id)) {
+            return errAsync(`Guild ${guild.id} already has an audio player`);
+        }
+
+        const player = new AudioPlayer(guild);
+        player.playlist = new TrackQueue(item.playlist);
+        if (player.playlist.moveTo(item.position) === null) {
+            player.destroy();
+            return errAsync(`Invalid queue position ${item.position} for guild ${guild.id}`);
+        }
+
+        return player
+            .restore(channel, new Millisecond(item.time).toSecond(), item.paused)
+            .andTee(() => {
+                const title = player.currentSong?.title;
+                const state = item.paused ? "paused on" : "resuming";
+                logger.info(`Restored queue in guild ${guild.id}, ${state} "${title}"`);
+            })
+            .orTee(() => player.destroy()) // no-op if the failed join already destroyed it
+            .mapErr((err) => `Guild ${guild.id}: ${err}`);
+    }
+
+    /**
+     * Joins the channel and continues the current track at `time`, without touching the queue.
+     * With `paused`, the track is loaded and paused right away so /resume continues it.
+     */
+    protected restore(
+        channel: VoiceChannel,
+        time: Second,
+        paused: boolean,
+    ): ResultAsync<void, string> {
+        const track = this.playlist.current;
+        if (!track) {
+            return errAsync("Restored queue is empty.");
+        }
+
+        this.starting = true;
+        return joinVoice(channel.id, channel.guild)
+            .andThen(() => this._play(track.id, time))
+            .andTee(() => {
+                if (paused) this.pauseWhenPlaying();
+            })
+            .andTee(() => {
+                this.starting = false;
+            })
+            .orTee(() => {
+                this.starting = false;
+            });
+    }
+
+    /**
+     * pause() only works in the Playing state, and the player is still Buffering right after
+     * play(). The "playing" event fires synchronously on that transition, before the first
+     * audio frame is sent, so pausing there plays nothing of the track.
+     */
+    protected pauseWhenPlaying(): void {
+        if (this.player.state.status === AudioPlayerStatus.Playing) {
+            this.player.pause(true);
+            return;
+        }
+
+        const onPlaying = () => {
+            cleanup();
+            this.player.pause(true);
+        };
+        // The track failed before playing: don't pause whatever plays next.
+        const onIdle = () => cleanup();
+        const cleanup = () => {
+            this.player.off(AudioPlayerStatus.Playing, onPlaying);
+            this.player.off(AudioPlayerStatus.Idle, onIdle);
+        };
+
+        this.player.once(AudioPlayerStatus.Playing, onPlaying);
+        this.player.once(AudioPlayerStatus.Idle, onIdle);
     }
 
     public addSong(track: ITrack): ResultAsync<ITrack, string> {

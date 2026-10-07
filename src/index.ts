@@ -3,6 +3,7 @@ import { logger } from "./logger.js";
 import { prisma } from "./prisma.js";
 import { main } from "./main.js";
 import { registerPeriodicTasks, stopPeriodicTasks } from "./periodics.js";
+import { AudioPlayer } from "./music-player/AudioPlayer.js";
 
 const wrapper: ClientWrapper = new ClientWrapper();
 let isShuttingDown: boolean = false;
@@ -69,6 +70,12 @@ async function shutdown(signal: NodeJS.Signals) {
 
     const wr = wrRes.value;
     logger.info(`Logged in as ${wr.user.tag}`);
+
+    // After login: restoring needs the guild/channel caches and the voice state handler.
+    await AudioPlayer.loadAll(wr).match(
+        () => logger.debug("Queue restore finished"),
+        (error) => logger.warn(`Failed to restore queues: ${error}`),
+    );
 
     logger.info("Client started successfully");
 })();
