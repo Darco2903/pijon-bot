@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from "discord.js";
-import { getVoiceConnection } from "@discordjs/voice";
 import type { BotCommand } from "../types/BotCommand.js";
+import { leaveVoice } from "../voice.js";
 
 const command: BotCommand = {
     data: new SlashCommandBuilder().setName("leave").setDescription("Leaves the voice channel"),
@@ -10,14 +10,11 @@ const command: BotCommand = {
             return;
         }
 
-        const conn = getVoiceConnection(interaction.guild.id);
-        if (!conn) {
+        if (leaveVoice(interaction.guild.id)) {
+            await interaction.reply("Left the voice channel.");
+        } else {
             await interaction.reply("I am not connected to a voice channel.");
-            return;
         }
-
-        conn.destroy();
-        await interaction.reply("Left the voice channel.");
     },
 };
 

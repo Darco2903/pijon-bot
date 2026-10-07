@@ -22,6 +22,8 @@ export class AudioCache {
     public readonly options: AudioCacheOptions;
     protected index: Map<string, CacheEntry> = new Map();
     protected inflight: Map<string, ResultAsync<void, string>> = new Map();
+    /** kill() of each running download, so shutdown doesn't wait for them to finish */
+    protected downloads: Map<string, () => void> = new Map();
 
     constructor(ytdlp: YtDlp, options: AudioCacheOptions) {
         this.ytDlp = ytdlp;
@@ -79,6 +81,18 @@ export class AudioCache {
             });
     }
 
+    /**
+     * Kills all running downloads (shutdown). Their .part files stay behind
+     * and are deleted by init() on the next start.
+     */
+    public abortAll(): void {
+        for (const [videoId, kill] of this.downloads) {
+            logger.debug(`AudioCache: aborting download of ${videoId}`);
+            kill();
+        }
+        this.downloads.clear();
+    }
+
     public get(key: string): CacheEntry | null {
         return this.index.get(key) || null;
     }
@@ -118,10 +132,12 @@ export class AudioCache {
             const p = this.cachePath(videoId);
             const upstream = this.ytDlp.stream(videoId);
             const { playerStream, done } = teeToFile(upstream.stream, p);
+            this.downloads.set(videoId, upstream.kill);
 
             done.then(() => {
                 // remove inflight entry when done, whether success or failure
                 this.inflight.delete(videoId);
+                this.downloads.delete(videoId);
             });
 
             // Registered so waitFor() and dedup can await the end of the download

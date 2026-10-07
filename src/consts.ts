@@ -9,3 +9,6 @@ export const FISH_AUDIO_VOICE_MODEL: string = "9a9cf47702da476aa4629e2506d4a857"
 // export const FISH_AUDIO_VOICE_MODEL: string = "98655a12fa944e26b274c535e5e03842"; // E-girl
 
 export const YT_DLP_UPDATE_CRON = "0 */12 * * *"; // Every 12 hours
+
+export const VOICE_READY_TIMEOUT_MS = 5_000;
+export const VOICE_ALONE_TIMEOUT_MS = 2 * 60_000; // Leave after 2 minutes alone in a channel

@@ -23,4 +23,5 @@ export async function stopMusicPlayer(): Promise<void> {
 
     AudioPlayer.all.forEach((player) => player.destroy());
     getVoiceConnections().forEach((connection) => connection.destroy());
+    audioCache.abortAll();
 }

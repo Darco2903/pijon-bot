@@ -4,11 +4,11 @@ import type { BotCommand } from "./types/BotCommand.js";
 import { commands } from "./commands/index.js";
 import { config } from "./config.js";
 import { handleInteraction } from "./interactionHandler.js";
-import { AudioPlayer } from "./music-player/AudioPlayer.js";
-import { getVoiceConnections } from "@discordjs/voice";
 import { stopMusicPlayer } from "./music-player/index.js";
+import { handleVoiceStateUpdate } from "./voice.js";
+import { ResultAsync } from "neverthrow";
 
-export default class ClientWrapper<T extends boolean> extends Client<T> {
+export default class ClientWrapper<T extends boolean = boolean> extends Client<T> {
     protected busy: boolean;
     public readonly commands: Collection<string, BotCommand>;
 
@@ -41,20 +41,35 @@ export default class ClientWrapper<T extends boolean> extends Client<T> {
     //     }
     // }
 
-    public async start(): Promise<ClientWrapper<true>> {
-        this.login(config.discord.token);
-        const client = await new Promise<ClientWrapper<true>>((resolve) => {
-            this.once(Events.ClientReady, () => resolve(this as ClientWrapper<true>));
+    public waitForReady(): Promise<ClientWrapper<true>> {
+        return new Promise((resolve) => {
+            if (this.isReady()) {
+                resolve(this);
+            } else {
+                this.once(Events.ClientReady, () => resolve(this as ClientWrapper<true>));
+            }
         });
-
-        // register the interaction handler
-        this.on(Events.InteractionCreate, (interaction) => handleInteraction(client, interaction));
-        return client;
     }
 
-    public async stop(this: ClientWrapper<true>): Promise<void> {
+    public start(): ResultAsync<ClientWrapper<true>, string> {
+        return ResultAsync.fromPromise(
+            this.login(config.discord.token),
+            (err) => `Failed to login: ${err}`,
+        )
+            .andThen(() => ResultAsync.fromSafePromise(this.waitForReady()))
+            .andTee((client) => {
+                // register the interaction handler
+                this.on(Events.InteractionCreate, (interaction) =>
+                    handleInteraction(client, interaction),
+                );
+                // leave voice channels when nobody is listening
+                this.on(Events.VoiceStateUpdate, handleVoiceStateUpdate);
+            });
+    }
+
+    public async stop(): Promise<void> {
         // if (this.isBusy()) {
-        //     logInfo("Client is busy, waiting...".yellow);
+        //     logger.info("Client is busy, waiting...");
         //     await this.waitForBusy();
         // }
 
@@ -62,5 +77,6 @@ export default class ClientWrapper<T extends boolean> extends Client<T> {
         this.user?.setStatus("invisible");
         await stopMusicPlayer();
         await this.destroy();
+        logger.info("Client stopped successfully");
     }
 }

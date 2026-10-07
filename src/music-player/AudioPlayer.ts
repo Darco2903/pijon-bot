@@ -15,7 +15,7 @@ import { Millisecond, Second } from "@darco2903/secondthought";
 import { audioCache } from "./index.js";
 import type { ITrack } from "./types/index.js";
 import { prisma } from "../prisma.js";
-import { VoiceChannel } from "discord.js";
+import { Guild, VoiceChannel } from "discord.js";
 import { joinVoice } from "../voice.js";
 import { ytDlp } from "../yt-dlp/index.js";
 import { logger } from "../logger.js";
@@ -32,11 +32,16 @@ export class AudioPlayer {
         return AudioPlayer._all.get(guildId);
     }
 
+    protected readonly guild: Guild;
     public readonly guildId: string;
     protected resource: AudioResource | null;
     protected offsetMs: number;
     protected player: DiscordAudioPlayer;
     protected playlist: TrackQueue<ITrack>;
+    /** play() is joining the channel or starting the stream; the player is still Idle meanwhile. */
+    protected starting: boolean = false;
+    /** Set by destroy(). Callers may still hold a reference, e.g. /play across its awaits. */
+    protected destroyed: boolean = false;
     // protected eventEmitter: TypedEmitter<PlayerEvents>;
 
     public get currentSong(): ITrack | null {
@@ -63,15 +68,36 @@ export class AudioPlayer {
         return this.player.state.status === AudioPlayerStatus.Playing;
     }
 
+    public get voiceChannel(): VoiceChannel | null {
+        const conn = this.connection;
+        if (!conn) {
+            return null;
+        }
+
+        const channelId = conn.joinConfig.channelId;
+        if (!channelId) {
+            return null;
+        }
+
+        const channel = this.guild.channels.cache.get(channelId);
+        if (!channel || !(channel instanceof VoiceChannel)) {
+            return null;
+        }
+
+        return channel;
+    }
+
     public get positionMs(): Millisecond {
         return new Millisecond(this.offsetMs + (this.resource?.playbackDuration ?? 0));
     }
 
-    constructor(guildId: string, options?: CreateAudioPlayerOptions) {
+    constructor(guild: Guild, options?: CreateAudioPlayerOptions) {
+        const guildId = guild.id;
         if (AudioPlayer._all.has(guildId)) {
             throw new Error(`AudioPlayer already exists for guild ${guildId}`);
         }
 
+        this.guild = guild;
         this.guildId = guildId;
         this.offsetMs = 0;
         this.resource = null;
@@ -85,16 +111,22 @@ export class AudioPlayer {
             logger.debug(`AudioPlayer for guild ${this.guildId} is idle.`);
 
             if (this.playlist.hasNext) {
-                await this.next().map(() => {
-                    logger.debug(`Playing next track for guild ${this.guildId}.`);
-                });
-                // this.eventEmitter.emit("statusChange", AudioPlayerStatus.Playing);
-                if (this.playlist.current) {
-                    // this.eventEmitter.emit("trackStart", this.playlist.current);
-                } else {
-                    logger.warn(
-                        `No current track found for guild ${this.guildId} after calling next().`,
-                    );
+                // Tracks that fail during playback come back here through the "error" -> Idle
+                // transition. This loop covers tracks that fail to start: skip them.
+                while (this.playlist.hasNext) {
+                    const res = await this.next();
+                    if (res.isOk()) {
+                        logger.debug(`Playing next track for guild ${this.guildId}.`);
+                        // this.eventEmitter.emit("trackStart", res.value);
+                        break;
+                    }
+                    if (!this.connection) {
+                        logger.debug(
+                            `No voice connection for guild ${this.guildId}, stopping queue.`,
+                        );
+                        break;
+                    }
+                    logger.warn(`Skipping track in guild ${this.guildId}: ${res.error}`);
                 }
             } else {
                 // this.eventEmitter.emit("statusChange", AudioPlayerStatus.Idle);
@@ -103,9 +135,9 @@ export class AudioPlayer {
             }
         });
 
-        // setInterval(() => {
-        //     logger.debug(`Current position: ${this.positionMs.toStringWithUnit()}`);
-        // }, 1000);
+        this.player.on("error", (error) => {
+            logger.error(`Audio error in guild ${this.guildId}: ${error.message}`);
+        });
     }
 
     public static saveAll(): ResultAsync<void, string> {
@@ -157,6 +189,10 @@ export class AudioPlayer {
     protected sub: boolean = false;
 
     protected _play(id: string, time?: Second): ResultAsync<void, string> {
+        if (this.destroyed) {
+            return errAsync("Audio player was destroyed.");
+        }
+
         const conn = this.connection;
         if (!conn) {
             logger.error(`No voice connection found for guild ${this.guildId}.`);
@@ -165,7 +201,13 @@ export class AudioPlayer {
 
         this.offsetMs = time?.toMillisecond().time ?? 0;
         return ResultAsync.fromSafePromise(audioCache.createStream(id, time))
-            .map(({ destroy, stream }) => {
+            .andThen(({ destroy, stream }) => {
+                // createStream() can wait for a download, so check again.
+                if (this.destroyed) {
+                    stream.destroy(); // stops ffmpeg, the download still finishes for the cache
+                    return errAsync("Audio player was destroyed.");
+                }
+
                 this.resource = createAudioResource(stream, {
                     inputType: StreamType.Raw,
                 });
@@ -183,6 +225,7 @@ export class AudioPlayer {
                     logger.debug(`AudioPlayer for guild ${this.guildId} is now playing.`);
                 });
                 this.player.play(this.resource);
+                return okAsync(undefined);
             })
             .orTee((error) => {
                 logger.error(`Failed to play track ${id} for guild ${this.guildId}: ${error}`);
@@ -193,19 +236,38 @@ export class AudioPlayer {
 
     public play(id: string, channel: VoiceChannel): ResultAsync<ITrack, string> {
         return ytDlp.getInfo(id).andThen((info) => {
+            // getInfo() takes a while, the player may have been destroyed (kick, /leave) meanwhile.
+            if (this.destroyed) {
+                return errAsync("Audio player was destroyed.");
+            }
+
+            const busy = this.starting || this.player.state.status !== AudioPlayerStatus.Idle;
             this.addSong(info); // don't wait for this to finish, we don't care if it fails
-            if (this.playing) {
+            if (busy) {
                 return okAsync(info);
             } else {
+                const track = this.playlist.current === info ? info : this.playlist.next();
+                if (!track) {
+                    logger.error(`No track found to play for guild ${this.guildId}.`);
+                    return errAsync("No track found to play.");
+                }
+
+                this.starting = true;
                 return joinVoice(channel.id, channel.guild)
                     .andTee(() => {
                         logger.debug(`Using voice connection for guild ${channel.guildId}`);
                     })
-                    .andThen(() => this._play(id))
+                    .andThen(() => this._play(track.id))
                     .andTee(() => {
                         logger.debug(
                             `Started playing track ${info.title} for guild ${channel.guildId}`,
                         );
+                    })
+                    .andTee(() => {
+                        this.starting = false;
+                    })
+                    .orTee(() => {
+                        this.starting = false;
                     })
                     .map(() => info);
             }
@@ -270,9 +332,15 @@ export class AudioPlayer {
 
     public destroy(): void {
         logger.debug(`Destroying AudioPlayer for guild ${this.guildId}`);
-        AudioPlayer._all.delete(this.guildId);
-
-        this.player.stop();
+        this.destroyed = true;
+        this.starting = false;
+        this.player.removeAllListeners();
+        this.player.stop(true);
+        this.offsetMs = 0;
         this.playlist.clear();
+        this.resource = null;
+        if (AudioPlayer._all.get(this.guildId) === this) {
+            AudioPlayer._all.delete(this.guildId);
+        }
     }
 }

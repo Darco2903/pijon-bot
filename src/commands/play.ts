@@ -34,10 +34,12 @@ const command: BotCommand = {
         }
 
         let query = interaction.options.getString("query", true);
+        let audioPlayer = AudioPlayer.get(guild.id);
 
         const ch =
             interaction.options.getChannel("channel")
-            ?? interaction.guild?.members.cache.get(interaction.user.id)?.voice.channel;
+            || interaction.guild?.members.cache.get(interaction.user.id)?.voice.channel
+            || audioPlayer?.voiceChannel;
 
         if (!ch) {
             await interaction.reply("Please specify a voice channel to join.");
@@ -53,9 +55,8 @@ const command: BotCommand = {
 
         await interaction.deferReply();
 
-        let audioPlayer = AudioPlayer.get(guild.id);
         if (!audioPlayer) {
-            audioPlayer = new AudioPlayer(guild.id, {
+            audioPlayer = new AudioPlayer(guild, {
                 behaviors: {
                     noSubscriber: NoSubscriberBehavior.Pause,
                 },

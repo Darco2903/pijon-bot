@@ -1,4 +1,5 @@
 import { ChannelType, SlashCommandBuilder } from "discord.js";
+import { getVoiceConnection } from "@discordjs/voice";
 import type { BotCommand } from "../types/BotCommand.js";
 import { joinVoice } from "../voice.js";
 import { logger } from "../logger.js";
@@ -15,16 +16,18 @@ const command: BotCommand = {
                 .addChannelTypes(ChannelType.GuildVoice),
         ),
     async execute(interaction) {
-        if (!interaction.guild) {
+        const guild = interaction.guild;
+        if (!guild) {
             await interaction.reply("This command can only be used in a server.");
             return;
         }
+
         const channel =
             interaction.options.getChannel("channel")
-            ?? interaction.guild?.members.cache.get(interaction.user.id)?.voice.channel;
+            ?? guild.members.cache.get(interaction.user.id)?.voice.channel;
 
         if (!channel) {
-            await interaction.reply("Please specify a voice channel to join.");
+            await interaction.reply("Join a voice channel or specify one.");
             return;
         }
 
@@ -33,15 +36,23 @@ const command: BotCommand = {
             return;
         }
 
+        const conn = getVoiceConnection(guild.id);
+        const alreadyHere = conn?.joinConfig.channelId === channel.id;
+
         await interaction.deferReply();
 
-        await joinVoice(channel.id, interaction.guild).match(
-            async (conn) => {
-                await interaction.editReply(`Joined the voice channel: ${channel.name}`);
+        await joinVoice(channel.id, guild).match(
+            async () => {
+                if (alreadyHere) {
+                    await interaction.editReply(`I'm already in <#${channel.id}>.`);
+                } else {
+                    await interaction.editReply(`Joined <#${channel.id}>.`);
+                }
             },
             async (error) => {
-                logger.error(`Failed to join voice channel: ${error}`);
-                await interaction.editReply("Failed to join the voice channel.");
+                logger.debug(`Join refused or failed in guild ${guild.id}: ${error}`);
+                // joinVoice errors are user-facing messages
+                await interaction.editReply(error);
             },
         );
     },

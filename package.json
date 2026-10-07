@@ -8,7 +8,7 @@
     "license": "ISC",
     "private": "true",
     "type": "module",
-    "packageManager": "pnpm@12.8.1",
+    "packageManager": "pnpm@12.9.1",
     "scripts": {
         "check": "tsc --noEmit",
         "build": "run-s build:db build:ts",
