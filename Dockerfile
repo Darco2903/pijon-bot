@@ -14,9 +14,10 @@ COPY tsconfig.json ./
 COPY prisma/schema.prisma ./prisma/
 RUN pnpm build
 
-FROM node:24-alpine AS runtime
+FROM node:24-slim AS runtime
 # yt-dlp (zipapp, needs python3) and ffmpeg for some formats; node is reused as its JS runtime
-RUN apk add --no-cache python3 ffmpeg
+RUN apt-get update && apt-get install -y --no-install-recommends python3 ffmpeg ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 ADD --chmod=755 https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp /usr/local/bin/yt-dlp
 # node_modules
 COPY --from=prod-deps /app/node_modules /app/node_modules
