@@ -123,7 +123,7 @@ const command: BotCommand = {
         if (query.length <= 0) {
             // display recently played songs
             const recentlyPlayed = await prisma
-                .safe(prisma.recently_played.findMany({ orderBy: { played_at: "desc" }, take: 15 }))
+                .safe(prisma.recently_played.findMany({ orderBy: { played_at: "desc" }, take: 25 }))
                 .orTee((error) => {
                     logger.error(`Failed to fetch recently played videos: ${error}`);
                 })
@@ -135,7 +135,7 @@ const command: BotCommand = {
             }));
         } else {
             results = await ytDlp
-                .search(query, 15)
+                .search(query, 10)
                 // .andTee((results) => {
                 //     console.log("Search:", results);
                 // })

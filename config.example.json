@@ -1,9 +1,4 @@
 {
-    "cache": {
-        "path": "CACHE_PATH",
-        "maxSize": MAX_SIZE_IN_BYTES,
-        "maxAge": MAX_AGE_IN_MILLISECONDS
-    },
     "discord": {
         "guilds": [
             {
@@ -17,6 +12,17 @@
                 "id": "CHANNEL_ID"
             }
         ]
+    },
+    "musicplayer": {
+        "cache": {
+            "path": "CACHE_PATH",
+            "maxSize": 0, // MAX_SIZE_IN_BYTES,
+            "maxAge": 0 // MAX_AGE_IN_MILLISECONDS
+        },
+        "queue_save": {
+            "enabled": true,
+            "path": "QUEUE_SAVE_PATH"
+        }
     },
     "ytdlp": {
         "cookie_file": "COOKIE_FILE_PATH"

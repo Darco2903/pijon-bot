@@ -1,5 +1,5 @@
 import z from "zod";
-import { ITrackSchema, type ITrack } from "./Track.js";
+import { ITrackSchema } from "./Track.js";
 
 export const QueueItemSchema = z.object({
     guildId: z.string(),
