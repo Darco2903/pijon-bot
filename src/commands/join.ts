@@ -3,6 +3,7 @@ import { getVoiceConnection } from "@discordjs/voice";
 import type { BotCommand } from "../types/BotCommand.js";
 import { joinVoice } from "../voice.js";
 import { logger } from "../logger.js";
+import { replyError } from "./helpers.js";
 
 const command: BotCommand = {
     data: new SlashCommandBuilder()
@@ -18,7 +19,7 @@ const command: BotCommand = {
     async execute(interaction) {
         const guild = interaction.guild;
         if (!guild) {
-            await interaction.reply("This command can only be used in a server.");
+            await replyError(interaction, "This command can only be used in a server.");
             return;
         }
 
@@ -27,12 +28,12 @@ const command: BotCommand = {
             ?? guild.members.cache.get(interaction.user.id)?.voice.channel;
 
         if (!channel) {
-            await interaction.reply("Join a voice channel or specify one.");
+            await replyError(interaction, "Join a voice channel or specify one.");
             return;
         }
 
         if (channel.type !== ChannelType.GuildVoice) {
-            await interaction.reply("Please specify a valid voice channel.");
+            await replyError(interaction, "That's not a voice channel.");
             return;
         }
 
@@ -46,13 +47,13 @@ const command: BotCommand = {
                 if (alreadyHere) {
                     await interaction.editReply(`I'm already in <#${channel.id}>.`);
                 } else {
-                    await interaction.editReply(`Joined <#${channel.id}>.`);
+                    await interaction.editReply(`🔊 Joined <#${channel.id}>.`);
                 }
             },
             async (error) => {
                 logger.debug(`Join refused or failed in guild ${guild.id}: ${error}`);
                 // joinVoice errors are user-facing messages
-                await interaction.editReply(error);
+                await replyError(interaction, error);
             },
         );
     },

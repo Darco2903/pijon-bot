@@ -1,5 +1,5 @@
 import fs from "fs/promises";
-import { errAsync, okAsync, ResultAsync } from "neverthrow";
+import { err, errAsync, ok, okAsync, Result, ResultAsync } from "neverthrow";
 import { TrackQueue } from "@darco2903/track-queue";
 import {
     AudioPlayerStatus,
@@ -22,6 +22,20 @@ import { logger } from "../logger.js";
 import { config } from "../config.js";
 import { QueueData, QueueDataSchema, QueueItem } from "./types/Queue.js";
 import { safeJSONParse, safeParse } from "../utils.js";
+
+export interface PlayResult {
+    track: ITrack;
+    /** false if it started right away */
+    queued: boolean;
+    /** Songs to go before it plays, 1 = up next, 0 = playing now */
+    position: number;
+}
+
+export interface SkipResult {
+    track: ITrack;
+    /** Songs skipped because they failed to start */
+    skipped: ITrack[];
+}
 
 export class AudioPlayer {
     protected static _all: Map<string, AudioPlayer> = new Map();
@@ -120,22 +134,16 @@ export class AudioPlayer {
 
             if (this.playlist.hasNext) {
                 // Tracks that fail during playback come back here through the "error" -> Idle
-                // transition. This loop covers tracks that fail to start: skip them.
-                while (this.playlist.hasNext) {
-                    const res = await this.next();
-                    if (res.isOk()) {
+                // transition. skip() covers tracks that fail to start.
+                await this.skip().match(
+                    () => {
                         logger.debug(`Playing next track for guild ${this.guildId}.`);
                         // this.eventEmitter.emit("trackStart", res.value);
-                        break;
-                    }
-                    if (!this.connection) {
-                        logger.debug(
-                            `No voice connection for guild ${this.guildId}, stopping queue.`,
-                        );
-                        break;
-                    }
-                    logger.warn(`Skipping track in guild ${this.guildId}: ${res.error}`);
-                }
+                    },
+                    (error) => {
+                        logger.debug(`Queue stopped for guild ${this.guildId}: ${error}`);
+                    },
+                );
             } else {
                 // this.eventEmitter.emit("statusChange", AudioPlayerStatus.Idle);
                 // this.eventEmitter.emit("queueEmpty");
@@ -420,44 +428,61 @@ export class AudioPlayer {
             });
     }
 
-    public play(id: string, channel: VoiceChannel): ResultAsync<ITrack, string> {
-        return ytDlp.getInfo(id).andThen((info) => {
-            // getInfo() takes a while, the player may have been destroyed (kick, /leave) meanwhile.
-            if (this.destroyed) {
-                return errAsync("Audio player was destroyed.");
-            }
-
-            const busy = this.starting || this.player.state.status !== AudioPlayerStatus.Idle;
-            this.addSong(info); // don't wait for this to finish, we don't care if it fails
-            if (busy) {
-                return okAsync(info);
-            } else {
-                const track = this.playlist.current === info ? info : this.playlist.next();
-                if (!track) {
-                    logger.error(`No track found to play for guild ${this.guildId}.`);
-                    return errAsync("No track found to play.");
+    public play(id: string, channel: VoiceChannel): ResultAsync<PlayResult, string> {
+        return ytDlp
+            .getInfo(id)
+            .mapErr((error) => {
+                logger.error(`Failed to get info for ${id}: ${error}`);
+                return "I couldn't load this song.";
+            })
+            .andThen((info) => {
+                // getInfo() takes a while, the player may have been destroyed (kick, /leave) meanwhile.
+                if (this.destroyed) {
+                    return errAsync("The music was stopped in the meantime.");
                 }
 
-                this.starting = true;
-                return joinVoice(channel.id, channel.guild)
-                    .andTee(() => {
-                        logger.debug(`Using voice connection for guild ${channel.guildId}`);
-                    })
-                    .andThen(() => this._play(track.id))
-                    .andTee(() => {
-                        logger.debug(
-                            `Started playing track ${info.title} for guild ${channel.guildId}`,
-                        );
-                    })
-                    .andTee(() => {
-                        this.starting = false;
-                    })
-                    .orTee(() => {
-                        this.starting = false;
-                    })
-                    .map(() => info);
-            }
-        });
+                const busy = this.starting || this.player.state.status !== AudioPlayerStatus.Idle;
+                this.addSong(info); // don't wait for this to finish, we don't care if it fails
+
+                // info is the last song of the queue
+                const result = (): PlayResult => {
+                    const position =
+                        this.playlist.length - 1 - (this.playlist.currentPosition ?? 0);
+                    return { track: info, queued: position > 0, position };
+                };
+
+                if (busy) {
+                    return okAsync(result());
+                } else {
+                    const track = this.playlist.current === info ? info : this.playlist.next();
+                    if (!track) {
+                        logger.error(`No track found to play for guild ${this.guildId}.`);
+                        return errAsync("No track found to play.");
+                    }
+
+                    this.starting = true;
+                    return (
+                        joinVoice(channel.id, channel.guild)
+                            .andTee(() => {
+                                logger.debug(`Using voice connection for guild ${channel.guildId}`);
+                            })
+                            .andThen(() => this._play(track.id))
+                            .andTee(() => {
+                                logger.debug(
+                                    `Started playing track ${info.title} for guild ${channel.guildId}`,
+                                );
+                            })
+                            .andTee(() => {
+                                this.starting = false;
+                            })
+                            .orTee(() => {
+                                this.starting = false;
+                            })
+                            // not always info: older songs may be left in the queue if they all failed
+                            .map(result)
+                    );
+                }
+            });
     }
 
     public stop(): boolean {
@@ -483,6 +508,35 @@ export class AudioPlayer {
 
         logger.debug(`Playing next track: ${nextTrack.title}`);
         return this._play(nextTrack.id).map(() => nextTrack);
+    }
+
+    /**
+     * Plays the next song that starts, skipping the ones that fail to start.
+     * If none starts, the current song is stopped too. Errors are user-facing.
+     */
+    public skip(): ResultAsync<SkipResult, string> {
+        const run = async (): Promise<Result<SkipResult, string>> => {
+            const skipped: ITrack[] = [];
+            while (this.playlist.hasNext) {
+                const res = await this.next();
+                if (res.isOk()) {
+                    return ok({ track: res.value, skipped });
+                }
+                if (this.destroyed || !this.connection) {
+                    return err(res.error);
+                }
+                logger.warn(`Skipping track in guild ${this.guildId}: ${res.error}`);
+                if (this.playlist.current) skipped.push(this.playlist.current);
+            }
+
+            this.player.stop();
+            return err(
+                skipped.length > 0 ?
+                    "None of the next songs could be played, the queue is over."
+                :   "There's no next song in the queue.",
+            );
+        };
+        return new ResultAsync(run());
     }
 
     public previous(): ResultAsync<ITrack, string> {

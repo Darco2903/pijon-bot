@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { describe, it, expect, vi } from "vitest";
 import { AudioCache } from "../../src/music-player/AudioCache.js";
 import { YtDlp } from "../../src/yt-dlp/yt-dlp.js";
+import { Hour } from "@darco2903/secondthought";
 
 const ytDlp = new YtDlp();
 
@@ -14,7 +15,8 @@ describe("AudioCache", () => {
         const cache = new AudioCache(ytDlp, {
             dir: dir,
             maxSizeBytes: 1024 * 1024 * 100, // 100 MB
-            ttlMs: 1000 * 60 * 60, // 1 hour
+            maxFileSizeBytes: 0,
+            ttl: new Hour(1).toSecond(),
         });
 
         const res = await cache.init();
@@ -26,7 +28,8 @@ describe("AudioCache", () => {
         const cache = new AudioCache(ytDlp, {
             dir: dir,
             maxSizeBytes: 1024 * 1024 * 100, // 100 MB
-            ttlMs: 1000 * 60 * 60, // 1 hour
+            maxFileSizeBytes: 0,
+            ttl: new Hour(1).toSecond(),
         });
 
         // Create a .part file and a valid cache file

@@ -1,47 +1,39 @@
 import { SlashCommandBuilder } from "discord.js";
 import type { BotCommand } from "../types/BotCommand.js";
-import { AudioPlayer } from "../music-player/AudioPlayer.js";
 import { Track } from "../music-player/types/Track.js";
+import { logger } from "../logger.js";
+import { getActivePlayer, replyError } from "./helpers.js";
 
 const command: BotCommand = {
     data: new SlashCommandBuilder()
         .setName("next")
         .setDescription("Plays the next song in the queue"),
     async execute(interaction) {
-        const guild = interaction.guild;
-        if (!guild) {
-            await interaction.reply("This command can only be used in a server.");
-            return;
-        }
-
-        const player = AudioPlayer.get(guild.id);
-
-        if (!player) {
-            await interaction.reply("No audio player found for this guild.");
-            return;
-        }
-
-        if (!player.playing && !player.paused) {
-            await interaction.reply("No song is currently playing.");
-            return;
-        }
+        const player = await getActivePlayer(interaction);
+        if (!player) return;
 
         if (!player.hasNext) {
-            await interaction.reply("No next song in the queue.");
+            await replyError(interaction, "There's no next song in the queue.");
             return;
         }
 
-        await player.next().match(
-            async (track) => {
-                const t = new Track(track);
-                await interaction.reply({
-                    content: "Playing the next song",
-                    embeds: [t.embed()],
-                });
+        // starting a song can wait for a download
+        await interaction.deferReply();
+
+        await player.skip().match(
+            async ({ track, skipped }) => {
+                const embed = new Track(track).embed("Now playing");
+                if (skipped.length > 0) {
+                    embed.setFooter({
+                        text: `Skipped ${skipped.length} song${skipped.length > 1 ? "s" : ""} that couldn't be played`,
+                    });
+                }
+                await interaction.editReply({ embeds: [embed] });
             },
             async (error) => {
-                await interaction.reply("Failed to play the next song.");
-                player.destroy();
+                logger.warn(`/next failed in guild ${player.guildId}: ${error}`);
+                // skip() errors are user-facing
+                await interaction.editReply(error);
             },
         );
     },

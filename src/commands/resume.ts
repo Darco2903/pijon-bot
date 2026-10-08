@@ -1,31 +1,22 @@
 import { SlashCommandBuilder } from "discord.js";
 import { BotCommand } from "../types/BotCommand.js";
-import { AudioPlayer } from "../music-player/AudioPlayer.js";
+import { getActivePlayer, replyError, trackName } from "./helpers.js";
 
 const command: BotCommand = {
     data: new SlashCommandBuilder().setName("resume").setDescription("Resumes the current song"),
     async execute(interaction) {
-        if (!interaction.guild) {
-            await interaction.reply("This command can only be used in a server.");
-            return;
-        }
-
-        const player = AudioPlayer.get(interaction.guild.id);
-
-        if (!player) {
-            await interaction.reply("No audio player found for this guild.");
-            return;
-        }
+        const player = await getActivePlayer(interaction);
+        if (!player) return;
 
         if (!player.paused) {
-            await interaction.reply("The current song is not paused.");
+            await replyError(interaction, "The song isn't paused.");
             return;
         }
 
         if (player.resume()) {
-            await interaction.reply("Current song resumed.");
+            await interaction.reply(`▶️ Resumed ${trackName(player.currentSong!)}`);
         } else {
-            await interaction.reply("Failed to resume the current song.");
+            await replyError(interaction, "Couldn't resume the song.");
         }
     },
 };

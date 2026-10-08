@@ -57,16 +57,23 @@ export class Track implements ITrack {
         return this.duration ? formatTime(this.duration) : "Unknown";
     }
 
-    public embed(): EmbedBuilder {
+    /**
+     * @param status shown above the title, e.g. "Now playing"
+     */
+    public embed(status: string): EmbedBuilder {
         return new EmbedBuilder()
-            .setTitle(this.display())
             .setColor("Blurple")
-            .setImage(this.thumbnail ?? this.getImage())
+            .setAuthor({ name: status })
+            .setTitle(this.title)
             .setURL(this.getUrl())
+            .setThumbnail(this.thumbnail ?? this.getImage())
             .addFields(
-                { name: "Title", value: this.title },
-                { name: "Channel", value: this.channel ?? "Unknown" },
-                { name: "Duration", value: this.getFormattedDuration() },
+                { name: "Channel", value: this.channel ?? "Unknown", inline: true },
+                {
+                    name: "Duration",
+                    value: this.is_live ? "🔴 Live" : this.getFormattedDuration(),
+                    inline: true,
+                },
             );
     }
 }

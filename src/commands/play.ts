@@ -1,4 +1,9 @@
-import { ApplicationCommandOptionChoiceData, ChannelType, SlashCommandBuilder } from "discord.js";
+import {
+    ApplicationCommandOptionChoiceData,
+    ChannelType,
+    escapeMarkdown,
+    SlashCommandBuilder,
+} from "discord.js";
 import { NoSubscriberBehavior } from "@discordjs/voice";
 import { BotCommand } from "../types/BotCommand.js";
 import { getVideoID, validateID, validateURL } from "../yt-dlp/yt-dlp.js";
@@ -7,6 +12,7 @@ import { prisma } from "../prisma.js";
 import { Track } from "../music-player/types/Track.js";
 import { logger } from "../logger.js";
 import { ytDlp } from "../yt-dlp/index.js";
+import { replyError } from "./helpers.js";
 
 const command: BotCommand = {
     data: new SlashCommandBuilder()
@@ -29,7 +35,7 @@ const command: BotCommand = {
     async execute(interaction) {
         const guild = interaction.guild;
         if (guild === null) {
-            await interaction.reply("This command can only be used in a server.");
+            await replyError(interaction, "This command can only be used in a server.");
             return;
         }
 
@@ -42,14 +48,14 @@ const command: BotCommand = {
             || audioPlayer?.voiceChannel;
 
         if (!ch) {
-            await interaction.reply("Please specify a voice channel to join.");
+            await replyError(interaction, "Join a voice channel or specify one.");
             return;
         }
 
         const channel = interaction.client.channels.resolve(ch.id);
 
         if (!channel || channel.type !== ChannelType.GuildVoice) {
-            await interaction.reply("Please specify a valid voice channel.");
+            await replyError(interaction, "That's not a voice channel.");
             return;
         }
 
@@ -74,14 +80,14 @@ const command: BotCommand = {
             const res = await ytDlp.search(query, 1);
             if (res.isErr()) {
                 logger.error(`Failed to search for query "${query}": ${res.error}`);
-                await interaction.followUp("An error occurred while searching for your song");
+                await replyError(interaction, "The search failed, try again.");
                 return;
             }
 
             const searchResults = res.value;
             if (searchResults.length === 0) {
                 logger.debug(`No search results found for query "${query}"`);
-                await interaction.followUp(`No results found for *${query}*`);
+                await replyError(interaction, `No results for *${escapeMarkdown(query)}*.`);
                 return;
             }
             // logger.debug(`Search results: ${searchResults.map((r) => r.title).join(", ")}`);
@@ -95,17 +101,20 @@ const command: BotCommand = {
         }
 
         await audioPlayer.play(id, channel).match(
-            async (track) => {
-                logger.debug(`Playing track ${track.title} (${track.id}) in guild ${guild.id}`);
-                const t = new Track(track);
-                // await interaction.followUp("Playing your song!");
-                await interaction.followUp({
-                    embeds: [t.embed()],
-                });
+            async ({ track, queued, position }) => {
+                logger.debug(
+                    `${queued ? "Queued" : "Playing"} track ${track.title} (${track.id}) in guild ${guild.id}`,
+                );
+                const status =
+                    queued ?
+                        `Added to queue · ${position === 1 ? "up next" : `#${position}`}`
+                    :   "Now playing";
+                await interaction.editReply({ embeds: [new Track(track).embed(status)] });
             },
             async (error) => {
                 logger.error(`Failed to play track: ${error}`);
-                await interaction.followUp("An error occurred while trying to play your song");
+                // play() errors are user-facing
+                await replyError(interaction, error);
             },
         );
     },
