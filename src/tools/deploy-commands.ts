@@ -12,18 +12,26 @@ const rest = new REST().setToken(config.discord.token);
     try {
         console.log(`Started refreshing ${commands.length} application (/) commands.`);
 
-        for (const guild of config.discord.guilds) {
-            // rest.put(Routes.applicationGuildCommands(config.discord.clientId, guild.id), { body: [] })
-            //     .then(() => console.log("Successfully deleted all guild commands."))
-            //     .catch(console.error);
+        await rest.put(Routes.applicationCommands(config.discord.clientId), { body: commands });
+        console.log(`Successfully reloaded ${commands.length} application (/) commands globally.`);
 
-            // The put method is used to fully refresh all commands in the guild with the current set
-            const data = (await rest.put(Routes.applicationGuildCommands(config.discord.clientId, guild.id), {
-                body: commands,
-            })) as any[];
+        // for (const guild of config.discord.guilds) {
+        //     // rest.put(Routes.applicationGuildCommands(config.discord.clientId, guild.id), { body: [] })
+        //     //     .then(() => console.log("Successfully deleted all guild commands."))
+        //     //     .catch(console.error);
 
-            console.log(`Successfully reloaded ${data.length} application (/) commands in guild ${guild.name}.`);
-        }
+        //     // The put method is used to fully refresh all commands in the guild with the current set
+        //     const data = (await rest.put(
+        //         Routes.applicationGuildCommands(config.discord.clientId, guild.id),
+        //         {
+        //             body: commands,
+        //         },
+        //     )) as any[];
+
+        //     console.log(
+        //         `Successfully reloaded ${data.length} application (/) commands in guild ${guild.name}.`,
+        //     );
+        // }
     } catch (error) {
         // And of course, make sure you catch and log any errors!
         console.error(error);

@@ -1,6 +1,7 @@
 {
     "discord": {
         "guilds": [
+            // not used
             {
                 "name": "CHANNEL_NAME",
                 "id": "GUILD_ID"

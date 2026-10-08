@@ -18,18 +18,18 @@ const configSchema = z.object({
     discord: z.object({
         clientId: z.string(),
         token: z.string(),
-        guilds: z.array(
-            z.object({
-                name: z.string(),
-                id: z.string(),
-            }),
-        ),
-        channels: z.array(
-            z.object({
-                name: z.string(),
-                id: z.string(),
-            }),
-        ),
+        // guilds: z.array(
+        //     z.object({
+        //         name: z.string(),
+        //         id: z.string(),
+        //     }),
+        // ),
+        // channels: z.array(
+        //     z.object({
+        //         name: z.string(),
+        //         id: z.string(),
+        //     }),
+        // ),
     }),
     fish_audio: z.object({
         apiKey: z.string(),
