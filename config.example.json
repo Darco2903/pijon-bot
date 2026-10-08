@@ -7,6 +7,7 @@
             }
         ],
         "channels": [
+            // not used yet
             {
                 "name": "CHANNEL_NAME",
                 "id": "CHANNEL_ID"
@@ -16,8 +17,9 @@
     "musicplayer": {
         "cache": {
             "path": "CACHE_PATH",
-            "maxSize": 0, // MAX_SIZE_IN_BYTES,
-            "maxAge": 0 // MAX_AGE_IN_MILLISECONDS
+            "maxSize": 0, // MAX_CACHE_SIZE_IN_BYTES, 0 = no limit
+            "maxFileSize": 0, // MAX_TRACK_SIZE_IN_BYTES, 0 = no limit
+            "maxAge": 0 // MAX_AGE_SINCE_LAST_PLAY_IN_SECONDS, 0 = no limit
         },
         "queue_save": {
             "enabled": true,

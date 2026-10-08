@@ -6,10 +6,15 @@ import { ResultAsync } from "neverthrow";
 
 interface TeeResult {
     playerStream: Readable; // goes to Discord
-    done: ResultAsync<void, string>; // resolves once the file is committed
+    /**
+     * true once the file is committed, false if it went over maxBytes
+     * (the file is dropped, the player branch keeps going)
+     */
+    done: ResultAsync<boolean, string>;
 }
 
-export function teeToFile(source: Readable, finalPath: string): TeeResult {
+/** maxBytes = 0 means no limit */
+export function teeToFile(source: Readable, finalPath: string, maxBytes = 0): TeeResult {
     const partPath = `${finalPath}.part`;
     const file = createWriteStream(partPath);
 
@@ -17,7 +22,10 @@ export function teeToFile(source: Readable, finalPath: string): TeeResult {
     const playerStream = new PassThrough({ highWaterMark: 8 * 1024 * 1024 });
 
     const done = ResultAsync.fromPromise(
-        new Promise<void>((resolve, reject) => {
+        new Promise<boolean>((resolve, reject) => {
+            let written = 0;
+            let tooBig = false;
+
             const fail = async (err: Error) => {
                 source.destroy();
                 file.destroy();
@@ -26,11 +34,37 @@ export function teeToFile(source: Readable, finalPath: string): TeeResult {
                 reject(err);
             };
 
+            // Drop the file branch. The player branch alone no longer throttles the source.
+            const dropFile = () => {
+                tooBig = true;
+                logger.debug(`teeToFile: ${finalPath} is over ${maxBytes} bytes, not caching it`);
+                file.once("close", () => unlink(partPath).catch(() => {}));
+                file.destroy();
+                source.resume(); // in case it was waiting for a drain that won't come
+                if (playerStream.destroyed) stop();
+            };
+
+            // Nobody needs the data anymore
+            const stop = () => {
+                source.destroy();
+                resolve(false);
+            };
+
+            // Skipped while the file branch is already gone
+            playerStream.on("close", () => {
+                if (tooBig) stop();
+            });
+
             source.on("data", (chunk: Buffer) => {
                 // Branch 1: file. The only branch allowed to throttle the source.
-                if (!file.write(chunk)) {
-                    source.pause();
-                    file.once("drain", () => source.resume());
+                if (!tooBig) {
+                    written += chunk.length;
+                    if (maxBytes > 0 && written > maxBytes) {
+                        dropFile();
+                    } else if (!file.write(chunk)) {
+                        source.pause();
+                        file.once("drain", () => source.resume());
+                    }
                 }
 
                 // Branch 2: player. write() return value is ignored on purpose,
@@ -42,27 +76,27 @@ export function teeToFile(source: Readable, finalPath: string): TeeResult {
 
             source.on("end", () => {
                 playerStream.end();
-                file.end(); // triggers "finish" once everything is flushed
+                if (tooBig) {
+                    resolve(false);
+                } else {
+                    file.end(); // triggers "finish" once everything is flushed
+                }
             });
 
             file.on("finish", async () => {
                 logger.debug(`teeToFile: finished writing ${partPath}, renaming to ${finalPath}`);
                 await rename(partPath, finalPath); // .part -> final, atomic
-                resolve();
+                resolve(true);
             });
 
             source.on("error", fail);
-            file.on("error", fail);
+            file.on("error", (err) => {
+                // destroying the file with a pending write errors, expected once dropped
+                if (!tooBig) void fail(err);
+            });
         }),
         (err) => `teeToFile failed: ${err instanceof Error ? err.message : String(err)}`,
     );
-
-    // const done = ResultAsync.fromPromise(
-    //     new Promise<void>((resolve, reject) => {
-    //         reject(new Error("teeToFile is not implemented yet"));
-    //     }),
-    //     (err) => `teeToFile failed: ${err instanceof Error ? err.message : String(err)}`,
-    // );
 
     return { playerStream, done };
 }

@@ -26,6 +26,8 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    environment:
+      - DATABASE_HOST=pijon-db # Override the DATABASE_HOST to point to the MySQL service
     volumes:
       - ./config.json:/app/config.json:ro
       - ./data:/app/data:rw

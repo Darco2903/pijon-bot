@@ -40,8 +40,12 @@ const configSchema = z.object({
     musicplayer: z.object({
         cache: z.object({
             path: z.string(),
-            maxSize: z.number(),
-            maxAge: z.number(),
+            /** Max size of the whole cache in bytes, 0 = no limit */
+            maxSize: z.number().nonnegative(),
+            /** Max size of one cached track in bytes, 0 = no limit */
+            maxFileSize: z.number().nonnegative(),
+            /** Max time since last access in seconds, 0 = no limit */
+            maxAge: z.number().nonnegative(),
             // maxTrackDurationMs: z.number().optional(),
         }),
         queue_save: z.object({
@@ -87,6 +91,7 @@ const parsedConfig = configSchema.safeParse({
         cache: {
             path: fileConfig?.musicplayer?.cache?.path,
             maxSize: fileConfig?.musicplayer?.cache?.maxSize,
+            maxFileSize: fileConfig?.musicplayer?.cache?.maxFileSize,
             maxAge: fileConfig?.musicplayer?.cache?.maxAge,
         },
         queue_save: {
