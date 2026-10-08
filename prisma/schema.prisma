@@ -8,7 +8,7 @@ datasource db {
 }
 
 model recently_played {
-  id        Int      @id @default(autoincrement()) @db.UnsignedTinyInt
+  id        Int      @id @default(autoincrement()) @db.UnsignedSmallInt
   video_id  String   @unique(map: "unique_video_id") @db.VarChar(12)
   title     String   @db.VarChar(100)
   played_at DateTime @db.Timestamp(0)
