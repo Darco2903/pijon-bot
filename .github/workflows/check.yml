@@ -3,8 +3,10 @@ name: Check
 on:
     push:
         branches:
-            - "main" # Trigger on pushes to the main branch
+            - "dev"
     pull_request:
+        branches:
+            - "main"
 
 # A new push cancels the previous run of the same branch
 concurrency:
