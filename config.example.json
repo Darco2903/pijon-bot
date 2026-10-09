@@ -1,20 +1,4 @@
 {
-    "discord": {
-        "guilds": [
-            // not used
-            {
-                "name": "CHANNEL_NAME",
-                "id": "GUILD_ID"
-            }
-        ],
-        "channels": [
-            // not used yet
-            {
-                "name": "CHANNEL_NAME",
-                "id": "CHANNEL_ID"
-            }
-        ]
-    },
     "musicplayer": {
         "cache": {
             "path": "CACHE_PATH",
