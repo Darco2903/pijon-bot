@@ -31,12 +31,12 @@ const configSchema = z.object({
         //     }),
         // ),
     }),
-    fish_audio: z.object({
-        apiKey: z.string(),
-    }),
-    openai: z.object({
-        apiKey: z.string(),
-    }),
+    // fish_audio: z.object({
+    //     apiKey: z.string(),
+    // }),
+    // openai: z.object({
+    //     apiKey: z.string(),
+    // }),
     musicplayer: z.object({
         cache: z.object({
             path: z.string(),
@@ -53,11 +53,16 @@ const configSchema = z.object({
             path: z.string(),
         }),
     }),
-    ytdlp: z.object({
-        cookie_file: z.string().refine((path) => fs.existsSync(path), {
-            message: "YTDLP_COOKIE_FILE does not exist",
-        }),
-    }),
+    ytdlp: z
+        .object({
+            cookie_file: z
+                .string()
+                .optional()
+                .refine((path) => !path || fs.existsSync(path), {
+                    message: "YTDLP_COOKIE_FILE does not exist",
+                }),
+        })
+        .optional(),
 });
 
 try {
