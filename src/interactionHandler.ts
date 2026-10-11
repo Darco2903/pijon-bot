@@ -18,7 +18,7 @@ export async function handleInteraction(
         return;
     }
 
-    logger.info(`Executing command ${interaction.commandName} by user ${interaction.user.tag}`);
+    // logger.info(`Executing command ${interaction.commandName} by user ${interaction.user.tag}`);
 
     if (interaction.isChatInputCommand()) {
         try {

@@ -4,6 +4,7 @@ import { prisma } from "./prisma.js";
 import { main } from "./main.js";
 import { registerPeriodicTasks, stopPeriodicTasks } from "./periodics.js";
 import { AudioPlayer } from "./music-player/AudioPlayer.js";
+import { PRISMA_CONNECTION_RETRY_COUNT } from "./consts.js";
 
 const wrapper: ClientWrapper = new ClientWrapper();
 let isShuttingDown: boolean = false;
@@ -28,12 +29,19 @@ async function shutdown(signal: NodeJS.Signals) {
 
 (async () => {
     logger.info("Connecting to the database...");
-    const prismaRes = await prisma
-        .connect()
-        .andTee(() => logger.info("Database connection established"))
-        .orTee((err) => logger.error(`Database connection failed: ${err}`));
+    let retries = 0;
 
-    if (prismaRes.isErr()) {
+    while (retries < PRISMA_CONNECTION_RETRY_COUNT) {
+        const prismaRes = await prisma
+            .connect()
+            .andTee(() => logger.info("Database connection established"))
+            .orTee((err) => logger.error(`Database connection failed: ${err}`));
+
+        if (prismaRes.isOk()) break;
+        retries++;
+    }
+
+    if (retries === PRISMA_CONNECTION_RETRY_COUNT) {
         logger.error("Failed to connect to the database, exiting...");
         process.exitCode = 1;
         return;

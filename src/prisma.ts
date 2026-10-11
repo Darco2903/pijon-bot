@@ -3,6 +3,7 @@ import { Prisma, PrismaClient } from "#prisma7/client";
 import { ResultAsync } from "neverthrow";
 import { logger } from "./logger.js";
 import { config } from "./config.js";
+import { PRISMA_CONNECTION_TIMEOUT_MS } from "./consts.js";
 
 const adapter = new PrismaMariaDb({
     host: config.database.host,
@@ -10,6 +11,7 @@ const adapter = new PrismaMariaDb({
     password: config.database.password,
     database: config.database.name,
     connectionLimit: 5,
+    acquireTimeout: PRISMA_CONNECTION_TIMEOUT_MS,
     logger: {
         // error: (msg) => logger.error(msg),
         // network: (msg) => logger.warn(msg),

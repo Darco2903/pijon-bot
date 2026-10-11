@@ -1,6 +1,9 @@
 import type { Backends } from "fish-audio";
 import type { ResponsesModel } from "openai/resources";
 
+export const PRISMA_CONNECTION_TIMEOUT_MS = 1000;
+export const PRISMA_CONNECTION_RETRY_COUNT = 5;
+
 export const OPENAI_MODEL: ResponsesModel = "gpt-5-nano";
 // export const OPENAI_MODEL: ResponsesModel = "gpt-6-luna";
 export const FISH_AUDIO_MODEL: Backends = "s2.1-pro-free" as Backends;
