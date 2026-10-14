@@ -1,4 +1,4 @@
-import { Client, Collection, Events, GatewayIntentBits } from "discord.js";
+import { Client, Collection, Events, GatewayIntentBits, Partials } from "discord.js";
 import { logger } from "./logger.js";
 import type { BotCommand } from "./types/BotCommand.js";
 import { commands } from "./commands/index.js";
@@ -7,6 +7,7 @@ import { handleInteraction } from "./interactionHandler.js";
 import { stopMusicPlayer } from "./music-player/index.js";
 import { handleVoiceStateUpdate } from "./voice.js";
 import { ResultAsync } from "neverthrow";
+import { handleMessageCreate } from "./openai/message.js";
 
 export default class ClientWrapper<T extends boolean = boolean> extends Client<T> {
     protected busy: boolean;
@@ -20,6 +21,11 @@ export default class ClientWrapper<T extends boolean = boolean> extends Client<T
                 GatewayIntentBits.GuildMessages,
                 GatewayIntentBits.GuildVoiceStates,
                 GatewayIntentBits.MessageContent,
+                GatewayIntentBits.DirectMessages,
+            ],
+            partials: [
+                //
+                Partials.Channel,
             ],
         });
 
@@ -64,6 +70,7 @@ export default class ClientWrapper<T extends boolean = boolean> extends Client<T
                 );
                 // leave voice channels when nobody is listening
                 this.on(Events.VoiceStateUpdate, handleVoiceStateUpdate);
+                this.on(Events.MessageCreate, handleMessageCreate);
             });
     }
 

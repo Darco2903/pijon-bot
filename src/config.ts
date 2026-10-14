@@ -34,9 +34,13 @@ const configSchema = z.object({
     // fish_audio: z.object({
     //     apiKey: z.string(),
     // }),
-    // openai: z.object({
-    //     apiKey: z.string(),
-    // }),
+    openai: z.object({
+        apiKey: z.string(),
+    }),
+    ai: z.object({
+        /** Channels where the bot may join the conversation on its own */
+        channels: z.array(z.string()).default([]),
+    }),
     musicplayer: z.object({
         cache: z.object({
             path: z.string(),
@@ -91,6 +95,9 @@ const parsedConfig = configSchema.safeParse({
     },
     openai: {
         apiKey: process.env.OPENAI_API_KEY,
+    },
+    ai: {
+        channels: fileConfig?.ai?.channels,
     },
     musicplayer: {
         cache: {
