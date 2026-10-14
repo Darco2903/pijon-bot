@@ -5,7 +5,13 @@ import {
     VoiceConnection,
     VoiceConnectionStatus,
 } from "@discordjs/voice";
-import type { Guild, VoiceState } from "discord.js";
+import {
+    Routes,
+    type Client,
+    type Guild,
+    type RESTPutAPIChannelVoiceStatusJSONBody,
+    type VoiceState,
+} from "discord.js";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import { AudioPlayer } from "./music-player/AudioPlayer.js";
 import { logger } from "./logger.js";
@@ -116,6 +122,29 @@ function watchConnection(conn: VoiceConnection, guildId: string): void {
     });
 }
 
+/**
+ * Sets the status shown under a voice channel (up to 500 characters), or clears it with null.
+ * Needs the SetVoiceChannelStatus permission, and the bot must be in the channel
+ * unless it also has ManageChannels. Errors are user-facing messages.
+ */
+export function setVoiceChannelStatus(
+    client: Client,
+    channelId: string,
+    status: string | null,
+): ResultAsync<void, string> {
+    const body: RESTPutAPIChannelVoiceStatusJSONBody = { status };
+    return ResultAsync.fromPromise(
+        // discord.js has no helper for this endpoint yet.
+        client.rest.put(`${Routes.channel(channelId)}/voice-status`, { body }),
+        (error) => (error instanceof Error ? error.message : String(error)),
+    )
+        .map(() => undefined)
+        .orTee((error) => {
+            logger.error(`Failed to set status of voice channel ${channelId}: ${error}`);
+        })
+        .mapErr(() => "I couldn't update the voice channel status.");
+}
+
 export function leaveVoice(guildId: string): boolean {
     const conn = getVoiceConnection(guildId);
     if (!conn) return false;
@@ -138,7 +167,16 @@ function clearAloneTimer(guildId: string): void {
  */
 export function handleVoiceStateUpdate(oldState: VoiceState, newState: VoiceState): void {
     const guild = newState.guild;
-    if (!getVoiceConnection(guild.id)) return;
+    const conn = getVoiceConnection(guild.id);
+    if (!conn) return;
+
+    // Kicked. When the bot was alone, the call ends without a 4014 close, so the library
+    // rejoins the old channel by itself and the Disconnected handler never runs.
+    if (newState.id === guild.client.user.id && oldState.channelId && !newState.channelId) {
+        logger.info(`Disconnected from voice channel in guild ${guild.id}`);
+        destroyConnection(conn);
+        return;
+    }
 
     // The client's cache is already updated when the event fires, unlike conn.joinConfig.
     const botChannelId = guild.members.me?.voice.channelId;
