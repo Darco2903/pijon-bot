@@ -81,6 +81,23 @@ describe("teeToFile", () => {
         expect(await pathExists(final)).toBe(false);
     });
 
+    it("cleans up when the source errors while the .part file is still opening", async () => {
+        // The open is async, so failing right away races it. Repeated to catch the race.
+        for (let i = 0; i < 20; i++) {
+            const source = new PassThrough();
+            const final = path.join(dir, `track-${i}`);
+            const { playerStream, done } = teeToFile(source, final);
+            playerStream.on("error", () => {});
+
+            source.write("partial");
+            source.destroy(new Error("boom"));
+
+            expect((await done).isErr()).toBe(true);
+        }
+        await tick();
+        expect(await fs.readdir(dir)).toEqual([]);
+    });
+
     it("keeps downloading to the file when the player is destroyed", async () => {
         const source = new PassThrough();
         const final = path.join(dir, "track");

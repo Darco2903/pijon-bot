@@ -26,10 +26,18 @@ export function teeToFile(source: Readable, finalPath: string, maxBytes = 0): Te
             let written = 0;
             let tooBig = false;
 
+            // Unlink only once closed: a file still being opened would be created again afterwards
+            const closeFile = () =>
+                new Promise<void>((resolveClose) => {
+                    if (file.closed) return resolveClose();
+                    file.once("close", () => resolveClose());
+                    file.destroy();
+                });
+
             const fail = async (err: Error) => {
                 source.destroy();
-                file.destroy();
                 playerStream.destroy(err);
+                await closeFile();
                 await unlink(partPath).catch(() => {});
                 reject(err);
             };

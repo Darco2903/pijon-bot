@@ -337,11 +337,6 @@ describe("AudioCache createStream", () => {
         const { stream } = await cache.createStream("song");
         stream.on("error", () => {});
         const source = yt.downloads[0].stream;
-        // Fail only once the .part file is open. teeToFile's fail() deletes it without
-        // waiting for the open, so a still-opening file would come back afterwards.
-        await vi.waitFor(async () => {
-            expect(await fs.readdir(dir)).toContain("song.part");
-        });
         source.write("partial");
         source.destroy(new Error("network down"));
 
