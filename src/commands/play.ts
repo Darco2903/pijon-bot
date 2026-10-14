@@ -1,13 +1,7 @@
-import {
-    ApplicationCommandOptionChoiceData,
-    ChannelType,
-    escapeMarkdown,
-    SlashCommandBuilder,
-} from "discord.js";
-import { NoSubscriberBehavior } from "@discordjs/voice";
+import { ApplicationCommandOptionChoiceData, ChannelType, SlashCommandBuilder } from "discord.js";
 import { BotCommand } from "../types/BotCommand.js";
-import { getVideoID, validateID, validateURL } from "../yt-dlp/yt-dlp.js";
 import { AudioPlayer } from "../music-player/AudioPlayer.js";
+import { resolveTrackId } from "../music-player/resolve.js";
 import { prisma } from "../prisma.js";
 import { Track } from "../music-player/types/Track.js";
 import { logger } from "../logger.js";
@@ -39,8 +33,8 @@ const command: BotCommand = {
             return;
         }
 
-        let query = interaction.options.getString("query", true);
-        let audioPlayer = AudioPlayer.get(guild.id);
+        const query = interaction.options.getString("query", true);
+        const audioPlayer = AudioPlayer.get(guild.id);
 
         const ch =
             interaction.options.getChannel("channel")
@@ -61,62 +55,27 @@ const command: BotCommand = {
 
         await interaction.deferReply();
 
-        if (!audioPlayer) {
-            audioPlayer = new AudioPlayer(guild, {
-                behaviors: {
-                    noSubscriber: NoSubscriberBehavior.Pause,
-                },
-            });
-
-            logger.debug(`Created new AudioPlayer for guild ${guild.id}`);
-        } else {
-            logger.debug(`Using existing AudioPlayer for guild ${guild.id}`);
-        }
-
         logger.debug(`query: ${query}`);
 
-        let id: string;
-        if (!validateID(query) && !validateURL(query)) {
-            const res = await ytDlp.search(query, 1);
-            if (res.isErr()) {
-                logger.error(`Failed to search for query "${query}": ${res.error}`);
-                await replyError(interaction, "The search failed, try again.");
-                return;
-            }
-
-            const searchResults = res.value;
-            if (searchResults.length === 0) {
-                logger.debug(`No search results found for query "${query}"`);
-                await replyError(interaction, `No results for *${escapeMarkdown(query)}*.`);
-                return;
-            }
-            // logger.debug(`Search results: ${searchResults.map((r) => r.title).join(", ")}`);
-            const firstResult = searchResults[0];
-            id = firstResult.id;
-            logger.debug(`First search result: ${firstResult.title}`);
-        } else if (validateURL(query)) {
-            id = getVideoID(query);
-        } else {
-            id = query;
-        }
-
-        await audioPlayer.play(id, channel).match(
-            async ({ track, queued, position }) => {
-                logger.debug(
-                    `${queued ? "Queued" : "Playing"} track ${track.title} (${track.id}) in guild ${guild.id}`,
-                );
-                const status =
-                    queued ?
-                        `Added to queue · ${position === 1 ? "up next" : `#${position}`}`
-                    :   "Now playing";
-                await interaction.editReply({ embeds: [new Track(track).embed(status)] });
-            },
-            async (error) => {
-                logger.error(`Failed to play track: ${error}`);
-                // play() errors are user-facing
-                await replyError(interaction, error);
-            },
-        );
+        await resolveTrackId(query)
+            .andThen((id) => AudioPlayer.getOrCreate(guild).play(id, channel))
+            .match(
+                async ({ track, queued, position }) => {
+                    logger.debug(
+                        `${queued ? "Queued" : "Playing"} track ${track.title} (${track.id}) in guild ${guild.id}`,
+                    );
+                    const status =
+                        queued ?
+                            `Added to queue · ${position === 1 ? "up next" : `#${position}`}`
+                        :   "Now playing";
+                    await interaction.editReply({ embeds: [new Track(track).embed(status)] });
+                },
+                async (error) => {
+                    logger.error(`Failed to play track: ${error}`);
+                    // resolveTrackId() and play() errors are user-facing
+                    await replyError(interaction, error);
+                },
+            );
     },
     async autoComplete(interaction) {
         const query = interaction.options.getString("query", true);

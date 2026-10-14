@@ -8,6 +8,7 @@ import {
     createAudioResource,
     AudioPlayer as DiscordAudioPlayer,
     getVoiceConnection,
+    NoSubscriberBehavior,
     StreamType,
     VoiceConnection,
 } from "@discordjs/voice";
@@ -46,6 +47,19 @@ export class AudioPlayer {
 
     public static get(guildId: string): AudioPlayer | undefined {
         return AudioPlayer._all.get(guildId);
+    }
+
+    /** The guild's player, or a new one that pauses while nobody is connected */
+    public static getOrCreate(guild: Guild): AudioPlayer {
+        const existing = AudioPlayer._all.get(guild.id);
+        if (existing) return existing;
+
+        logger.debug(`Creating new AudioPlayer for guild ${guild.id}`);
+        return new AudioPlayer(guild, {
+            behaviors: {
+                noSubscriber: NoSubscriberBehavior.Pause,
+            },
+        });
     }
 
     protected readonly guild: Guild;

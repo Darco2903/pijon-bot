@@ -1,4 +1,7 @@
 {
+    "ai": {
+        "channels": ["CHANNEL_ID"] // channels where the bot may join the conversation on its own
+    },
     "musicplayer": {
         "cache": {
             "path": "CACHE_PATH",
