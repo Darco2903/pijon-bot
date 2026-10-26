@@ -1,3 +1,4 @@
+name: pijon-bot
 services:
   mysql-db:
     image: mysql:8
