@@ -22,16 +22,14 @@ services:
 
   migrate:
     build: { context: ., target: migrate }
-    image: pijon-bot-migrate:latest
+    image: darco2903/pijon-bot:latest-migrate
     env_file: .env
     depends_on:
       mysql-db: { condition: service_healthy }
 
   pijon-bot:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: pijon-bot:latest
+    build: .
+    image: darco2903/pijon-bot:latest
     container_name: pijon-bot
     restart: unless-stopped
     env_file:
