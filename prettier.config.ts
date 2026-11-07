@@ -17,6 +17,15 @@ const config: Config = {
     experimentalOperatorPosition: "start",
     experimentalTernaries: true,
     objectWrap: "preserve",
+    overrides: [
+        {
+            files: ["*.yml", "*.yaml"],
+            options: {
+                tabWidth: 2,
+                printWidth: 20,
+            },
+        },
+    ],
 };
 
 export default config;

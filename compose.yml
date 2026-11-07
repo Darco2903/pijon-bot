@@ -15,17 +15,34 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DATABASE_ROOT_PASSWORD}" ]
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p${DATABASE_ROOT_PASSWORD}",
+        ]
       interval: 5s
       timeout: 5s
       retries: 10
 
   migrate:
-    build: { context: ., target: migrate }
+    build:
+      {
+        context: .,
+        target: migrate,
+      }
     image: darco2903/pijon-bot:latest-migrate
     env_file: .env
     depends_on:
-      mysql-db: { condition: service_healthy }
+      mysql-db:
+        {
+          condition: service_healthy,
+        }
 
   pijon-bot:
     build: .
@@ -40,7 +57,10 @@ services:
     depends_on:
       mysql-db:
         condition: service_healthy
-      migrate: { condition: service_completed_successfully }
+      migrate:
+        {
+          condition: service_completed_successfully,
+        }
 
 volumes:
   mysql-data:
