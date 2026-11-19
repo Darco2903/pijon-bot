@@ -13,15 +13,87 @@ jobs:
     permissions:
       contents: read
 
+  # Each image × platform on a native runner (no QEMU), pushed by digest only; merge tags them
   build:
     needs: check
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
+    strategy:
+      matrix:
+        image: [runtime, migrate]
+        platform: [amd64, arm64]
+        include:
+          - platform: amd64
+            runner: ubuntu-latest
+          - platform: arm64
+            runner: ubuntu-24.04-arm
+          - image: runtime
+            cache: buildcache
+          # Same repo, for the migrate service of compose.yml
+          - image: migrate
+            target: migrate
+            cache: buildcache-migrate
     steps:
       - uses: actions/checkout@v7
 
-      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # labels only, the tags are set by merge
+      - id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.IMAGE }}
+
+      - id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: ${{ matrix.target }}
+          platforms: linux/${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          # Registry cache, not gha: the gha cache is scoped to the ref, so a tag never sees the previous tag's.
+          # One per platform, or each build would overwrite the other's
+          cache-from: type=registry,ref=${{ env.IMAGE }}:${{ matrix.cache }}-${{ matrix.platform }}
+          cache-to: type=registry,ref=${{ env.IMAGE }}:${{ matrix.cache }}-${{ matrix.platform }},mode=max
+
+      - env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/digests"
+          touch "$RUNNER_TEMP/digests/${DIGEST#sha256:}"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: digests-${{ matrix.image }}-${{ matrix.platform }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  # One multi-platform image per image, from the two digests of build
+  merge:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions: {}
+    strategy:
+      matrix:
+        include:
+          - image: runtime
+          # Same tags with -migrate
+          - image: migrate
+            flavor: suffix=-migrate,onlatest=true
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-${{ matrix.image }}-*
+          merge-multiple: true
 
       - uses: docker/setup-buildx-action@v4
 
@@ -36,47 +108,21 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: ${{ env.IMAGE }}
+          flavor: ${{ matrix.flavor }}
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
             type=sha
 
-      - uses: docker/build-push-action@v7
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=runtime
-          cache-to: type=gha,scope=runtime,mode=max
-
-      # Same tags with -migrate, in the same repo, for the migrate service of compose.yml
-      - id: meta-migrate
-        uses: docker/metadata-action@v6
-        with:
-          images: ${{ env.IMAGE }}
-          flavor: suffix=-migrate,onlatest=true
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=sha
-
-      - uses: docker/build-push-action@v7
-        with:
-          context: .
-          target: migrate
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta-migrate.outputs.tags }}
-          labels: ${{ steps.meta-migrate.outputs.labels }}
-          cache-from: type=gha,scope=migrate
-          cache-to: type=gha,scope=migrate,mode=max
+      - working-directory: ${{ runner.temp }}/digests
+        run: |
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf "$IMAGE@sha256:%s " *)
 
   deploy:
-    needs: build
+    needs: merge
     runs-on: ubuntu-latest
     permissions: {}
     steps:
